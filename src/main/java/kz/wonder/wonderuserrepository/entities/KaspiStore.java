@@ -1,7 +1,9 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
+@Data
 @Entity
 @Table(schema = "schema_wonder", name = "kaspi_token")
 public class KaspiStore {
@@ -12,6 +14,9 @@ public class KaspiStore {
     private String token;
     @Column(name = "seller_name", nullable = false)
     private String sellerName;
+    @Column(name = "seller_id", unique = true, nullable = false)
+    private String sellerId;
+
     private boolean enabled;
     @OneToOne
     @JoinColumn(columnDefinition = "integer", name = "userId")
