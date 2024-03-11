@@ -33,7 +33,7 @@ public class Beans {
         return KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
                 .realm(realm)
-                .clientId(password)
+                .clientId(clintId)
                 .grantType(OAuth2Constants.PASSWORD)
                 .username(username)
                 .password(password)
