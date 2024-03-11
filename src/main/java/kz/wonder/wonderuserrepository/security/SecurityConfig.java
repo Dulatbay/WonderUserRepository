@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.auth.converter.resource-id}")
+    @Value("${application.client-id}")
     private String clientId;
 
     @Bean
@@ -46,8 +46,6 @@ public class SecurityConfig {
                     auth
                             .requestMatchers(HttpMethod.DELETE, "/")
                             .hasAuthority("ADMIN");
-//                            .requestMatchers("/reports/**", "/reports")
-//                            .hasAuthority("ADMIN");
 
                     auth
                             .anyRequest()
@@ -60,7 +58,6 @@ public class SecurityConfig {
 
         http.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> {
                     httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(new CustomAccessDeniedHandler());
-//                    httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(authenticationEntryPoint);
                 }
         );
 
