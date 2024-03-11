@@ -4,14 +4,14 @@ application:
   keycloak-url: ${KEYCLOAK_URL:http://localhost:8484/auth}
   realm: wonder
   client-id: wonder
-  username: admin
+  username: admin_qit
   password: admin_password
 #  keycloak-url: ${KEYCLOAK_URL:http://192.168.0.101:8484/auth}
 #  keycloak-url: ${KEYCLOAK_URL:http://172.20.10.11:8484/auth}
 spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
-    username: ${DATABASE_USERNAME:qit}
+    username: ${DATABASE_USERNAME:user_qit}
     password: ${DATABASE_PASSWORD:123}
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:

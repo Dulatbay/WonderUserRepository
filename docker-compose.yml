@@ -7,7 +7,7 @@ services:
     expose:
       - "5432"
     environment:
-      POSTGRES_USER: k_app
+      POSTGRES_USER: user_qit
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: wonder
     volumes:
@@ -23,9 +23,9 @@ services:
       DB_VENDOR: POSTGRES
       DB_ADDR: postgres
       DB_DATABASE: wonder
-      DB_USER: k_app
+      DB_USER: user_qit
       DB_PASSWORD: 123
-      KEYCLOAK_USER: admin
+      KEYCLOAK_USER: admin_qit
       KEYCLOAK_PASSWORD: admin_password
     ports:
       - "8484:8080"

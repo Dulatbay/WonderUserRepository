@@ -16,7 +16,7 @@ public class Beans {
     @Value("${application.keycloak-url}")
     private String keycloakUrl;
 
-    @Value("${application.reals}")
+    @Value("${application.realm}")
     private String realm;
 
     @Value("${application.client-id}")

@@ -1,8 +1,11 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
+import kz.wonder.wonderuserrepository.dto.request.UserAuthRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
+import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +24,21 @@ public class AuthController {
     private final KeycloakService keycloakService;
     private final UserService userService;
 
+    @Operation(summary = "Registration")
     @PostMapping("/registration")
-    public ResponseEntity<AuthResponse> registration(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
+    public ResponseEntity<MessageResponse> registration(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
         // todo: create transactions
         var userRepresentation = keycloakService.createUser(registrationRequestBody).toRepresentation();
         registrationRequestBody.setKeycloakId(userRepresentation.getId());
         userService.createUser(registrationRequestBody);
-        var authResponse = keycloakService.getAuthResponse(registrationRequestBody.getEmail(), registrationRequestBody.getPassword());
-        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Подтвердите почту чтобы продолжить"));
     }
+
+
+    @Operation(summary = "Login")
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid UserAuthRequest userAuthRequest) {
+        return ResponseEntity.ok(keycloakService.getAuthResponse(userAuthRequest.email(), userAuthRequest.password()));
+    }
+
 }

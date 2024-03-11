@@ -3,9 +3,12 @@ package kz.wonder.wonderuserrepository.services.impl;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.security.KeycloakRole;
+import kz.wonder.wonderuserrepository.security.keycloak.EmailType;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
@@ -21,7 +24,10 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -38,10 +44,6 @@ public class KeycloakServiceImpl implements KeycloakService {
     private String keycloakUrl;
 
     private final Keycloak keycloak;
-    private final RealmResource realmResource = keycloak.realm(realm);
-    private final UsersResource usersResource = realmResource.users();
-    private final ClientRepresentation client = realmResource.clients()
-            .findByClientId(clintId).getFirst();
 
     @Override
     public UserResource createUser(SellerRegistrationRequest sellerRegistrationRequest) {
@@ -50,16 +52,44 @@ public class KeycloakServiceImpl implements KeycloakService {
         userRepresentation.setFirstName(sellerRegistrationRequest.getFirstName());
         userRepresentation.setLastName(sellerRegistrationRequest.getLastName());
         userRepresentation.setEmail(sellerRegistrationRequest.getEmail());
+        userRepresentation.setUsername(sellerRegistrationRequest.getEmail());
+        String userId = null;
+        try (Response response = getUsersResource().create(userRepresentation)) {
 
-        try (var response = usersResource.create(userRepresentation)) {
-            String userId = CreatedResponseUtil.getCreatedId(response);
-            UserResource userResource = usersResource.get(userId);
+            if (response.getStatus() != 201) {
+                log.info("response status: {}", response.getStatus());
+                log.info("response entity: {}", response.getEntity());
+                if (response.getStatus() == HttpStatus.SC_CONFLICT) {
+                    var object = response.readEntity(KeycloakError.class);
+                    throw new IllegalArgumentException(object.getErrorMessage());
+                } else {
+                    throw new InternalServerErrorException("Unknown error");
+                }
+            }
+
+            userId = CreatedResponseUtil.getCreatedId(response);
+            UserResource userResource = getUsersResource().get(userId);
             userResource.resetPassword(getPasswordCredential(sellerRegistrationRequest.getPassword(), false));
             userResource.roles() //
-                    .clientLevel(client.getId()).add(Collections.singletonList(getClientRole(client, KeycloakRole.SELLER)));
+                    .clientLevel(getClient().getId())
+                    .add(Collections.singletonList(getClientRole(getClient(), KeycloakRole.SELLER)));
+
+            try {
+                sendEmail(userId, EmailType.VERIFY_EMAIL);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Email is incorrect");
+            }
+
+
             return userResource;
         } catch (Exception e) {
-            log.error("Error occurred in creating user: ", e);
+//            if (userId != null) {
+//                try (var response = getUsersResource().delete(userId)) {
+//                    if(response.getStatus() ==
+//                }
+//            }
+            if(userId != null)
+                getUsersResource().delete(userId);
             throw e;
         }
     }
@@ -73,8 +103,25 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     private RoleRepresentation getClientRole(ClientRepresentation client, KeycloakRole keycloakRole) {
-        return realmResource.clients().get(client.getClientId())
+        return getRealmResource().clients().get(client.getId())
                 .roles().get(keycloakRole.name()).toRepresentation();
+    }
+
+    private RealmResource getRealmResource() {
+        return keycloak.realm(realm);
+    }
+
+    private UsersResource getUsersResource() {
+        return getRealmResource().users();
+    }
+
+    private ClientRepresentation getClient() {
+        return getRealmResource().clients()
+                .findByClientId(clintId).getFirst();
+    }
+
+    private void sendEmail(String userId, EmailType emailType) {
+        getUsersResource().get(userId).executeActionsEmail(List.of(emailType.name()));
     }
 
     @Override
