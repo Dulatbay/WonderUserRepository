@@ -14,6 +14,7 @@ public class TelegramAccount {
     private String tgUsername;
     @Column(name = "tg_chat_id", unique = true, nullable = false)
     private String tgChatId;
+    private boolean verified;
     private boolean enabled;
     @OneToOne
     @JoinColumn(columnDefinition = "integer", name = "userId")
