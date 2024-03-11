@@ -14,5 +14,15 @@
       "name": "application.title",
       "type": "java.lang.String",
       "description": "Description for application.title."
+    },
+    {
+      "name": "application.username",
+      "type": "java.lang.String",
+      "description": "Description for application.username."
+    },
+    {
+      "name": "application.password",
+      "type": "java.lang.String",
+      "description": "Description for application.password."
     }
   ] }
