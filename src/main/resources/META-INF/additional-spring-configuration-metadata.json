@@ -1,0 +1,18 @@
+{
+  "properties": [
+    {
+      "name": "application.client-id",
+      "type": "java.lang.String",
+      "description": "Description for application.client-id."
+    },
+    {
+      "name": "application.version",
+      "type": "java.lang.String",
+      "description": "Description for application.version."
+    },
+    {
+      "name": "application.title",
+      "type": "java.lang.String",
+      "description": "Description for application.title."
+    }
+  ] }

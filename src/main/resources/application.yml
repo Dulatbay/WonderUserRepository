@@ -2,6 +2,8 @@ application:
   title: Wonder
   version: 1.0.0
   keycloak-url: ${KEYCLOAK_URL:http://localhost:8484/auth}
+  realm: wonder
+  client-id: wonder
 #  keycloak-url: ${KEYCLOAK_URL:http://192.168.0.101:8484/auth}
 #  keycloak-url: ${KEYCLOAK_URL:http://172.20.10.11:8484/auth}
 spring:
@@ -26,7 +28,7 @@ spring:
       resourceserver:
         jwt:
 #          issuer-uri: ${OAUTH2_ISSUER:http://localhost:8484/auth/realms/miniland}
-          issuer-uri: ${OAUTH2_ISSUER:${application.keycloak-url}/realms/wonder}
+          issuer-uri: ${OAUTH2_ISSUER:${application.keycloak-url}/realms/${application.realm}}
           jwk-set-uri: ${OAUTH2_JWK:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs}
 server:
   servlet:
