@@ -39,6 +39,8 @@ dependencies {
 	implementation(kotlin("stdlib-jdk8"))
 
 	implementation("org.keycloak:keycloak-admin-client:21.0.1")
+
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 }
 configure<DependencyManagementExtension> {
 	imports {
