@@ -10,19 +10,14 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Data
 public class ErrorDto {
-    @JsonProperty("error")
     private String error;
 
-    @JsonProperty("message")
     private String message;
 
-    @JsonProperty("stack_trace")
     private String stackTrace;
 
-    @JsonProperty("timestamp")
     private long timestamp;
 
-    @JsonProperty("request_id")
     private String requestId;
 
     public ErrorDto(String error, String message, String stackTrace) {
