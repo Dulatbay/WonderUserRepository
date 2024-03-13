@@ -2,13 +2,15 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(schema = schemaName, name = "kaspi_token")
-public class KaspiToken {
+public class KaspiToken  extends AbstractEntity<Long>{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
