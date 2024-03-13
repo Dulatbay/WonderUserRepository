@@ -3,9 +3,11 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
+
 @Data
 @Entity
-@Table(schema = "schema_wonder", name = "kaspi_token")
+@Table(schema = schemaName, name = "kaspi_token")
 public class KaspiToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

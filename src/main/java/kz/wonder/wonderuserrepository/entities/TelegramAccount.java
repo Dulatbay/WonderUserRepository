@@ -3,8 +3,10 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
+
 @Entity
-@Table(schema = "schema_wonder", name = "telegram_account")
+@Table(schema = schemaName, name = "telegram_account")
 public class TelegramAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
