@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Entity
 @Table(schema = "schema_wonder", name = "kaspi_token")
-public class KaspiStore {
+public class KaspiToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

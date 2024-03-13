@@ -1,9 +1,9 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
-import kz.wonder.wonderuserrepository.entities.KaspiStore;
+import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.User;
-import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
+import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final KaspiStoreRepository kaspiStoreRepository;
+    private final KaspiTokenRepository kaspiTokenRepository;
     private final UserRepository userRepository;
     @Override
     public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
@@ -24,15 +24,15 @@ public class UserServiceImpl implements UserService {
         user.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
         user.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
 
-        KaspiStore kaspiStore = new KaspiStore();
-        kaspiStore.setEnabled(true);
-        kaspiStore.setSellerName(sellerRegistrationRequest.getSellerName());
-        kaspiStore.setSellerId(sellerRegistrationRequest.getSellerId());
-        kaspiStore.setToken(sellerRegistrationRequest.getTokenKaspi());
-        kaspiStore.setUser(user);
+        KaspiToken kaspiToken = new KaspiToken();
+        kaspiToken.setEnabled(true);
+        kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
+        kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
+        kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
+        kaspiToken.setUser(user);
 
         userRepository.save(user);
-        kaspiStoreRepository.save(kaspiStore);
+        kaspiTokenRepository.save(kaspiToken);
     }
 
     private boolean isTokenValid(String token){
