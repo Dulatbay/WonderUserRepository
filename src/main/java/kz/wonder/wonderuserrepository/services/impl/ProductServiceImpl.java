@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +49,7 @@ public class ProductServiceImpl implements ProductService {
                 Double priceAstana = row.getCell(5).getNumericCellValue();
 
                 Product product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
-                        .orElse(new Product(vendorCode, name, link, enabled, keycloakUserId));
+                        .orElse(new Product(vendorCode, name, link, enabled, new ArrayList<>(), keycloakUserId));
 
                 product.setName(name);
                 product.setLink(link);
