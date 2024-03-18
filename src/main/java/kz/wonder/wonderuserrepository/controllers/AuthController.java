@@ -27,10 +27,15 @@ public class AuthController {
     @Operation(summary = "Registration")
     @PostMapping("/registration")
     public ResponseEntity<MessageResponse> registration(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
-        // todo: create transactions
+        // todo: унификация данных с keycloak и с бд
         var userRepresentation = keycloakService.createUser(registrationRequestBody).toRepresentation();
         registrationRequestBody.setKeycloakId(userRepresentation.getId());
-        userService.createUser(registrationRequestBody);
+        try {
+            userService.createUser(registrationRequestBody);
+        } catch (Exception e) {
+            keycloakService.deleteUserById(userRepresentation.getId());
+            throw e;
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Подтвердите почту чтобы продолжить"));
     }
 
