@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
         kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
         kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
         kaspiToken.setUser(user);
-
+        // todo: phone number
         userRepository.save(user);
         kaspiTokenRepository.save(kaspiToken);
     }

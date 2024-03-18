@@ -3,7 +3,6 @@ package kz.wonder.wonderuserrepository.services.impl;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.security.KeycloakRole;
-import kz.wonder.wonderuserrepository.security.keycloak.EmailType;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
-import java.util.List;
 
 @Service
 @Slf4j
@@ -75,7 +73,7 @@ public class KeycloakServiceImpl implements KeycloakService {
                     .add(Collections.singletonList(getClientRole(getClient(), KeycloakRole.SELLER)));
 
             try {
-                sendEmail(userId, EmailType.VERIFY_EMAIL);
+                sendEmail(userId);
             } catch (Exception e) {
                 throw new IllegalArgumentException("Email is incorrect");
             }
@@ -120,13 +118,12 @@ public class KeycloakServiceImpl implements KeycloakService {
                 .findByClientId(clintId).getFirst();
     }
 
-    private void sendEmail(String userId, EmailType emailType) {
-        getUsersResource().get(userId).executeActionsEmail(List.of(emailType.name()));
+    private void sendEmail(String userId) {
+        getUsersResource().get(userId).sendVerifyEmail();
     }
 
-    @Override
-    public AuthResponse getAuthResponse(String username, String password) {
-        try (var userKeycloak = KeycloakBuilder.builder()
+    private Keycloak getKeycloak(String username, String password){
+        return KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
                 .realm(realm)
                 .clientId(clintId)
@@ -135,7 +132,12 @@ public class KeycloakServiceImpl implements KeycloakService {
                 .password(password)
                 .resteasyClient(new ResteasyClientBuilderImpl()
                         .connectionPoolSize(10).build())
-                .build()) {
+                .build();
+    }
+
+    @Override
+    public AuthResponse getAuthResponse(String username, String password) {
+        try (var userKeycloak = getKeycloak(username, password)) {
             String accessToken = userKeycloak.tokenManager().getAccessTokenString();
             String refreshToken = userKeycloak.tokenManager().refreshToken().getRefreshToken();
             return AuthResponse.builder()
