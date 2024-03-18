@@ -1,7 +1,7 @@
 application:
   title: Wonder
   version: 1.0.0
-  keycloak-url: ${KEYCLOAK_URL:http://localhost:8484/auth}
+  keycloak-url: ${KEYCLOAK_URL:http://34.125.159.241/keycloak}
   realm: wonder
   client-id: wonder
   username: admin_qit
@@ -16,7 +16,7 @@ spring:
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
