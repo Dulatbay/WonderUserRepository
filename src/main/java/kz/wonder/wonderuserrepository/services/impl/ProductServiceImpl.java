@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.entities.Product;
 import kz.wonder.wonderuserrepository.entities.ProductPrice;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -18,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -26,7 +29,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductPriceRepository productPriceRepository;
 
     @Override
-    public void processExcelFile(MultipartFile file) {
+    public void processExcelFile(MultipartFile file, String keycloakUserId) {
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.iterator();
@@ -44,8 +47,8 @@ public class ProductServiceImpl implements ProductService {
                 Double priceAlmaty = row.getCell(4).getNumericCellValue();
                 Double priceAstana = row.getCell(5).getNumericCellValue();
 
-                Product product = productRepository.findByVendorCode(vendorCode)
-                        .orElse(new Product(vendorCode, name, link, enabled));
+                Product product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
+                        .orElse(new Product(vendorCode, name, link, enabled, keycloakUserId));
 
                 product.setName(name);
                 product.setLink(link);
@@ -69,5 +72,28 @@ public class ProductServiceImpl implements ProductService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<ProductResponse> getProductsByKeycloakId(String keycloakUserId) {
+        return productRepository.findAllByKeycloakId(keycloakUserId)
+                .stream().map(product -> ProductResponse.builder()
+                        .id(product.getId())
+                        .enabled(product.isEnabled())
+                        .name(product.getName())
+                        .vendorCode(product.getVendorCode())
+                        .keycloakUserId(product.getKeycloakId())
+                        .prices(
+                                product.getPrices().stream().map(
+                                        productPrice ->
+                                                ProductResponse.ProductPriceResponse.builder()
+                                                        .price(productPrice.getPrice())
+                                                        .cityName(productPrice.getKaspiCity().getName())
+                                                        .build()
+                                ).collect(Collectors.toList())
+                        )
+
+                        .build()).collect(Collectors.toList())
+                ;
     }
 }

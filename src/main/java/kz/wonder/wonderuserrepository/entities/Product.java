@@ -1,12 +1,12 @@
 package kz.wonder.wonderuserrepository.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -28,4 +28,11 @@ public class Product extends AbstractEntity<Long> {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private List<ProductPrice> prices;
+
+    @Column(name = "keycloak_id", nullable = false)
+    private String keycloakId;
 }

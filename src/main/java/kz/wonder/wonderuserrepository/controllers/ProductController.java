@@ -1,14 +1,15 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -22,8 +23,15 @@ public class ProductController {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file is empty");
         }
-        productService.processExcelFile(file);
+
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        productService.processExcelFile(file, Utils.extractIdFromToken(token));
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Products upload successfully"));
     }
 
+    @GetMapping()
+    private ResponseEntity<ProductResponse> getProducts() {
+
+    }
 }
