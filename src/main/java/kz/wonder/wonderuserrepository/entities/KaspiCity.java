@@ -21,6 +21,8 @@ public class KaspiCity extends AbstractEntity<Long> {
     @Column(name = "code", nullable = false, unique = true)
     private String code;
 
+    @Column
+    private boolean enabled;
 }
 
 

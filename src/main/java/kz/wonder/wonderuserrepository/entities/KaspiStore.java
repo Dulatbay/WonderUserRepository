@@ -28,6 +28,9 @@ public class KaspiStore extends AbstractEntity<Long>{
     @Column(name = "kaspi_id", nullable = false)
     private String kaspiId;
 
+    @Column
+    private boolean enabled;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", columnDefinition = "integer")
     private User user;

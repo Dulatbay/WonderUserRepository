@@ -88,7 +88,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 //                    if(response.getStatus() ==
 //                }
 //            }
-            if(userId != null)
+            if (userId != null)
                 getUsersResource().delete(userId);
             throw e;
         }
@@ -146,5 +146,10 @@ public class KeycloakServiceImpl implements KeycloakService {
             log.error("Error occurred in getting tokens: ", e);
             throw e;
         }
+    }
+
+    @Override
+    public UserResource getUserById(String id) {
+        return getUsersResource().get(id);
     }
 }

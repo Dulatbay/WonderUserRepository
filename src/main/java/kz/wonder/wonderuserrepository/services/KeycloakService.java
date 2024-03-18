@@ -7,4 +7,7 @@ import org.keycloak.admin.client.resource.UserResource;
 public interface KeycloakService {
     UserResource createUser(SellerRegistrationRequest sellerRegistrationRequest);
     AuthResponse getAuthResponse(String email, String password);
+
+    UserResource getUserById(String id);
+
 }
