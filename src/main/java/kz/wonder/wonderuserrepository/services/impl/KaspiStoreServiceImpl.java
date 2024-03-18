@@ -95,7 +95,6 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
                         .availableWorkTimes(getAvailableTimesByStoreId(i.getId()))
                         .enabled(i.isEnabled())
                         .build()).collect(Collectors.toList());
-        )
     }
 
     public List<StoreResponse.AvailableWorkTime> getAvailableTimesByStoreId(Long kaspiStoreId) {

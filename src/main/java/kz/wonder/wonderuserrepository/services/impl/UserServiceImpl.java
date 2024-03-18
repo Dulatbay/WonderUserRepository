@@ -22,6 +22,10 @@ public class UserServiceImpl implements UserService {
     public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
         if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
             throw new IllegalArgumentException("Token is invalid");
+        if(userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
+            throw new IllegalArgumentException("Phone number must be unique");
+        if(kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
+            throw new IllegalArgumentException("Seller id must be unique");
 
         User user = new User();
         user.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
@@ -33,7 +37,6 @@ public class UserServiceImpl implements UserService {
         kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
         kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
         kaspiToken.setUser(user);
-        // todo: phone number
         userRepository.save(user);
         kaspiTokenRepository.save(kaspiToken);
     }

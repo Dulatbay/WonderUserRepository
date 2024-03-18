@@ -151,6 +151,11 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
+    public void deleteUserById(String userId) {
+        getUserById(userId).remove();
+    }
+
+    @Override
     public UserResource getUserById(String id) {
         return getUsersResource().get(id);
     }

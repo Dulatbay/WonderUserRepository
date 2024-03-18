@@ -8,6 +8,8 @@ public interface KeycloakService {
     UserResource createUser(SellerRegistrationRequest sellerRegistrationRequest);
     AuthResponse getAuthResponse(String email, String password);
 
+    void deleteUserById(String userId);
+
     UserResource getUserById(String id);
 
 }
