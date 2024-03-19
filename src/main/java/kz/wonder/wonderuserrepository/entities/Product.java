@@ -29,6 +29,11 @@ public class Product extends AbstractEntity<Long> {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted;
+
+    @Column(name = "quantity", nullable = false)
+    private Long quantity;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductPrice> prices;
@@ -41,4 +46,10 @@ public class Product extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBoxProducts> supplyBoxes;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "product",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<ProductQuantity> productQuantities;
 }

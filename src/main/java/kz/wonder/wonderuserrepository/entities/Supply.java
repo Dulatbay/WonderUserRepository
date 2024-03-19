@@ -22,9 +22,15 @@ public class Supply extends AbstractEntity<Long> {
     @JoinColumn(name = "store_id", columnDefinition = "integer")
     private KaspiStore kaspiStore;
 
+    @Column(name = "supply_states", nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private SupplyStates supplyStates;
+
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supply",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBox> supplyBoxes;
+
+
 }

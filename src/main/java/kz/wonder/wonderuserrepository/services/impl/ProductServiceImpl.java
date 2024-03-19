@@ -46,22 +46,15 @@ public class ProductServiceImpl implements ProductService {
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-                Long vendorCode = (long) row.getCell(0).getNumericCellValue();
+                long vendorCode = (long) row.getCell(0).getNumericCellValue();
                 String name = row.getCell(1).getStringCellValue();
                 String link = row.getCell(2).getStringCellValue();
                 boolean enabled = Boolean.parseBoolean(row.getCell(3).getStringCellValue());
                 Double priceAlmaty = row.getCell(4).getNumericCellValue();
                 Double priceAstana = row.getCell(5).getNumericCellValue();
 
-                Product product = productRepository.findByVendorCodeAndKeycloakId(vendorCode.toString(), keycloakUserId)
-                        .orElse(new Product(
-                                vendorCode.toString(),
-                                name,
-                                link,
-                                enabled,
-                                new ArrayList<>(),
-                                keycloakUserId,
-                                new ArrayList<>()));
+                Product product = productRepository.findByVendorCodeAndKeycloakId(Long.toString(vendorCode), keycloakUserId)
+                        .orElse(new Product());
 
                 product.setName(name);
                 product.setLink(link);
