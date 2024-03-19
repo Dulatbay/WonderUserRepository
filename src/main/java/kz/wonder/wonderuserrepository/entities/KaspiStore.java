@@ -33,6 +33,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column
     private boolean enabled;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", columnDefinition = "integer")
     private User user;
@@ -52,5 +53,11 @@ public class KaspiStore extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<KaspiStoreAvailableBoxTypes> availableBoxTypes;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "kaspiStore",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<Supply> supplies;
 
 }

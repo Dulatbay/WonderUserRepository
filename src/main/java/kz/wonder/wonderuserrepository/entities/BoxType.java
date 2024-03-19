@@ -26,4 +26,10 @@ public class BoxType extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<KaspiStoreAvailableBoxTypes> availableBoxTypes;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "boxType",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<SupplyBox> supplyBoxes;
 }

@@ -35,4 +35,10 @@ public class Product extends AbstractEntity<Long> {
 
     @Column(name = "keycloak_id", nullable = false)
     private String keycloakId;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "product",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<SupplyBoxProducts> supplyBoxes;
 }

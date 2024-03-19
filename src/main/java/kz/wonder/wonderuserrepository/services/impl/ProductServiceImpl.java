@@ -54,7 +54,14 @@ public class ProductServiceImpl implements ProductService {
                 Double priceAstana = row.getCell(5).getNumericCellValue();
 
                 Product product = productRepository.findByVendorCodeAndKeycloakId(vendorCode.toString(), keycloakUserId)
-                        .orElse(new Product(vendorCode.toString(), name, link, enabled, new ArrayList<>(), keycloakUserId));
+                        .orElse(new Product(
+                                vendorCode.toString(),
+                                name,
+                                link,
+                                enabled,
+                                new ArrayList<>(),
+                                keycloakUserId,
+                                new ArrayList<>()));
 
                 product.setName(name);
                 product.setLink(link);
