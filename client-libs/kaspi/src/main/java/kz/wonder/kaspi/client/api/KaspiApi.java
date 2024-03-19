@@ -23,7 +23,7 @@ public class KaspiApi {
                 .build();
     }
 
-    private Consumer<HttpHeaders> httpHeaders() {
+    private Consumer<HttpHeaders> httpHeaders(String token) {
         return headers -> {
             headers.set("X-Auth-Token", token);
             headers.set("Accept", "*/*");
@@ -33,7 +33,15 @@ public class KaspiApi {
     public Mono<CitiesDataResponse> getDataCities() {
         return webClient.get()
                 .uri("/cities")
-                .headers(httpHeaders())
+                .headers(httpHeaders(token))
+                .retrieve()
+                .bodyToMono(CitiesDataResponse.class);
+    }
+
+    public Mono<CitiesDataResponse> getDataCitiesWithToken(String token) {
+        return webClient.get()
+                .uri("/cities")
+                .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(CitiesDataResponse.class);
     }
