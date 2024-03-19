@@ -32,6 +32,10 @@ spring:
 #          issuer-uri: ${OAUTH2_ISSUER:http://localhost:8484/auth/realms/miniland}
           issuer-uri: ${OAUTH2_ISSUER:${application.keycloak-url}/realms/${application.realm}}
           jwk-set-uri: ${OAUTH2_JWK:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs}
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 1000MB
 server:
   servlet:
     context-path: '/api/'

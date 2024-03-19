@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository;
 
 import kz.wonder.kaspi.client.api.KaspiApi;
+import kz.wonder.wonderuserrepository.services.FileService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -21,9 +22,10 @@ public class WonderUserRepositoryApplication {
     }
 
     @Bean
-    CommandLineRunner init(UserService userService) {
+    CommandLineRunner init(UserService userService, FileService fileService) {
         return args -> {
             userService.syncUsersBetweenDBAndKeycloak();
+            fileService.init();
             log.info("Successfully started");
         };
     }

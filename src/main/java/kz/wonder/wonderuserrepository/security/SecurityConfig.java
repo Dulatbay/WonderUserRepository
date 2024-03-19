@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -57,9 +58,9 @@ public class SecurityConfig {
                         .jwt(Customizer.withDefaults())
                 )
                 .authorizeHttpRequests((auth) -> {
-//                    auth
-//                            .requestMatchers(HttpMethod.DELETE, "/")
-//                            .hasAuthority("ADMIN");
+                    auth
+                            .requestMatchers(HttpMethod.POST, "/box-types")
+                            .hasAuthority("SUPER_ADMIN");
                     auth.requestMatchers(WHITE_LIST_URL)
                             .permitAll();
 
