@@ -26,5 +26,5 @@ jobs:
           cp ~/wonder/Dockerfile .
           cp ~/wonder/docker-compose.yml .
           cp ~/wonder/application.yml ~/WonderUserRepository/src/main/resources/
-          docker-compose up --build -d springapp
+          docker compose up --build -d springapp
         EOF
