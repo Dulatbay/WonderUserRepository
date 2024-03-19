@@ -27,9 +27,9 @@ public class StoreController {
     private final KaspiApi kaspiApi;
 
     @PostMapping()
-    public ResponseEntity<Void> createStore(        @RequestBody
-                                                    @Valid
-                                                    KaspiStoreCreateRequest kaspiStoreCreateRequest) {
+    public ResponseEntity<Void> createStore(@RequestBody
+                                            @Valid
+                                            KaspiStoreCreateRequest kaspiStoreCreateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
 
@@ -50,8 +50,9 @@ public class StoreController {
 
         log.info("userId: {}", userId);
 
+        var stores = kaspiStoreService.getAllByUser(userId);
 
-        return null;
+        return ResponseEntity.ok(stores);
     }
 
 }

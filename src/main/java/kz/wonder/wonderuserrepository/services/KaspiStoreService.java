@@ -10,5 +10,5 @@ public interface KaspiStoreService {
 
     void createStore(KaspiStoreCreateRequest kaspiStoreCreateRequest);
 
-    List<StoreResponse> getAllByUser(Long userId);
+    List<StoreResponse> getAllByUser(String keycloakUserId);
 }

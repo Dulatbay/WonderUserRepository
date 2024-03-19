@@ -80,8 +80,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     }
 
     @Override
-    public List<StoreResponse> getAllByUser(Long userId) {
-        var kaspiStores = kaspiStoreRepository.findAllByUserId(userId);
+    public List<StoreResponse> getAllByUser(String keycloakUserId) {
+        var kaspiStores = kaspiStoreRepository.findAllByUserKeycloakId(keycloakUserId);
 
 
         return kaspiStores.stream().map(i ->
