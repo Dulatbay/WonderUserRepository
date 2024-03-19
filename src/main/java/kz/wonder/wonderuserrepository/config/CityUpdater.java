@@ -19,8 +19,8 @@ public class CityUpdater {
 
     private final CityService cityService;
 
-    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
-    public void updateCitiesFromKaspiApi() {
-       cityService.syncWithKaspi();
-    }
+//    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
+//    public void updateCitiesFromKaspiApi() {
+//       cityService.syncWithKaspi();
+//    }
 }

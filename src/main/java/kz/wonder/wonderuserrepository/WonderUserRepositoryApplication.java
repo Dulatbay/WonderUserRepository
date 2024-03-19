@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository;
 
 import kz.wonder.kaspi.client.api.KaspiApi;
+import kz.wonder.wonderuserrepository.services.CityService;
 import kz.wonder.wonderuserrepository.services.FileService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @Import(KaspiApi.class)
-@EnableScheduling
+//@EnableScheduling
 @Slf4j
 //@EnableFeignClients(basePackages = "kz.wonder.kaspi.client.api")
 public class WonderUserRepositoryApplication {
@@ -22,9 +23,12 @@ public class WonderUserRepositoryApplication {
     }
 
     @Bean
-    CommandLineRunner init(UserService userService, FileService fileService) {
+    CommandLineRunner init(UserService userService,
+                           FileService fileService,
+                           CityService cityService) {
         return args -> {
             userService.syncUsersBetweenDBAndKeycloak();
+            cityService.syncWithKaspi();
             fileService.init();
             log.info("Successfully started");
         };

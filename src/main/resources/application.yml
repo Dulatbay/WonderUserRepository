@@ -1,7 +1,7 @@
 application:
   title: Wonder
   version: 1.0.0
-  keycloak-url: ${KEYCLOAK_URL:http://34.125.159.241/keycloak}
+  keycloak-url: ${KEYCLOAK_URL:http://34.118.81.46/keycloak}
   realm: wonder
   client-id: wonder
   username: admin_qit
