@@ -19,5 +19,6 @@ public class ProductQuantity extends AbstractEntity<Long> {
     @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer")
     private KaspiStore kaspiStore;
 
+    @Column(nullable = false)
     private Long quantity;
 }
