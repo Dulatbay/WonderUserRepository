@@ -9,4 +9,5 @@ import java.util.Optional;
 
 public interface KaspiStoreAvailableTimesRepository extends JpaRepository<KaspiStoreAvailableTimes, Long> {
     List<KaspiStoreAvailableTimes> findByKaspiStoreId(Long id);
+    void deleteAllByKaspiStoreId(Long id);
 }

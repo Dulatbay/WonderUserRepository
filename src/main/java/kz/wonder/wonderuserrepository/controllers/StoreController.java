@@ -1,10 +1,11 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import jakarta.validation.Valid;
-import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
+import kz.wonder.wonderuserrepository.security.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KaspiStoreService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static kz.wonder.wonderuserrepository.constants.Utils.getAuthorities;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -24,12 +27,17 @@ import java.util.List;
 public class StoreController {
     private final KaspiStoreService kaspiStoreService;
     private final UserService userService;
-    private final KaspiApi kaspiApi;
 
     @PostMapping()
     public ResponseEntity<Void> createStore(@RequestBody
                                             @Valid
                                             KaspiStoreCreateRequest kaspiStoreCreateRequest) {
+        kaspiStoreCreateRequest.getDayOfWeekWorks()
+                .forEach(i -> {
+                    if (i.numericDayOfWeek() < 1 || i.numericDayOfWeek() > 7)
+                        throw new IllegalArgumentException("Number of week must be in range 1-7");
+                });
+
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
 
@@ -43,15 +51,50 @@ public class StoreController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        if (getAuthorities(token.getAuthorities())
+                .contains(KeycloakRole.SUPER_ADMIN.name())) {
+            kaspiStoreService.deleteById(id);
+        } else {
+            kaspiStoreService.deleteById(id, Utils.extractIdFromToken(token));
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> changeStore(@RequestBody
+                                            @Valid
+                                            KaspiStoreChangeRequest changeRequest,
+                                            @PathVariable Long id) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        if (getAuthorities(token.getAuthorities())
+                .contains(KeycloakRole.SUPER_ADMIN.name())) {
+            kaspiStoreService.changeStore(changeRequest, id);
+        }else{
+            var userId = Utils.extractIdFromToken(token);
+            kaspiStoreService.changeStore(changeRequest, id, userId);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping()
     public ResponseEntity<List<StoreResponse>> getAllOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        var userId = Utils.extractIdFromToken(token);
+        if (getAuthorities(token.getAuthorities())
+                .contains(KeycloakRole.SUPER_ADMIN.name())) {
+            return ResponseEntity.ok(kaspiStoreService.getAll());
+        }
 
+        var userId = Utils.extractIdFromToken(token);
         log.info("userId: {}", userId);
 
         var stores = kaspiStoreService.getAllByUser(userId);
-
         return ResponseEntity.ok(stores);
     }
 

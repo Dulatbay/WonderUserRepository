@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     List<KaspiStore> findAllByUserKeycloakId(String id);
+    Optional<KaspiStore> findByUserKeycloakIdAndId(String keycloakId, Long id);
 }

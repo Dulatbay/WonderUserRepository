@@ -4,13 +4,15 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @EqualsAndHashCode(callSuper = false)
 @Data
 @Entity
 @Table(name = "kaspi_store", schema = schemaName)
-public class KaspiStore extends AbstractEntity<Long>{
+public class KaspiStore extends AbstractEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,5 +40,11 @@ public class KaspiStore extends AbstractEntity<Long>{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")
     private KaspiCity kaspiCity;
+
+    @OneToMany(fetch = FetchType.EAGER,
+            mappedBy = "kaspiStore",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<KaspiStoreAvailableTimes> availableTimes;
 
 }

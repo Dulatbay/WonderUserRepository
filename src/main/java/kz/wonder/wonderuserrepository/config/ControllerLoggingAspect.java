@@ -3,7 +3,6 @@ package kz.wonder.wonderuserrepository.config;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,7 +51,9 @@ public class ControllerLoggingAspect {
 
     private String getCurrentRequestToken() {
         var tokenAuth = SecurityContextHolder.getContext().getAuthentication();
-        if(tokenAuth == null || tokenAuth.isAuthenticated()) return "Anonymous";
+
+        if (!tokenAuth.getAuthorities().isEmpty())
+            return "Anonymous";
         var jwt = (JwtAuthenticationToken) tokenAuth;
         return jwt.getName();
     }

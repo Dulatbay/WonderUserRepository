@@ -8,10 +8,12 @@ import lombok.EqualsAndHashCode;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Entity
-@Table(name = "kaspi_store_available_times")
+@Table(name = "kaspi_store_available_times", schema = schemaName)
 public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

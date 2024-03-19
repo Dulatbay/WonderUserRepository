@@ -15,6 +15,7 @@ public class StoreResponse {
     private String city;
     private List<AvailableWorkTime> availableWorkTimes;
     private boolean enabled;
+    private Long userId;
 
     @Data
     @Builder
