@@ -67,14 +67,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public List<StoreResponse> getAllByUser(String keycloakUserId) {
-        var kaspiStores = kaspiStoreRepository.findAllByUserKeycloakId(keycloakUserId);
+        final var kaspiStores = kaspiStoreRepository.findAllByUserKeycloakId(keycloakUserId);
 
         return mapToResponse(kaspiStores);
     }
 
     @Override
     public List<StoreResponse> getAll() {
-        var kaspiStores = kaspiStoreRepository.findAll();
+        final var kaspiStores = kaspiStoreRepository.findAll();
         return mapToResponse(kaspiStores);
     }
 
@@ -121,7 +121,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void deleteById(Long id, String keycloakUserId) {
-        var kaspiStore = kaspiStoreRepository.findByUserKeycloakIdAndId(keycloakUserId, id)
+        final var kaspiStore = kaspiStoreRepository.findByUserKeycloakIdAndId(keycloakUserId, id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi store doesn't exist"));
 
         kaspiStoreRepository.delete(kaspiStore);
@@ -129,7 +129,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void deleteById(Long id) {
-        var kaspiStore = kaspiStoreRepository.findById(id)
+        final var kaspiStore = kaspiStoreRepository.findById(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
         kaspiStoreRepository.delete(kaspiStore);
@@ -137,7 +137,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
-        var kaspiStore = kaspiStoreRepository.findById(id)
+        final var kaspiStore = kaspiStoreRepository.findById(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
 
@@ -146,7 +146,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
-        var storeToDelete = kaspiStoreRepository.findByUserKeycloakIdAndId(userId, id)
+        final var storeToDelete = kaspiStoreRepository.findByUserKeycloakIdAndId(userId, id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
         kaspiStoreRepository.save(mapToEntity(changeRequest, storeToDelete));
@@ -169,10 +169,10 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     public List<StoreResponse.AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
 
-        var awts = new ArrayList<StoreResponse.AvailableWorkTime>();
+        final var awts = new ArrayList<StoreResponse.AvailableWorkTime>();
 
         availableTimes.forEach(i -> {
-            var awt = StoreResponse.AvailableWorkTime.builder()
+            final var awt = StoreResponse.AvailableWorkTime.builder()
                     .id(i.getId())
                     .openTime(i.getOpenTime().format(TIME_FORMATTER).toLowerCase())
                     .closeTime(i.getCloseTime().format(TIME_FORMATTER).toLowerCase())
