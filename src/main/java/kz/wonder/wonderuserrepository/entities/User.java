@@ -19,4 +19,16 @@ public class User extends AbstractEntity<Long> {
     private String phoneNumber;
     @Column(name = "keycloak_id", unique = true, nullable = false)
     private String keycloakId;
+
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "user",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private KaspiToken kaspiToken;
+
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "user",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private TelegramAccount telegramAccount;
 }

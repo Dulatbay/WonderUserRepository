@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -153,6 +154,11 @@ public class KeycloakServiceImpl implements KeycloakService {
     @Override
     public void deleteUserById(String userId) {
         getUserById(userId).remove();
+    }
+
+    @Override
+    public List<UserRepresentation> getAllUsers() {
+        return getUsersResource().list();
     }
 
     @Override

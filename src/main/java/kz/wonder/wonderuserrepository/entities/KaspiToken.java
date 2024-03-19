@@ -3,6 +3,8 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -20,9 +22,9 @@ public class KaspiToken  extends AbstractEntity<Long>{
     private String sellerName;
     @Column(name = "seller_id", unique = true, nullable = false)
     private String sellerId;
-
+    @Column(name = "enabled",  nullable = false)
     private boolean enabled;
-    @OneToOne
-    @JoinColumn(columnDefinition = "integer", name = "userId")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(columnDefinition = "integer", name = "user_id")
     private User user;
 }
