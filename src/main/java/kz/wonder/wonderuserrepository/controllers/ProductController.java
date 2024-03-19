@@ -1,37 +1,42 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
-import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/products")
 public class ProductController {
     private final ProductService productService;
 
-    @PostMapping("/by-file")
-    private ResponseEntity<MessageResponse> createByFile(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Uploaded file is empty");
-        }
-
+    @PostMapping(name = "/by-file",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> createByFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var userId = Utils.extractIdFromToken(token);
+        productService.processExcelFile(file, userId);
 
-        productService.processExcelFile(file, Utils.extractIdFromToken(token));
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Products upload successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping()
-    private ResponseEntity<ProductResponse> getProducts() {
+    public ResponseEntity<List<ProductResponse>> getProducts(){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
+        return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
     }
+
+
 }

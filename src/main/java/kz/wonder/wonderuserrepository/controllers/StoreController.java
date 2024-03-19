@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/store")
+@RequestMapping("/stores")
 public class StoreController {
     private final KaspiStoreService kaspiStoreService;
     private final UserService userService;

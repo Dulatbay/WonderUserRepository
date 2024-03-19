@@ -4,10 +4,12 @@ import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.entities.Product;
 import kz.wonder.wonderuserrepository.entities.ProductPrice;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductPriceRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductRepository;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -16,18 +18,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductPriceRepository productPriceRepository;
+    private final KaspiCityRepository kaspiCityRepository;
+
 
     @Override
     public void processExcelFile(MultipartFile file, String keycloakUserId) {
@@ -36,20 +40,21 @@ public class ProductServiceImpl implements ProductService {
             Iterator<Row> rowIterator = sheet.iterator();
             if (rowIterator.hasNext()) {
                 rowIterator.next();
+                rowIterator.next();
+                rowIterator.next();
             }
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-
-                String vendorCode = row.getCell(0).getStringCellValue();
+                Long vendorCode = (long) row.getCell(0).getNumericCellValue();
                 String name = row.getCell(1).getStringCellValue();
                 String link = row.getCell(2).getStringCellValue();
-                boolean enabled = row.getCell(3).getBooleanCellValue();
+                boolean enabled = Boolean.parseBoolean(row.getCell(3).getStringCellValue());
                 Double priceAlmaty = row.getCell(4).getNumericCellValue();
                 Double priceAstana = row.getCell(5).getNumericCellValue();
 
-                Product product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
-                        .orElse(new Product(vendorCode, name, link, enabled, new ArrayList<>(), keycloakUserId));
+                Product product = productRepository.findByVendorCodeAndKeycloakId(vendorCode.toString(), keycloakUserId)
+                        .orElse(new Product(vendorCode.toString(), name, link, enabled, new ArrayList<>(), keycloakUserId));
 
                 product.setName(name);
                 product.setLink(link);
@@ -57,20 +62,32 @@ public class ProductServiceImpl implements ProductService {
 
                 product = productRepository.save(product);
 
-                ProductPrice almatyPrice = productPriceRepository.findByProductAndKaspiCityName(product, "Almaty")
-                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
-                almatyPrice.setPrice(priceAlmaty);
-                almatyPrice.setUpdatedAt(LocalDateTime.now());
-                productPriceRepository.save(almatyPrice);
-
-                ProductPrice astanaPrice = productPriceRepository.findByProductAndKaspiCityName(product, "Astana")
+                var city = kaspiCityRepository.findByName("Алматы")
                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-                astanaPrice.setPrice(priceAstana);
-                astanaPrice.setUpdatedAt(LocalDateTime.now());
-                productPriceRepository.save(astanaPrice);
+                ProductPrice price = productPriceRepository.findByProductAndKaspiCityName(product, "Алматы")
+                        .orElse(new ProductPrice(city, product, priceAlmaty));
+
+                price.setKaspiCity(city);
+                price.setPrice(priceAlmaty);
+                price.setUpdatedAt(LocalDateTime.now());
+                productPriceRepository.save(price);
+
+                city = kaspiCityRepository.findByName("Алматы")
+                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+
+
+                price = productPriceRepository.findByProductAndKaspiCityName(product, "Астана")
+                        .orElse(new ProductPrice(city, product, priceAstana));
+
+                price.setKaspiCity(city);
+                price.setPrice(priceAstana);
+                price.setUpdatedAt(LocalDateTime.now());
+                productPriceRepository.save(price);
             }
-        } catch (IOException e) {
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException("File process failed");
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -97,4 +114,5 @@ public class ProductServiceImpl implements ProductService {
                         .build()).collect(Collectors.toList())
                 ;
     }
+
 }
