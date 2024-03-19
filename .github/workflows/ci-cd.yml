@@ -21,6 +21,7 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no grozergeorge80@34.125.159.241 << EOF
           cd WonderUserRepository
+          git stash push -m "Saving my local changes"
           git pull --rebase origin main
           cp ~/wonder/Dockerfile .
           cp ~/wonder/docker-compose.yml .
