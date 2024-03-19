@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
+import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
 import kz.wonder.wonderuserrepository.security.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KaspiStoreService;
@@ -75,12 +76,40 @@ public class StoreController {
         if (getAuthorities(token.getAuthorities())
                 .contains(KeycloakRole.SUPER_ADMIN.name())) {
             kaspiStoreService.changeStore(changeRequest, id);
-        }else{
+        } else {
             var userId = Utils.extractIdFromToken(token);
             kaspiStoreService.changeStore(changeRequest, id, userId);
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/add-box-type")
+    public ResponseEntity<Void> addBoxTypeToStore(@RequestParam("box-type-id") Long boxTypeId,
+                                                  @RequestParam("store-id") Long storeId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        if (getAuthorities(token.getAuthorities())
+                .contains(KeycloakRole.SUPER_ADMIN.name())) {
+            kaspiStoreService.addBoxTypeToStore(boxTypeId, storeId);
+        } else {
+            kaspiStoreService.addBoxTypeToStore(boxTypeId, storeId, Utils.extractIdFromToken(token));
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/remove-box-type")
+    public ResponseEntity<Void> removeBoxTypeFromStore(@RequestParam("box-type-id") Long boxTypeId,
+                                                       @RequestParam("store-id") Long storeId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name())) {
+            kaspiStoreService.removeBoxType(boxTypeId, storeId);
+        } else {
+            kaspiStoreService.removeBoxType(boxTypeId, storeId, Utils.extractIdFromToken(token));
+        }
+        return ResponseEntity.noContent().build();
+
     }
 
     @GetMapping()
@@ -95,6 +124,18 @@ public class StoreController {
         log.info("userId: {}", userId);
 
         var stores = kaspiStoreService.getAllByUser(userId);
+        return ResponseEntity.ok(stores);
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<List<StoreDetailResponse>> getAllDetailOwnStores() {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        if (getAuthorities(token.getAuthorities())
+                .contains(KeycloakRole.SUPER_ADMIN.name())) {
+            return ResponseEntity.ok(kaspiStoreService.getAllDetail());
+        }
+
+        var stores = kaspiStoreService.getAllDetailByUser(Utils.extractIdFromToken(token));
         return ResponseEntity.ok(stores);
     }
 

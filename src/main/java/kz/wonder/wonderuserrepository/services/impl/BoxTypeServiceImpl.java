@@ -4,10 +4,12 @@ import kz.wonder.wonderuserrepository.dto.request.BoxTypeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.BoxTypeResponse;
 import kz.wonder.wonderuserrepository.entities.BoxType;
 import kz.wonder.wonderuserrepository.entities.BoxTypeImages;
+import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
 import kz.wonder.wonderuserrepository.services.FileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -46,10 +48,22 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     public List<BoxTypeResponse> getAll() {
         return boxTypeRepository.findAll().stream().map(
                 i -> BoxTypeResponse.builder()
+                        .id(i.getId())
                         .name(i.getName())
                         .description(i.getDescription())
                         .imageUrls(i.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
                         .build()
         ).toList();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        var boxTypeToDelete = boxTypeRepository.findById(id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
+
+        boxTypeToDelete.getImages()
+                .forEach(i -> fileService.deleteByName(i.imageUrl));
+
+        boxTypeRepository.delete(boxTypeToDelete);
     }
 }

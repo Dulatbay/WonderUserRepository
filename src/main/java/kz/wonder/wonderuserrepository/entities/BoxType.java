@@ -20,4 +20,10 @@ public class BoxType extends AbstractEntity<Long> {
 
     @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL, mappedBy = "boxType")
     List<BoxTypeImages> images;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "boxType",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<KaspiStoreAvailableBoxTypes> availableBoxTypes;
 }

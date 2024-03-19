@@ -5,14 +5,17 @@ import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.dto.request.DayOfWeekWork;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
+import kz.wonder.wonderuserrepository.dto.response.AvailableWorkTime;
+import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
+import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableBoxTypes;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableTimes;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreAvailableTimesRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
-import kz.wonder.wonderuserrepository.repositories.UserRepository;
 import kz.wonder.wonderuserrepository.services.KaspiStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMATTER;
@@ -37,7 +41,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     private final KaspiStoreRepository kaspiStoreRepository;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
-    private final UserRepository userRepository;
+    private final BoxTypeRepository boxTypeRepository;
+
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -119,6 +124,29 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
                         .build()).collect(Collectors.toList());
     }
 
+    private List<StoreDetailResponse> mapToDetailResponse(List<KaspiStore> kaspiStores) {
+        return kaspiStores.stream().map(i ->
+                        StoreDetailResponse.builder()
+                                .id(i.getId())
+                                .kaspiId(i.getKaspiId())
+                                .city(i.getKaspiCity().getName())
+                                .street(i.getStreet())
+                                .address(i.getApartment())
+                                .availableWorkTimes(getAvailableTimesByStoreId(i.getAvailableTimes()))
+                                .availableBoxTypes(i.getAvailableBoxTypes().stream().map(
+                                        j -> StoreDetailResponse.AvailableBoxType.builder()
+                                                .id(j.getBoxType().getId())
+                                                .name(j.getBoxType().getName())
+                                                .description(j.getBoxType().getDescription())
+                                                .imageUrls(j.getBoxType().getImages().stream().map(k -> k.imageUrl).collect(Collectors.toList()))
+                                                .build()
+                                ).collect(Collectors.toList()))
+                                .enabled(i.isEnabled())
+                                .userId(i.getUser() == null ? -1 : i.getUser().getId())
+                                .build())
+                .collect(Collectors.toList());
+    }
+
     @Override
     public void deleteById(Long id, String keycloakUserId) {
         final var kaspiStore = kaspiStoreRepository.findByUserKeycloakIdAndId(keycloakUserId, id)
@@ -152,7 +180,90 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         kaspiStoreRepository.save(mapToEntity(changeRequest, storeToDelete));
     }
 
-    private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore){
+    @Override
+    public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
+        var kaspiStore = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi store doesn't exist"));
+
+        var boxType = boxTypeRepository.findById(boxTypeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box type doesn't exist"));
+
+        var availableBoxType = new KaspiStoreAvailableBoxTypes();
+
+        availableBoxType.setBoxType(boxType);
+        availableBoxType.setKaspiStore(kaspiStore);
+        availableBoxType.setEnabled(true);
+
+        kaspiStore.getAvailableBoxTypes().add(availableBoxType);
+
+        kaspiStoreRepository.save(kaspiStore);
+    }
+
+    @Override
+    public void addBoxTypeToStore(Long boxTypeId, Long storeId, String keycloakUserId) {
+        var kaspiStore = kaspiStoreRepository.findByUserKeycloakIdAndId(keycloakUserId, storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi store doesn't exist"));
+
+        var boxType = boxTypeRepository.findById(boxTypeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box type doesn't exist"));
+
+        var availableBoxType = new KaspiStoreAvailableBoxTypes();
+
+        availableBoxType.setBoxType(boxType);
+        availableBoxType.setKaspiStore(kaspiStore);
+        availableBoxType.setEnabled(true);
+
+        kaspiStore.getAvailableBoxTypes().add(availableBoxType);
+
+        kaspiStoreRepository.save(kaspiStore);
+    }
+
+    @Override
+    public List<StoreDetailResponse> getAllDetail() {
+        return mapToDetailResponse(kaspiStoreRepository.findAll());
+    }
+
+    @Override
+    public List<StoreDetailResponse> getAllDetailByUser(String keycloakId) {
+        return mapToDetailResponse(kaspiStoreRepository.findAllByUserKeycloakId(keycloakId));
+    }
+
+    @Override
+    public void removeBoxType(Long boxTypeId, Long storeId) {
+        var store = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+
+        var itemsToDelete = store.getAvailableBoxTypes()
+                .stream()
+                .filter(i -> i.getBoxType().getId().equals(boxTypeId))
+                .toList();
+
+        log.info("Items to delete size: {}", itemsToDelete.size());
+
+
+        if (itemsToDelete.isEmpty()) {
+            throw new IllegalArgumentException("Store doesn't contain box type with ID: " + boxTypeId);
+        }
+
+
+        store.getAvailableBoxTypes()
+                .removeAll(itemsToDelete);
+
+        kaspiStoreRepository.save(store);
+    }
+
+    @Override
+    public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
+        var store = kaspiStoreRepository.findByUserKeycloakIdAndId(keycloakId, storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+
+        store.getAvailableBoxTypes()
+                .removeIf(i -> Objects.equals(i.getId(), storeId));
+
+        kaspiStoreRepository.save(store);
+    }
+
+    private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
         kaspiStore.setStreet(changeRequest.getStreet());
         kaspiStore.setApartment(changeRequest.getApartment());
         kaspiStore.setKaspiId(changeRequest.getKaspiId());
@@ -167,12 +278,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         return kaspiStore;
     }
 
-    public List<StoreResponse.AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
+    public List<AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
 
-        final var awts = new ArrayList<StoreResponse.AvailableWorkTime>();
+        final var awts = new ArrayList<AvailableWorkTime>();
 
         availableTimes.forEach(i -> {
-            final var awt = StoreResponse.AvailableWorkTime.builder()
+            final var awt = AvailableWorkTime.builder()
                     .id(i.getId())
                     .openTime(i.getOpenTime().format(TIME_FORMATTER).toLowerCase())
                     .closeTime(i.getCloseTime().format(TIME_FORMATTER).toLowerCase())

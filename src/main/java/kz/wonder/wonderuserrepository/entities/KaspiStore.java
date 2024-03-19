@@ -47,4 +47,10 @@ public class KaspiStore extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private List<KaspiStoreAvailableTimes> availableTimes;
 
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "kaspiStore",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<KaspiStoreAvailableBoxTypes> availableBoxTypes;
+
 }

@@ -100,6 +100,22 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public void deleteByName(String filename) {
+        try {
+
+            Path filePath = rootLocation.resolve(filename);
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                log.info("File deleted successfully: {}", filename);
+            } else {
+                log.warn("File not found: {}", filename);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void deleteAll() {
         FileSystemUtils.deleteRecursively(rootLocation.toFile());
     }

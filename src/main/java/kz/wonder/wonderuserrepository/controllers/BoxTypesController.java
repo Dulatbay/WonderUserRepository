@@ -28,4 +28,11 @@ public class BoxTypesController {
     public ResponseEntity<List<BoxTypeResponse>> getAll() {
         return ResponseEntity.ok(boxTypeService.getAll());
     }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id){
+        boxTypeService.deleteById(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
 }

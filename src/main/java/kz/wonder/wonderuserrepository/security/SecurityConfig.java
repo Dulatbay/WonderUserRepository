@@ -60,7 +60,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) -> {
                     auth
                             .requestMatchers(HttpMethod.POST, "/box-types")
-                            .hasAuthority("SUPER_ADMIN");
+                            .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
+                    auth
+                            .requestMatchers(HttpMethod.DELETE, "/box-types")
+                            .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
+
                     auth.requestMatchers(WHITE_LIST_URL)
                             .permitAll();
 

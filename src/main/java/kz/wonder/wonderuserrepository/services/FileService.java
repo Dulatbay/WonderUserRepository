@@ -10,5 +10,7 @@ public interface FileService {
 
     void init();
 
+    void deleteByName(String url);
+
     void deleteAll();
 }
