@@ -2,6 +2,8 @@ package kz.wonder.wonderuserrepository.constants;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
@@ -16,6 +18,11 @@ public class Utils {
         return token.getToken().getClaim(USER_ID_CLAIM);
     }
 
+    public static String getStringFromExcelCell(Cell vendorCodeCell) {
+        return vendorCodeCell.getCellType() == CellType.NUMERIC ?
+                String.valueOf(vendorCodeCell.getNumericCellValue()) :
+                vendorCodeCell.getStringCellValue();
+    }
     public static List<String> getAuthorities(Collection<GrantedAuthority> authorities){
         return authorities
                 .stream()

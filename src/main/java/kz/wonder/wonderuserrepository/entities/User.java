@@ -38,5 +38,6 @@ public class User extends AbstractEntity<Long> {
             mappedBy = "user",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<Product> products;
+    private List<KaspiStore> stores;
+
 }

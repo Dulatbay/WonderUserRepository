@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Iterator;
 
+import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
+
 @Service
 @RequiredArgsConstructor
 public class SupplyServiceImpl implements SupplyService {
@@ -36,7 +38,7 @@ public class SupplyServiceImpl implements SupplyService {
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-                String vendorCode = getString(row.getCell(0));
+                String vendorCode = getStringFromExcelCell(row.getCell(0));
                 long quantity = (long) row.getCell(1).getNumericCellValue();
 
                 var product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, userId)
@@ -63,9 +65,5 @@ public class SupplyServiceImpl implements SupplyService {
         }
     }
 
-    private static String getString(Cell vendorCodeCell) {
-        return vendorCodeCell.getCellType() == CellType.NUMERIC ?
-                String.valueOf(vendorCodeCell.getNumericCellValue()) :
-                vendorCodeCell.getStringCellValue();
-    }
+
 }

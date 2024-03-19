@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,20 +48,27 @@ public class ProductServiceImpl implements ProductService {
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-                long vendorCode = (long) row.getCell(0).getNumericCellValue();
+                String vendorCode = getStringFromExcelCell(row.getCell(0));
+                if(vendorCode.isEmpty())
+                    continue;
+
                 String name = row.getCell(1).getStringCellValue();
                 String link = row.getCell(2).getStringCellValue();
                 boolean enabled = Boolean.parseBoolean(row.getCell(3).getStringCellValue());
                 Double priceAlmaty = row.getCell(4).getNumericCellValue();
                 Double priceAstana = row.getCell(5).getNumericCellValue();
 
-                Product product = productRepository.findByVendorCodeAndKeycloakId(Long.toString(vendorCode), keycloakUserId)
+                Product product = productRepository
+                        .findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
                         .orElse(new Product());
 
+                product.setVendorCode(vendorCode);
                 product.setName(name);
                 product.setLink(link);
                 product.setEnabled(enabled);
-
+                product.setKeycloakId(keycloakUserId);
+                product.setEnabled(true);
+                product.setDeleted(false);
                 product = productRepository.save(product);
 
                 var city = kaspiCityRepository.findByName("Алматы")
@@ -73,7 +82,7 @@ public class ProductServiceImpl implements ProductService {
                 price.setUpdatedAt(LocalDateTime.now());
                 productPriceRepository.save(price);
 
-                city = kaspiCityRepository.findByName("Алматы")
+                city = kaspiCityRepository.findByName("Астана")
                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
 
@@ -86,6 +95,7 @@ public class ProductServiceImpl implements ProductService {
                 productPriceRepository.save(price);
             }
         } catch (IllegalStateException e) {
+            log.error("IllegalStateException: ", e);
             throw new IllegalArgumentException("File process failed");
         } catch (Exception e) {
             throw new RuntimeException(e);

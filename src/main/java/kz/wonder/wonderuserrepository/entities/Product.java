@@ -32,9 +32,6 @@ public class Product extends AbstractEntity<Long> {
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
 
-    @Column(name = "quantity", nullable = false)
-    private Long quantity;
-
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductPrice> prices;
 
