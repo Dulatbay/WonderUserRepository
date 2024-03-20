@@ -15,21 +15,18 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
-  keycloak:
-    image: jboss/keycloak
-#    image: sleighzy/keycloak
-    container_name: wonder-keycloak
+  springapp:
+    container_name: wonder-springapp
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
-      DB_VENDOR: POSTGRES
-      DB_ADDR: postgres
-      DB_DATABASE: wonder
-      DB_USER: user_qit
-      DB_PASSWORD: 123
-      KEYCLOAK_USER: admin_qit
-      KEYCLOAK_PASSWORD: admin_password
+      DATABASE_DOMAIN: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: wonder
+      DATABASE_USERNAME: user_qit
+      DATABASE_PASSWORD: 123
     ports:
-      - "8484:8080"
+      - "8181:8181"
     depends_on:
       - postgres
-    links:
-      - "postgres:postgres"
