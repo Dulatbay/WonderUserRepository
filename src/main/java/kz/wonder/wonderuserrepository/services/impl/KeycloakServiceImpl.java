@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
@@ -123,7 +124,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 //        getUsersResource().get(userId).sendVerifyEmail();
     }
 
-    private Keycloak getKeycloak(String username, String password){
+    private Keycloak getKeycloak(String username, String password) {
         return KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
                 .realm(realm)
@@ -145,6 +146,8 @@ public class KeycloakServiceImpl implements KeycloakService {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .build();
+        } catch (NotAuthorizedException notAuthorizedException) {
+            throw new IllegalArgumentException("Bad credentials");
         } catch (Exception e) {
             log.error("Error occurred in getting tokens: ", e);
             throw e;
