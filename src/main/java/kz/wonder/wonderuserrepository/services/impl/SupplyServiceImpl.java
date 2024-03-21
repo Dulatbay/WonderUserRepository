@@ -10,6 +10,7 @@ import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -25,6 +26,7 @@ import java.util.List;
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class SupplyServiceImpl implements SupplyService {
 
@@ -67,6 +69,7 @@ public class SupplyServiceImpl implements SupplyService {
             }
             return response;
         } catch (IllegalStateException e) {
+            log.info("IllegalStateException :", e);
             throw new IllegalArgumentException("File process failed");
         } catch (Exception e) {
             throw new RuntimeException(e);

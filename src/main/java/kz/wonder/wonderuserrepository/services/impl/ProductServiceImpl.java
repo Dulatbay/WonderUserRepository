@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +37,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void processExcelFile(MultipartFile file, String keycloakUserId) {
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
+            if(workbook.getNumberOfSheets() == 0)
+                throw new IllegalArgumentException("File must have at least one page!");
+            Sheet sheet = workbook.getSheetAt(workbook.getNumberOfSheets() - 1);
             Iterator<Row> rowIterator = sheet.iterator();
             if (rowIterator.hasNext()) {
                 rowIterator.next();
@@ -49,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
                 String vendorCode = getStringFromExcelCell(row.getCell(0));
-                if(vendorCode.isEmpty())
+                if (vendorCode.isEmpty())
                     continue;
 
                 String name = row.getCell(1).getStringCellValue();
@@ -67,7 +68,6 @@ public class ProductServiceImpl implements ProductService {
                 product.setLink(link);
                 product.setEnabled(enabled);
                 product.setKeycloakId(keycloakUserId);
-                product.setEnabled(true);
                 product.setDeleted(false);
                 product = productRepository.save(product);
 
