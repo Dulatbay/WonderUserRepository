@@ -8,5 +8,9 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByVendorCodeAndKeycloakId(String vendorCode, String keycloakId);
+
     List<Product> findAllByKeycloakId(String keycloakId);
+
+    List<Product> findAllByIdInAndKeycloakId(List<Long> id, String keycloakId);
+
 }
