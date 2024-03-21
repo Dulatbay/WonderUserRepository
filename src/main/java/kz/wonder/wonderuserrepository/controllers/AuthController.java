@@ -45,10 +45,5 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid UserAuthRequest userAuthRequest) {
         return ResponseEntity.ok(keycloakService.getAuthResponse(userAuthRequest.email(), userAuthRequest.password()));
     }
-// уберешь потом ci cd хочу чекать
-    @PostMapping("/cicd")
-    public ResponseEntity<MessageResponse> cicd(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("CiCd check"));
-    }
 
 }

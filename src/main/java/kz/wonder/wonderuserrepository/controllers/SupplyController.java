@@ -22,7 +22,7 @@ public class SupplyController {
 
     private final SupplyService supplyService;
 
-    @PostMapping(name = "/process-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/process-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<SupplyProcessFileResponse>> processFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
