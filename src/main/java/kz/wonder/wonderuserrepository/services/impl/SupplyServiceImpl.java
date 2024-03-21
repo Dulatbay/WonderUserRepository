@@ -89,7 +89,7 @@ public class SupplyServiceImpl implements SupplyService {
         supply.setAuthor(user);
         supply.setKaspiStore(store);
         supply.setSupplyStates(SupplyStates.START);
-
+        supply.setSupplyBoxes(new ArrayList<>());
 
         createRequest.getSelectedBoxes()
                 .forEach(selectedBox -> {
@@ -98,6 +98,8 @@ public class SupplyServiceImpl implements SupplyService {
 
                     var supplyBox = new SupplyBox();
                     supplyBox.setBoxType(boxType);
+                    supplyBox.setSupplyBoxProducts(new ArrayList<>());
+                    supplyBox.setSupply(supply);
 
                     selectedBox.getProductIds()
                             .forEach(productId -> {

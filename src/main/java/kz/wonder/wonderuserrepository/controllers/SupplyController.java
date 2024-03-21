@@ -20,22 +20,21 @@ import java.util.List;
 @RequestMapping("/supplies")
 public class SupplyController {
 
-    private final SupplyService supplyService;
+	private final SupplyService supplyService;
 
-    @PostMapping(value = "/process-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<SupplyProcessFileResponse>> processFile(@RequestPart("file") MultipartFile file) {
-        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        var userId = Utils.extractIdFromToken(token);
-        var result = supplyService.processFile(file, userId);
-        return ResponseEntity.ok(result);
-    }
+	@PostMapping(value = "/process-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<List<SupplyProcessFileResponse>> processFile(@RequestPart("file") MultipartFile file) {
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		var userId = Utils.extractIdFromToken(token);
+		var result = supplyService.processFile(file, userId);
+		return ResponseEntity.ok(result);
+	}
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> createSupply(@RequestBody SupplyCreateRequest createRequest){
-        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        var userId = Utils.extractIdFromToken(token);
-        supplyService.createSupply(createRequest, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
+	@PostMapping
+	public ResponseEntity<Void> createSupply(@RequestBody SupplyCreateRequest createRequest) {
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		var userId = Utils.extractIdFromToken(token);
+		supplyService.createSupply(createRequest, userId);
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
 }

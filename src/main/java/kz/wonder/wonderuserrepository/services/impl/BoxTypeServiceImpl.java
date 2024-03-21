@@ -31,13 +31,15 @@ public class BoxTypeServiceImpl implements BoxTypeService {
         boxType.setName(boxTypeCreateRequest.getName());
         boxType.setDescription(boxTypeCreateRequest.getDescription());
 
-        boxTypeCreateRequest.getImages()
-                .forEach(i -> {
-                    var boxTypeImages = new BoxTypeImages();
-                    boxTypeImages.setBoxType(boxType);
-                    boxTypeImages.setImageUrl(fileService.save(i));
-                    images.add(boxTypeImages);
-                });
+
+        if (boxTypeCreateRequest.getImages() != null)
+            boxTypeCreateRequest.getImages()
+                    .forEach(i -> {
+                        var boxTypeImages = new BoxTypeImages();
+                        boxTypeImages.setBoxType(boxType);
+                        boxTypeImages.setImageUrl(fileService.save(i));
+                        images.add(boxTypeImages);
+                    });
 
         boxType.setImages(images);
 
