@@ -7,10 +7,7 @@ import kz.wonder.wonderuserrepository.entities.SupplyBox;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProducts;
 import kz.wonder.wonderuserrepository.entities.SupplyStates;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
-import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
-import kz.wonder.wonderuserrepository.repositories.ProductRepository;
-import kz.wonder.wonderuserrepository.repositories.UserRepository;
+import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
@@ -35,6 +32,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final KaspiStoreRepository kaspiStoreRepository;
     private final BoxTypeRepository boxTypeRepository;
     private final UserRepository userRepository;
+    private final SupplyRepository supplyRepository;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -95,13 +93,23 @@ public class SupplyServiceImpl implements SupplyService {
                     var boxType = boxTypeRepository.findById(selectedBox.getSelectedBoxId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box doesn't exist"));
 
+                    var supplyBox = new SupplyBox();
+                    supplyBox.setBoxType(boxType);
 
+                    selectedBox.getProductIds()
+                            .forEach(productId -> {
+                                var product = productRepository.findById(productId)
+                                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                                SupplyBoxProducts boxProducts = new SupplyBoxProducts();
+                                boxProducts.setSupplyBox(supplyBox);
+                                boxProducts.setProduct(product);
+                                supplyBox.getSupplyBoxProducts().add(boxProducts);
+                            });
 
-
+                    supply.getSupplyBoxes().add(supplyBox);
                 });
 
-
+        supplyRepository.save(supply);
     }
-
 
 }

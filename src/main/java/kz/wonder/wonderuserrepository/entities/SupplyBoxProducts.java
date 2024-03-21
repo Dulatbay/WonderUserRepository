@@ -18,7 +18,4 @@ public class SupplyBoxProducts extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", columnDefinition = "integer")
     private Product product;
-
-    @Column(name = "quantity", nullable = false)
-    private Long quantity;
 }

@@ -14,12 +14,6 @@ public class SupplyCreateRequest {
     @Data
     public static class SelectedBox {
         private Long selectedBoxId;
-        private List<SelectedProduct> selectedProducts;
-    }
-
-    @Data
-    public static class SelectedProduct {
-        private Long id;
-        private Long quantity;
+        private List<Long> productIds;
     }
 }
