@@ -19,12 +19,9 @@ jobs:
 
     - name: Deploy to VM
       run: |
-        ssh -o StrictHostKeyChecking=no grozergeorge80@34.125.159.241 << EOF
+        ssh -o StrictHostKeyChecking=no grozergeorge80@34.116.183.163 << EOF
           cd WonderUserRepository
           git stash push -m "Saving my local changes"
           git pull --rebase origin main
-          cp ~/wonder/Dockerfile .
-          cp ~/wonder/docker-compose.yml .
-          cp ~/wonder/application.yml ~/WonderUserRepository/src/main/resources/
-          docker compose up --build -d springapp
+          docker compose up --build -d
         EOF
