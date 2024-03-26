@@ -66,7 +66,7 @@ public class StoreController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> changeStore(@RequestBody
                                             @Valid
                                             KaspiStoreChangeRequest changeRequest,
