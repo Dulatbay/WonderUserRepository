@@ -38,9 +38,10 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.5.3.Final")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
 
-    implementation("io.micrometer:micrometer-tracing-bridge-brave")
 
     implementation("org.springframework.boot:spring-boot-starter-validation")
+
+
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
@@ -58,6 +59,9 @@ dependencies {
 
     implementation("org.apache.poi:poi:5.2.0")
     implementation("org.apache.poi:poi-ooxml:5.2.0")
+
+
+    implementation("net.sourceforge.barbecue:barbecue:1.5-beta1")
 
 }
 

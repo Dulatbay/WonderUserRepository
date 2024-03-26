@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
@@ -24,13 +25,14 @@ public class Supply extends AbstractEntity<Long> {
 
     @Column(name = "supply_states", nullable = false)
     @Enumerated(value = EnumType.STRING)
-    private SupplyStates supplyStates;
+    private SupplyStates supplyState;
+
+    @Column(name = "accepted_time")
+    private LocalDateTime acceptedTime;
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supply",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBox> supplyBoxes;
-
-
 }

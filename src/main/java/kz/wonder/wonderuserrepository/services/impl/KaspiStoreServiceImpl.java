@@ -51,6 +51,11 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
         log.info("kaspiStoreCreateRequest.getUser().getKeycloakId(): {}", kaspiStoreCreateRequest.getUser().getKeycloakId());
 
+
+        var oo = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId());
+
+	    oo.ifPresent(kaspiCity -> System.out.println(kaspiCity.getName()));
+
         final var selectedCity = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId())
                 .orElseThrow(
                         () -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist")

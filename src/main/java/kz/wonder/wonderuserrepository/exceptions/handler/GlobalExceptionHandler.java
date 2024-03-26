@@ -27,6 +27,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDto> argumentExceptionHandler(IllegalArgumentException e) {
         log.error("Argument exception: ", e);
