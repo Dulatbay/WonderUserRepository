@@ -68,26 +68,27 @@ public class UserServiceImpl implements UserService {
 
 		var usersFromKeycloak = keycloakService.getAllUsers();
 
-		log.info("usersFromKeycloak(with admin account): {}, usersFromDB: {}", usersFromKeycloak.size(), usersFromDB.size());
+		log.info("usersFromKeycloak(with admin account and testers): {}, usersFromDB: {}", usersFromKeycloak.size(), usersFromDB.size());
 
 		AtomicReference<String> testerUserId = new AtomicReference<>("");
 
 
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
-				.filter(user -> usersFromDB
-						.stream()
-						.noneMatch(user1 -> user1.getKeycloakId()
-								.equals(user.getId()))
-						&&
-						!user.getUsername().equals("admin_qit")
-				)
 				.filter(user -> {
-					if (user.getUsername().equals("tester@mail.ru")) {
-						testerUserId.set(user.getId());
-						return false;
-					}
-					return true;
-				})
+							log.info("email: {}", user.getEmail());
+							if (user.getEmail().equals("tester@mail.ru")) {
+								testerUserId.set(user.getId());
+								return false;
+							}
+
+							return usersFromDB
+									.stream()
+									.noneMatch(user1 -> user1.getKeycloakId()
+											.equals(user.getId()))
+									&&
+									!user.getUsername().equals("admin_qit");
+						}
+				)
 				.toList();
 
 		for (var user : usersToDeleteFromKeycloak) {
@@ -112,19 +113,22 @@ public class UserServiceImpl implements UserService {
 
 		log.info("Test user exists in db: {}, test user exists in keycloak: {}", testUserExists.get(), !testerUserId.get().isEmpty());
 
-		if(!testUserExists.get()){
-			if(testerUserId.get().isEmpty()){
-				var keycloakTester = keycloakService.createTester(SellerRegistrationRequest
-						.builder()
-						.email("tester@mail.ru")
-						.password("test_tester")
-						.firstName("test")
-						.lastName("test")
-						.phoneNumber("test")
-						.sellerId("test")
-						.sellerName("test")
-						.tokenKaspi("token")
-						.build());
+		log.info("Tester id: {}", testerUserId.get());
+
+		if (!testUserExists.get()) {
+			if (testerUserId.get().isEmpty()) {
+				var keycloakTester = keycloakService.createTester(
+						SellerRegistrationRequest
+								.builder()
+								.email("tester@mail.ru")
+								.password("test_tester")
+								.firstName("test")
+								.lastName("test")
+								.phoneNumber("test")
+								.sellerId("test")
+								.sellerName("test")
+								.tokenKaspi("token")
+								.build());
 
 				testerUserId.set(keycloakTester.getId());
 			}

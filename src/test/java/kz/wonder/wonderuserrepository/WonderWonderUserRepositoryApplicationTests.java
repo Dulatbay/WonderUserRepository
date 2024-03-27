@@ -38,10 +38,6 @@ class WonderWonderUserRepositoryApplicationTests {
 	private static final String AUTH_LOGIN = "/auth/login";
 	private static final String BOX_TYPES = "/box-types";
 
-	public WonderWonderUserRepositoryApplicationTests() {
-		System.out.println("constructor");
-	}
-
 	private SellerRegistrationRequest getRandomUser() {
 		return SellerRegistrationRequest
 				.builder()
@@ -151,7 +147,4 @@ class WonderWonderUserRepositoryApplicationTests {
 
 		assertEquals(initialSize - 1, finalSize, "One box should be deleted from the system.");
 	}
-
-
-
 }

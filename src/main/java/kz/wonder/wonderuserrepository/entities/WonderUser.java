@@ -39,5 +39,4 @@ public class WonderUser extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<KaspiStore> stores;
-
 }

@@ -31,7 +31,8 @@ public class ControllerLoggingAspect {
 
 	private String getCurrentRequestUrl() {
 		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-		assert requestAttributes != null;
+		if (requestAttributes == null)
+			return "start from method";
 		HttpServletRequest request = requestAttributes.getRequest();
 		return request.getRequestURI();
 	}
@@ -39,7 +40,7 @@ public class ControllerLoggingAspect {
 	private String getCurrentRequestToken() {
 		var tokenAuth = SecurityContextHolder.getContext().getAuthentication();
 
-		if (!tokenAuth.getAuthorities().isEmpty())
+		if (tokenAuth == null || !tokenAuth.getAuthorities().isEmpty())
 			return "Anonymous";
 		var jwt = (JwtAuthenticationToken) tokenAuth;
 		return jwt.getName();

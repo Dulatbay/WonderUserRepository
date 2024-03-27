@@ -1,0 +1,47 @@
+application:
+  title: Wonder
+  version: 1.0.0
+  keycloak-url: ${KEYCLOAK_URL:http://34.118.81.46/keycloak}
+  realm: wonder
+  client-id: wonder
+  username: admin_qit
+  password: admin_password
+  sync-users: true
+#  keycloak-url: ${KEYCLOAK_URL:http://192.168.0.101:8484/auth}
+#  keycloak-url: ${KEYCLOAK_URL:http://172.20.10.11:8484/auth}
+spring:
+  datasource:
+    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
+    username: ${DATABASE_USERNAME:user_qit}
+    password: ${DATABASE_PASSWORD:123}
+    driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+#          issuer-uri: ${OAUTH2_ISSUER:http://localhost:8484/auth/realms/miniland}
+          issuer-uri: ${OAUTH2_ISSUER:${application.keycloak-url}/realms/${application.realm}}
+          jwk-set-uri: ${OAUTH2_JWK:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs}
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 1000MB
+server:
+  servlet:
+    context-path: '/api/'
+  error:
+    include-message: always
+  port: 8181
+  address: 0.0.0.0
+
