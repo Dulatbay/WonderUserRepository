@@ -57,7 +57,7 @@ public class SupplyServiceImpl implements SupplyService {
 				long quantity = (long) row.getCell(1).getNumericCellValue();
 
 				var product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, userId)
-						.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(),
+						.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
 								String.format("Product by id %s doesn't exist: ", vendorCode)));
 
 				response.add(
@@ -82,10 +82,10 @@ public class SupplyServiceImpl implements SupplyService {
 	@Override
 	public void createSupply(SupplyCreateRequest createRequest, String userId) {
 		final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
 
 		final var user = userRepository.findByKeycloakId(userId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
 
 		Supply supply = new Supply();
@@ -97,7 +97,7 @@ public class SupplyServiceImpl implements SupplyService {
 		createRequest.getSelectedBoxes()
 				.forEach(selectedBox -> {
 					final var boxType = boxTypeRepository.findById(selectedBox.getSelectedBoxId())
-							.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box doesn't exist"));
+							.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box doesn't exist"));
 
 					var supplyBox = new SupplyBox();
 					supplyBox.setBoxType(boxType);
@@ -107,7 +107,7 @@ public class SupplyServiceImpl implements SupplyService {
 					selectedBox.getProductIds()
 							.forEach(productId -> {
 								var product = productRepository.findById(productId)
-										.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+										.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 								SupplyBoxProducts boxProducts = new SupplyBoxProducts();
 								boxProducts.setSupplyBox(supplyBox);
 								boxProducts.setProduct(product);

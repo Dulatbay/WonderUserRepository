@@ -22,75 +22,75 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final KaspiTokenRepository kaspiTokenRepository;
-    private final UserRepository userRepository;
-    private final KeycloakService keycloakService;
-    private final KaspiApi kaspiApi;
+	private final KaspiTokenRepository kaspiTokenRepository;
+	private final UserRepository userRepository;
+	private final KeycloakService keycloakService;
+	private final KaspiApi kaspiApi;
 
-    @Override
-    public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
-        if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
-            throw new IllegalArgumentException("Token is invalid");
-        if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
-            throw new IllegalArgumentException("Phone number must be unique");
-        if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
-            throw new IllegalArgumentException("Seller id must be unique");
+	@Override
+	public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
+		if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
+			throw new IllegalArgumentException("Token is invalid");
+		if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
+			throw new IllegalArgumentException("Phone number must be unique");
+		if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
+			throw new IllegalArgumentException("Seller id must be unique");
 
-        WonderUser wonderUser = new WonderUser();
-        wonderUser.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
-        wonderUser.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
+		WonderUser wonderUser = new WonderUser();
+		wonderUser.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
+		wonderUser.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
 
-        KaspiToken kaspiToken = new KaspiToken();
-        kaspiToken.setEnabled(true);
-        kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
-        kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
-        kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
-        kaspiToken.setWonderUser(wonderUser);
-        userRepository.save(wonderUser);
-        // todo: возвращает 401 если token is null
-        kaspiTokenRepository.save(kaspiToken);
-    }
+		KaspiToken kaspiToken = new KaspiToken();
+		kaspiToken.setEnabled(true);
+		kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
+		kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
+		kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
+		kaspiToken.setWonderUser(wonderUser);
+		userRepository.save(wonderUser);
+		// todo: возвращает 401 если token is null
+		kaspiTokenRepository.save(kaspiToken);
+	}
 
-    @Override
-    public WonderUser getUserByKeycloakId(String keycloakId) {
-        return userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
+	@Override
+	public WonderUser getUserByKeycloakId(String keycloakId) {
+		return userRepository.findByKeycloakId(keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
-    }
-
-
-    @Override
-    @Transactional
-    public void syncUsersBetweenDBAndKeycloak() {
-        var usersFromDB = userRepository.findAll();
-
-        var usersFromKeycloak = keycloakService.getAllUsers();
-
-        var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
-                .filter(user -> usersFromDB
-                        .stream()
-                        .noneMatch(user1 -> user1.getKeycloakId()
-                                .equals(user.getId()))
-                        &&
-                        !user.getUsername().equals("admin_qit")
-                )
-                .toList();
-
-        for (var user : usersToDeleteFromKeycloak) {
-            keycloakService.deleteUserById(user.getId());
-        }
-
-        List<WonderUser> usersToDeleteFromDB = usersFromDB.stream()
-                .filter(user -> usersFromKeycloak
-                        .stream()
-                        .noneMatch(userRepresentation -> userRepresentation.getId().equals(user.getKeycloakId())))
-                .toList();
-
-        userRepository.deleteAll(usersToDeleteFromDB);
-    }
+	}
 
 
-    private boolean isTokenValid(String token) {
+	@Override
+	@Transactional
+	public void syncUsersBetweenDBAndKeycloak() {
+		var usersFromDB = userRepository.findAll();
+
+		var usersFromKeycloak = keycloakService.getAllUsers();
+
+		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
+				.filter(user -> usersFromDB
+						.stream()
+						.noneMatch(user1 -> user1.getKeycloakId()
+								.equals(user.getId()))
+						&&
+						!user.getUsername().equals("admin_qit")
+				)
+				.toList();
+
+		for (var user : usersToDeleteFromKeycloak) {
+			keycloakService.deleteUserById(user.getId());
+		}
+
+		List<WonderUser> usersToDeleteFromDB = usersFromDB.stream()
+				.filter(user -> usersFromKeycloak
+						.stream()
+						.noneMatch(userRepresentation -> userRepresentation.getId().equals(user.getKeycloakId())))
+				.toList();
+
+		userRepository.deleteAll(usersToDeleteFromDB);
+	}
+
+
+	private boolean isTokenValid(String token) {
 //        try {
 //            kaspiApi.getDataCitiesWithToken(token);
 //            return true;
@@ -98,6 +98,6 @@ public class UserServiceImpl implements UserService {
 //            log.info("Exception: ", e);
 //            return false;
 //        }
-        return true;
-    }
+		return true;
+	}
 }

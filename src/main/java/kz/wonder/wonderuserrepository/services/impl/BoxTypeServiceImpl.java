@@ -21,51 +21,51 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BoxTypeServiceImpl implements BoxTypeService {
 
-    private final BoxTypeRepository boxTypeRepository;
-    private final FileService fileService;
+	private final BoxTypeRepository boxTypeRepository;
+	private final FileService fileService;
 
-    @Override
-    public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
-        var boxType = new BoxType();
-        var images = new ArrayList<BoxTypeImages>();
-        boxType.setName(boxTypeCreateRequest.getName());
-        boxType.setDescription(boxTypeCreateRequest.getDescription());
+	@Override
+	public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
+		var boxType = new BoxType();
+		var images = new ArrayList<BoxTypeImages>();
+		boxType.setName(boxTypeCreateRequest.getName());
+		boxType.setDescription(boxTypeCreateRequest.getDescription());
 
 
-        if (boxTypeCreateRequest.getImages() != null)
-            boxTypeCreateRequest.getImages()
-                    .forEach(i -> {
-                        var boxTypeImages = new BoxTypeImages();
-                        boxTypeImages.setBoxType(boxType);
-                        boxTypeImages.setImageUrl(fileService.save(i));
-                        images.add(boxTypeImages);
-                    });
+		if (boxTypeCreateRequest.getImages() != null)
+			boxTypeCreateRequest.getImages()
+					.forEach(i -> {
+						var boxTypeImages = new BoxTypeImages();
+						boxTypeImages.setBoxType(boxType);
+						boxTypeImages.setImageUrl(fileService.save(i));
+						images.add(boxTypeImages);
+					});
 
-        boxType.setImages(images);
+		boxType.setImages(images);
 
-        boxTypeRepository.save(boxType);
-    }
+		boxTypeRepository.save(boxType);
+	}
 
-    @Override
-    public List<BoxTypeResponse> getAll() {
-        return boxTypeRepository.findAll().stream().map(
-                i -> BoxTypeResponse.builder()
-                        .id(i.getId())
-                        .name(i.getName())
-                        .description(i.getDescription())
-                        .imageUrls(i.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
-                        .build()
-        ).toList();
-    }
+	@Override
+	public List<BoxTypeResponse> getAll() {
+		return boxTypeRepository.findAll().stream().map(
+				i -> BoxTypeResponse.builder()
+						.id(i.getId())
+						.name(i.getName())
+						.description(i.getDescription())
+						.imageUrls(i.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
+						.build()
+		).toList();
+	}
 
-    @Override
-    public void deleteById(Long id) {
-        var boxTypeToDelete = boxTypeRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
+	@Override
+	public void deleteById(Long id) {
+		var boxTypeToDelete = boxTypeRepository.findById(id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
 
-        boxTypeToDelete.getImages()
-                .forEach(i -> fileService.deleteByName(i.imageUrl));
+		boxTypeToDelete.getImages()
+				.forEach(i -> fileService.deleteByName(i.imageUrl));
 
-        boxTypeRepository.delete(boxTypeToDelete);
-    }
+		boxTypeRepository.delete(boxTypeToDelete);
+	}
 }
