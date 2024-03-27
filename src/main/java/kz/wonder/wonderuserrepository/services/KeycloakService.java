@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface KeycloakService {
     UserRepresentation createUser(SellerRegistrationRequest sellerRegistrationRequest);
+    UserRepresentation createTester(SellerRegistrationRequest sellerRegistrationRequest);
     AuthResponse getAuthResponse(String email, String password);
 
     void deleteUserById(String userId);

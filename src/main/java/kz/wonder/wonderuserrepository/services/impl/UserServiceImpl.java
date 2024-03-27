@@ -72,6 +72,7 @@ public class UserServiceImpl implements UserService {
 
 		AtomicReference<String> testerUserId = new AtomicReference<>("");
 
+
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
 				.filter(user -> usersFromDB
 						.stream()
@@ -109,9 +110,25 @@ public class UserServiceImpl implements UserService {
 				})
 				.toList();
 
-		log.info("Test user exists: {}", testUserExists.get());
+		log.info("Test user exists in db: {}, test user exists in keycloak: {}", testUserExists.get(), !testerUserId.get().isEmpty());
 
 		if(!testUserExists.get()){
+			if(testerUserId.get().isEmpty()){
+				var keycloakTester = keycloakService.createTester(SellerRegistrationRequest
+						.builder()
+						.email("tester@mail.ru")
+						.password("test_tester")
+						.firstName("test")
+						.lastName("test")
+						.phoneNumber("test")
+						.sellerId("test")
+						.sellerName("test")
+						.tokenKaspi("token")
+						.build());
+
+				testerUserId.set(keycloakTester.getId());
+			}
+
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
