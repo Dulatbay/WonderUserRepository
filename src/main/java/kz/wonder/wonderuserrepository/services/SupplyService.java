@@ -1,9 +1,7 @@
 package kz.wonder.wonderuserrepository.services;
 
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
-import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyProcessFileResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
+import kz.wonder.wonderuserrepository.dto.response.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -17,4 +15,8 @@ public interface SupplyService {
 	List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username);
 
 	List<SupplyProductResponse> getSuppliesDetail(Long id);
+
+	List<SupplySellerResponse> getSuppliesOfSeller(String id, LocalDate startDate, LocalDate endDate);
+
+	List<SupplyReportResponse> getSupplyReport(Long supplyId, String keycloakId);
 }

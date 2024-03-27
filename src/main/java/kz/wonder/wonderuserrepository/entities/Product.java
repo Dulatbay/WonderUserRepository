@@ -43,16 +43,4 @@ public class Product extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBoxProducts> supplyBoxes;
-
-    @OneToMany(fetch = FetchType.LAZY,
-            mappedBy = "product",
-            orphanRemoval = true,
-            cascade = CascadeType.ALL)
-    private List<StoreProduct> storeProducts;
-
-    @OneToMany(fetch = FetchType.LAZY,
-            mappedBy = "product",
-            orphanRemoval = true,
-            cascade = CascadeType.ALL)
-    private List<ProductQuantity> productQuantities;
 }

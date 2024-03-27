@@ -2,9 +2,7 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
-import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyProcessFileResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
+import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
@@ -60,4 +58,23 @@ public class SupplyController {
 		List<SupplyProductResponse> result = supplyService.getSuppliesDetail(id);
 		return ResponseEntity.ok(result);
 	}
+
+	@GetMapping("/seller")
+	public ResponseEntity<List<SupplySellerResponse>> getSuppliesSeller(@RequestParam("start-date") LocalDate startDate,
+	                                                                    @RequestParam("end-date") LocalDate endDate){
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		var id = Utils.extractIdFromToken(token);
+		List<SupplySellerResponse> response = supplyService.getSuppliesOfSeller(id, startDate, endDate);
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/seller/{supplyId}")
+	public ResponseEntity<List<SupplyReportResponse>> getSupplyReportSeller(@PathVariable Long supplyId){
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		var keycloakId = Utils.extractIdFromToken(token);
+		List<SupplyReportResponse> response = supplyService.getSupplyReport(supplyId, keycloakId);
+		return ResponseEntity.ok(response);
+	}
+
+
 }

@@ -1,13 +1,8 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
-import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyProcessFileResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
-import kz.wonder.wonderuserrepository.entities.Supply;
-import kz.wonder.wonderuserrepository.entities.SupplyBox;
-import kz.wonder.wonderuserrepository.entities.SupplyBoxProducts;
-import kz.wonder.wonderuserrepository.entities.SupplyStates;
+import kz.wonder.wonderuserrepository.dto.response.*;
+import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.SupplyService;
@@ -22,9 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
 
@@ -91,7 +85,7 @@ public class SupplyServiceImpl implements SupplyService {
 		Supply supply = new Supply();
 		supply.setAuthor(user);
 		supply.setKaspiStore(store);
-		supply.setSupplyState(SupplyStates.START);
+		supply.setSupplyState(SupplyState.START);
 		supply.setSupplyBoxes(new ArrayList<>());
 
 		createRequest.getSelectedBoxes()
@@ -111,6 +105,7 @@ public class SupplyServiceImpl implements SupplyService {
 								SupplyBoxProducts boxProducts = new SupplyBoxProducts();
 								boxProducts.setSupplyBox(supplyBox);
 								boxProducts.setProduct(product);
+								boxProducts.setState(ProductStateInStore.PENDING);
 								supplyBox.getSupplyBoxProducts().add(boxProducts);
 							});
 
@@ -126,7 +121,7 @@ public class SupplyServiceImpl implements SupplyService {
 		return supplies.stream().map(supply -> {
 			SupplyAdminResponse supplyAdminResponse = new SupplyAdminResponse();
 			supplyAdminResponse.setId(supply.getId());
-			supplyAdminResponse.setSupplyStates(supply.getSupplyState());
+			supplyAdminResponse.setSupplyState(supply.getSupplyState());
 			supplyAdminResponse.setSupplyAcceptTime(supply.getAcceptedTime());
 			supplyAdminResponse.setSupplyCreatedTime(supply.getCreatedAt());
 			supplyAdminResponse.setSeller(new SupplyAdminResponse.Seller(userId, fullName));
@@ -161,4 +156,74 @@ public class SupplyServiceImpl implements SupplyService {
 
 		return supplyProductsRes;
 	}
+
+	@Override
+	public List<SupplySellerResponse> getSuppliesOfSeller(String keycloakId, LocalDate startDate, LocalDate endDate) {
+		var supplies = supplyRepository.findAllByCreatedAtBetweenAndAuthorKeycloakId(
+				startDate.atStartOfDay(),
+				endDate.atStartOfDay(),
+				keycloakId);
+		return supplies
+				.stream()
+				.map(supply ->
+						SupplySellerResponse.builder()
+								.supplyCreatedTime(supply.getCreatedAt())
+								.supplyAcceptTime(supply.getAcceptedTime())
+								.supplyState(supply.getSupplyState())
+								.id(supply.getId())
+								.build()
+				).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<SupplyReportResponse> getSupplyReport(Long supplyId, String keycloakId) {
+		var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
+						HttpStatus.NOT_FOUND.getReasonPhrase(),
+						"Supply doesn't exist"
+				));
+
+		Map<Long, SupplyReportResponse> supplyReportResponseMap = new HashMap<>();
+		processSupplyBoxes(supply, supplyReportResponseMap);
+
+		return new ArrayList<>(supplyReportResponseMap.values());
+	}
+
+	private void processSupplyBoxes(Supply supply, Map<Long, SupplyReportResponse> reportMap) {
+		supply.getSupplyBoxes().forEach(supplyBox -> {
+			var supplyBoxProducts = supplyBox.getSupplyBoxProducts();
+			supplyBoxProducts.forEach(product -> processSupplyBoxProduct(product, reportMap));
+		});
+	}
+
+	private void processSupplyBoxProduct(SupplyBoxProducts supplyBoxProduct, Map<Long, SupplyReportResponse> reportMap) {
+		var product = supplyBoxProduct.getProduct();
+		var productId = product.getId();
+
+		var report = reportMap.computeIfAbsent(productId, id -> SupplyReportResponse.builder()
+				.productName(product.getName())
+				.productArticle(supplyBoxProduct.getArticle())
+				.countOfProductDeclined(0L)
+				.countOfProductAccepted(0L)
+				.countOfProductPending(0L)
+				.build());
+
+		updateReportCounts(supplyBoxProduct, report);
+	}
+
+	private void updateReportCounts(SupplyBoxProducts supplyBoxProduct, SupplyReportResponse report) {
+		switch (supplyBoxProduct.getState()) {
+			case ACCEPTED:
+				report.setCountOfProductAccepted(report.getCountOfProductAccepted() + 1);
+				break;
+			case DECLINED:
+				report.setCountOfProductDeclined(report.getCountOfProductDeclined() + 1);
+				break;
+			case PENDING:
+				report.setCountOfProductPending(report.getCountOfProductPending() + 1);
+				break;
+			default:
+		}
+	}
+
 }

@@ -24,6 +24,10 @@ public class SupplyBoxProducts extends AbstractEntity<Long> {
     @Column(name = "article", nullable = false, unique = true)
     private UUID article;
 
+    @Column(name = "product_state", nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private ProductStateInStore state;
+
     @Override
     protected void onCreate() {
         super.onCreate();
