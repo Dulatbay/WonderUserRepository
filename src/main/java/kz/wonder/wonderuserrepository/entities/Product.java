@@ -48,5 +48,11 @@ public class Product extends AbstractEntity<Long> {
             mappedBy = "product",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
+    private List<StoreProduct> storeProducts;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "product",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
     private List<ProductQuantity> productQuantities;
 }

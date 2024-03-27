@@ -85,7 +85,7 @@ public class SupplyServiceImpl implements SupplyService {
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
 
 		final var user = userRepository.findByKeycloakId(userId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "User doesn't exist"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
 
 		Supply supply = new Supply();
@@ -130,13 +130,35 @@ public class SupplyServiceImpl implements SupplyService {
 			supplyAdminResponse.setSupplyAcceptTime(supply.getAcceptedTime());
 			supplyAdminResponse.setSupplyCreatedTime(supply.getCreatedAt());
 			supplyAdminResponse.setSeller(new SupplyAdminResponse.Seller(userId, fullName));
-            return supplyAdminResponse;
-        }).toList();
+			return supplyAdminResponse;
+		}).toList();
 	}
 
 	@Override
 	public List<SupplyProductResponse> getSuppliesDetail(Long id) {
-		var spr = new ArrayList<SupplyProductResponse>();
+		var supply = supplyRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Supply doesn't exist"));
 
+		var supplyProductsRes = new ArrayList<SupplyProductResponse>();
+
+
+		supply.getSupplyBoxes()
+				.forEach(supplyBox ->
+						supplyBox
+								.getSupplyBoxProducts()
+								.forEach(supplyBoxProducts -> {
+									var product = supplyBoxProducts.getProduct();
+									SupplyProductResponse supplyProductResponse = new SupplyProductResponse();
+									supplyProductResponse.setName(product.getName());
+									supplyProductResponse.setArticle(supplyBoxProducts.getArticle().toString());
+									supplyProductResponse.setVendorCode(product.getVendorCode());
+									supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode().toString());
+									supplyProductResponse.setStoreName(supply.getKaspiStore().getName());
+									supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
+									supplyProductsRes.add(supplyProductResponse);
+								})
+				);
+
+		return supplyProductsRes;
 	}
 }

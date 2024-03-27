@@ -17,7 +17,7 @@ public class Supply extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", columnDefinition = "integer")
-    private User author;
+    private WonderUser author;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", columnDefinition = "integer")

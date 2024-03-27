@@ -47,6 +47,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
     implementation(kotlin("stdlib-jdk8"))
+    implementation("com.h2database:h2:2.2.220")
 
     implementation("org.keycloak:keycloak-admin-client:21.0.1")
 
@@ -63,6 +64,13 @@ dependencies {
 
     implementation("net.sourceforge.barbecue:barbecue:1.5-beta1")
 
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher") {
+        because("Only needed to run tests in a version of IntelliJ IDEA that bundles older versions")
+    }
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+
 }
 
 dependencyManagement {
@@ -77,5 +85,6 @@ configure<DependencyManagementExtension> {
     }
 }
 tasks.withType<Test> {
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
     useJUnitPlatform()
 }

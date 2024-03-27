@@ -3,8 +3,6 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -26,5 +24,5 @@ public class TelegramAccount  extends AbstractEntity<Long>{
     private boolean enabled;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(columnDefinition = "integer", name = "user_id")
-    private User user;
+    private WonderUser wonderUser;
 }

@@ -4,5 +4,10 @@ import lombok.Data;
 
 @Data
 public class SupplyProductResponse {
-	private String
+	private String article;
+	private String name;
+	private String vendorCode;
+	private String boxBarCode;
+	private String boxTypeName;
+	private String storeName;
 }

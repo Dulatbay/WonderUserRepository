@@ -36,7 +36,7 @@ public class KaspiStore extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", columnDefinition = "integer")
-    private User user;
+    private WonderUser wonderUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")

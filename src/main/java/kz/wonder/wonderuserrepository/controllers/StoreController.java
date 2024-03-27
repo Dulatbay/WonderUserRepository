@@ -46,7 +46,7 @@ public class StoreController {
 
         var user = userService.getUserByKeycloakId(userId);
 
-        kaspiStoreCreateRequest.setUser(user);
+        kaspiStoreCreateRequest.setWonderUser(user);
         kaspiStoreService.createStore(kaspiStoreCreateRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();

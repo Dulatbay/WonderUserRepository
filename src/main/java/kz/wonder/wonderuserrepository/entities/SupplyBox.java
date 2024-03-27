@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
+import java.util.UUID;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -26,4 +27,15 @@ public class SupplyBox extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBoxProducts> supplyBoxProducts;
+
+    @Column(name = "vendor_code", nullable = false, unique = true)
+    private UUID vendorCode;
+
+    @Override
+    protected void onCreate() {
+        super.onCreate();
+        if (vendorCode == null) {
+            vendorCode = UUID.randomUUID();
+        }
+    }
 }

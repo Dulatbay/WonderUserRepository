@@ -46,7 +46,7 @@ public class KeycloakServiceImpl implements KeycloakService {
     private final Keycloak keycloak;
 
     @Override
-    public UserResource createUser(SellerRegistrationRequest sellerRegistrationRequest) {
+    public UserRepresentation createUser(SellerRegistrationRequest sellerRegistrationRequest) {
         UserRepresentation userRepresentation = new UserRepresentation();
         userRepresentation.setEnabled(true);
         userRepresentation.setFirstName(sellerRegistrationRequest.getFirstName());
@@ -81,7 +81,7 @@ public class KeycloakServiceImpl implements KeycloakService {
             }
 
 
-            return userResource;
+            return userResource.toRepresentation();
         } catch (Exception e) {
 //            if (userId != null) {
 //                try (var response = getUsersResource().delete(userId)) {

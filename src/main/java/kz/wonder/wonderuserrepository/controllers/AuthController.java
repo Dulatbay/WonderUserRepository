@@ -28,7 +28,7 @@ public class AuthController {
     @PostMapping("/registration")
     public ResponseEntity<MessageResponse> registration(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
         // todo: унификация данных с keycloak и с бд
-        var userRepresentation = keycloakService.createUser(registrationRequestBody).toRepresentation();
+        var userRepresentation = keycloakService.createUser(registrationRequestBody);
         registrationRequestBody.setKeycloakId(userRepresentation.getId());
         try {
             userService.createUser(registrationRequestBody);

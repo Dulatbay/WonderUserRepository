@@ -11,8 +11,8 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Entity
-@Table(schema = schemaName, name = "user")
-public class User extends AbstractEntity<Long> {
+@Table(schema = schemaName, name = "wonder_user")
+public class WonderUser extends AbstractEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,19 +23,19 @@ public class User extends AbstractEntity<Long> {
     private String keycloakId;
 
     @OneToOne(fetch = FetchType.LAZY,
-            mappedBy = "user",
+            mappedBy = "wonderUser",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private KaspiToken kaspiToken;
 
     @OneToOne(fetch = FetchType.LAZY,
-            mappedBy = "user",
+            mappedBy = "wonderUser",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private TelegramAccount telegramAccount;
 
     @OneToMany(fetch = FetchType.LAZY,
-            mappedBy = "user",
+            mappedBy = "wonderUser",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<KaspiStore> stores;
