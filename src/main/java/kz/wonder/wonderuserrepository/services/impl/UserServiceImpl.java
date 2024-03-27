@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @Slf4j
@@ -66,6 +68,10 @@ public class UserServiceImpl implements UserService {
 
 		var usersFromKeycloak = keycloakService.getAllUsers();
 
+		log.info("usersFromKeycloak(with admin account): {}, usersFromDB: {}", usersFromKeycloak.size(), usersFromDB.size());
+
+		AtomicReference<String> testerUserId = new AtomicReference<>("");
+
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
 				.filter(user -> usersFromDB
 						.stream()
@@ -74,17 +80,46 @@ public class UserServiceImpl implements UserService {
 						&&
 						!user.getUsername().equals("admin_qit")
 				)
+				.filter(user -> {
+					if (user.getUsername().equals("tester@mail.ru")) {
+						testerUserId.set(user.getId());
+						return false;
+					}
+					return true;
+				})
 				.toList();
 
 		for (var user : usersToDeleteFromKeycloak) {
 			keycloakService.deleteUserById(user.getId());
 		}
 
-		List<WonderUser> usersToDeleteFromDB = usersFromDB.stream()
-				.filter(user -> usersFromKeycloak
-						.stream()
-						.noneMatch(userRepresentation -> userRepresentation.getId().equals(user.getKeycloakId())))
+		AtomicBoolean testUserExists = new AtomicBoolean(false);
+
+		List<WonderUser> usersToDeleteFromDB = usersFromDB
+				.stream()
+				.filter(user -> {
+					if (user.getKeycloakId().equals(testerUserId.get())) {
+						testUserExists.set(true);
+					}
+					return usersFromKeycloak
+							.stream()
+							.noneMatch(userRepresentation -> userRepresentation
+									.getId()
+									.equals(user.getKeycloakId()));
+				})
 				.toList();
+
+		log.info("Test user exists: {}", testUserExists.get());
+
+		if(!testUserExists.get()){
+			var wonderUser = new WonderUser();
+			wonderUser.setKeycloakId(testerUserId.get());
+			wonderUser.setPhoneNumber("tester");
+			log.info("New tester created");
+			userRepository.save(wonderUser);
+		}
+
+		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
 
 		userRepository.deleteAll(usersToDeleteFromDB);
 	}

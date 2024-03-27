@@ -14,7 +14,6 @@ public class KaspiStoreCreateRequest {
     @JsonIgnore
     private WonderUser wonderUser;
     private String kaspiId;
-    private String name;
     private Long cityId;
     private String street;
     private String apartment;

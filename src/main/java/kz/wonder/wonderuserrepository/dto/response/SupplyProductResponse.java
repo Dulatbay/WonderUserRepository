@@ -9,5 +9,5 @@ public class SupplyProductResponse {
 	private String vendorCode;
 	private String boxBarCode;
 	private String boxTypeName;
-	private String storeName;
+	private String storeAddress;
 }

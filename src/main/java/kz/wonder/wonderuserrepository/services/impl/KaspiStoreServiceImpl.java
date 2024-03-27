@@ -67,7 +67,6 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
 		kaspiStore.setKaspiCity(selectedCity);
 		kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
-		kaspiStore.setName(kaspiStoreCreateRequest.getName());
 		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
 		kaspiStore.setStreet(kaspiStoreCreateRequest.getStreet());
 
@@ -300,7 +299,6 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setStreet(changeRequest.getStreet());
 		kaspiStore.setApartment(changeRequest.getApartment());
 		kaspiStore.setKaspiId(changeRequest.getKaspiId());
-		kaspiStore.setName(changeRequest.getName());
 		kaspiStore.setEnabled(changeRequest.isEnabled());
 		kaspiStore.setKaspiCity(
 				kaspiCityRepository.findById(changeRequest.getCityId())

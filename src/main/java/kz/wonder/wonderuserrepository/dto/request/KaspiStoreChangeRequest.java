@@ -10,7 +10,6 @@ import java.util.List;
 @Data
 public class KaspiStoreChangeRequest {
     private String kaspiId;
-    private String name;
     private boolean enabled;
     private Long cityId;
     private String street;
@@ -18,6 +17,4 @@ public class KaspiStoreChangeRequest {
     @NotNull(message = "Day of week must be not null")
     @Size(min = 1, max = 7, message = "Number of days should be between 1 and 7")
     private List<DayOfWeekWork> dayOfWeekWorks;
-
-
 }

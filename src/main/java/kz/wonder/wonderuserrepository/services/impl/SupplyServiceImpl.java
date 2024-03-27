@@ -148,7 +148,7 @@ public class SupplyServiceImpl implements SupplyService {
 									supplyProductResponse.setArticle(supplyBoxProducts.getArticle().toString());
 									supplyProductResponse.setVendorCode(product.getVendorCode());
 									supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode().toString());
-									supplyProductResponse.setStoreName(supply.getKaspiStore().getName());
+									supplyProductResponse.setStoreAddress(supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment());
 									supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
 									supplyProductsRes.add(supplyProductResponse);
 								})
