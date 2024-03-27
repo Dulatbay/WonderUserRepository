@@ -16,12 +16,13 @@ import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = WonderUserRepositoryApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
@@ -59,9 +60,26 @@ class WonderWonderUserRepositoryApplicationTests {
 		return new UserAuthRequest("tester@mail.ru", "test_tester");
 	}
 
+	private HttpEntity<MultiValueMap<String, Object>> createHttpEntity(MultiValueMap<String, Object> boxData) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		return new HttpEntity<>(boxData, headers);
+	}
+
+	private static MultiValueMap<String, Object> getBoxTypeCreateAsMultiValueMap(String name, String description) {
+		MultiValueMap<String, Object> multipartRequest = new LinkedMultiValueMap<>();
+		multipartRequest.add("name", name);
+		multipartRequest.add("description", description);
+		return multipartRequest;
+	}
+
+	private String getServerUrl() {
+		return String.format(SERVER_URL, port);
+	}
+
 	@BeforeEach
 	public void initUser() {
-		var res = restTemplate.postForEntity(getServerUrl() + "/auth/login", getAuthRequest(), AuthResponse.class);
+		var res = restTemplate.postForEntity(getServerUrl() + AUTH_LOGIN, getAuthRequest(), AuthResponse.class);
 		accessToken = Objects.requireNonNull(res.getBody()).getAccessToken();
 		restTemplate.getRestTemplate().setInterceptors(Collections.singletonList((request, body, execution) -> {
 			request.getHeaders().add("Authorization", "Bearer " + accessToken);
@@ -91,26 +109,49 @@ class WonderWonderUserRepositoryApplicationTests {
 				getServerUrl() + "/box-types",
 				HttpMethod.GET,
 				null,
-				new ParameterizedTypeReference<>() {});
+				new ParameterizedTypeReference<>() {
+				});
 		assertEquals(HttpStatus.OK, response.getStatusCode());
 		assertNotNull(response.getBody());
 		assertEquals(2, response.getBody().size(), "There should be exactly 2 boxes in the system.");
 	}
 
-	private HttpEntity<MultiValueMap<String, Object>> createHttpEntity(MultiValueMap<String, Object> boxData) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-		return new HttpEntity<>(boxData, headers);
+	@Test
+	void whenDeleteBoxType_thenStatus200() {
+		MultiValueMap<String, Object> box = getBoxTypeCreateAsMultiValueMap("Box 3", "Third Box Description");
+		HttpEntity<MultiValueMap<String, Object>> httpEntity = createHttpEntity(box);
+		ResponseEntity<Void> createResponse = restTemplate.postForEntity(getServerUrl() + BOX_TYPES, httpEntity, Void.class);
+		assertEquals(HttpStatus.CREATED, createResponse.getStatusCode());
+
+		ResponseEntity<List<BoxTypeResponse>> initialResponse = restTemplate.exchange(
+				getServerUrl() + "/box-types",
+				HttpMethod.GET,
+				null,
+				new ParameterizedTypeReference<>() {
+				});
+		assertEquals(HttpStatus.OK, initialResponse.getStatusCode());
+		assertNotNull(initialResponse.getBody());
+		int initialSize = initialResponse.getBody().size();
+
+		ResponseEntity<Void> deleteResponse = restTemplate.exchange(
+				getServerUrl() + "/box-types/" + initialResponse.getBody().get(initialSize - 1).id(),
+				HttpMethod.DELETE,
+				null,
+				Void.class);
+		assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
+
+		ResponseEntity<List<BoxTypeResponse>> finalResponse = restTemplate.exchange(
+				getServerUrl() + "/box-types",
+				HttpMethod.GET,
+				null,
+				new ParameterizedTypeReference<>() {});
+		assertEquals(HttpStatus.OK, finalResponse.getStatusCode());
+		assertNotNull(finalResponse.getBody());
+		int finalSize = finalResponse.getBody().size();
+
+		assertEquals(initialSize - 1, finalSize, "One box should be deleted from the system.");
 	}
 
-	private static MultiValueMap<String, Object> getBoxTypeCreateAsMultiValueMap(String name, String description) {
-		MultiValueMap<String, Object> multipartRequest = new LinkedMultiValueMap<>();
-		multipartRequest.add("name", name);
-		multipartRequest.add("description", description);
-		return multipartRequest;
-	}
 
-	private String getServerUrl() {
-		return String.format(SERVER_URL, port);
-	}
+
 }
