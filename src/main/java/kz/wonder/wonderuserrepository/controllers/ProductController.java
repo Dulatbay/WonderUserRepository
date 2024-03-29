@@ -23,12 +23,13 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping(name = "/by-file",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> createByFile(@RequestPart("file") MultipartFile file) {
+    public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
-        productService.processExcelFile(file, userId);
+        List<ProductResponse> result =  productService.processExcelFile(file, userId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(result);
     }
 
     @GetMapping()

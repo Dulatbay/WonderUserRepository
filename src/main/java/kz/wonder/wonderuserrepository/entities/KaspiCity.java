@@ -15,10 +15,10 @@ public class KaspiCity extends AbstractEntity<Long> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(name = "name", unique = true)
     private String name;
 
-    @Column(name = "code", nullable = false, unique = true)
+    @Column(name = "code", unique = true)
     private String code;
 
     @Column

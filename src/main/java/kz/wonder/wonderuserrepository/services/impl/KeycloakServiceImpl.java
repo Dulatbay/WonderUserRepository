@@ -2,10 +2,9 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
-import kz.wonder.wonderuserrepository.security.KeycloakRole;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
-import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;

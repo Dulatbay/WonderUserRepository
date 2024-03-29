@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.security;
 
 import com.nimbusds.jose.shaded.gson.internal.LinkedTreeMap;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
