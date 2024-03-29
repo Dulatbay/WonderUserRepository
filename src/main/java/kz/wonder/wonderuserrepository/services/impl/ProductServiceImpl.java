@@ -1,6 +1,8 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import kz.wonder.wonderuserrepository.entities.Product;
 import kz.wonder.wonderuserrepository.entities.ProductPrice;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,8 +38,11 @@ public class ProductServiceImpl implements ProductService {
 
 
 	@Override
-	public void processExcelFile(MultipartFile file, String keycloakUserId) {
-		try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+	@Transactional
+	public List<ProductResponse> processExcelFile(MultipartFile excelFile, String keycloakUserId) {
+		try (Workbook workbook = WorkbookFactory.create(excelFile.getInputStream())) {
+			List<ProductResponse> productResponses = new ArrayList<>();
+
 			if (workbook.getNumberOfSheets() == 0)
 				throw new IllegalArgumentException("File must have at least one page!");
 			Sheet sheet = workbook.getSheetAt(workbook.getNumberOfSheets() - 1);
@@ -46,54 +52,18 @@ public class ProductServiceImpl implements ProductService {
 				rowIterator.next();
 				rowIterator.next();
 			}
-
 			while (rowIterator.hasNext()) {
 				Row row = rowIterator.next();
 				String vendorCode = getStringFromExcelCell(row.getCell(0));
 				if (vendorCode.isEmpty())
 					continue;
 
-				String name = row.getCell(1).getStringCellValue();
-				String link = row.getCell(2).getStringCellValue();
-				boolean enabled = Boolean.parseBoolean(row.getCell(3).getStringCellValue());
-				Double priceAlmaty = row.getCell(4).getNumericCellValue();
-				Double priceAstana = row.getCell(5).getNumericCellValue();
+				Product product = processProduct(row, keycloakUserId, vendorCode);
+				processProductPrices(product, row);
 
-				Product product = productRepository
-						.findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
-						.orElse(new Product());
-
-				product.setVendorCode(vendorCode);
-				product.setName(name);
-				product.setLink(link);
-				product.setEnabled(enabled);
-				product.setKeycloakId(keycloakUserId);
-				product.setDeleted(false);
-				product = productRepository.save(product);
-
-				var city = kaspiCityRepository.findByName("Алматы")
-						.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
-
-				ProductPrice price = productPriceRepository.findByProductAndKaspiCityName(product, "Алматы")
-						.orElse(new ProductPrice(city, product, priceAlmaty));
-
-				price.setKaspiCity(city);
-				price.setPrice(priceAlmaty);
-				price.setUpdatedAt(LocalDateTime.now());
-				productPriceRepository.save(price);
-
-				city = kaspiCityRepository.findByName("Астана")
-						.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
-
-
-				price = productPriceRepository.findByProductAndKaspiCityName(product, "Астана")
-						.orElse(new ProductPrice(city, product, priceAstana));
-
-				price.setKaspiCity(city);
-				price.setPrice(priceAstana);
-				price.setUpdatedAt(LocalDateTime.now());
-				productPriceRepository.save(price);
+				productResponses.add(this.mapToResponse(product));
 			}
+			return productResponses;
 		} catch (IllegalStateException e) {
 			log.error("IllegalStateException: ", e);
 			throw new IllegalArgumentException("File process failed");
@@ -102,27 +72,72 @@ public class ProductServiceImpl implements ProductService {
 		}
 	}
 
+	private Product processProduct(Row row, String keycloakUserId, String vendorCode) {
+		Product product = productRepository
+				.findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
+				.orElse(new Product());
+		product.setVendorCode(vendorCode);
+		product.setName(row.getCell(1).getStringCellValue());
+		product.setLink(row.getCell(2).getStringCellValue());
+		product.setEnabled(Boolean.parseBoolean(row.getCell(3).getStringCellValue()));
+		product.setKeycloakId(keycloakUserId);
+		product.setDeleted(false);
+		return productRepository.save(product);
+	}
+
+	private void processProductPrices(Product product, Row row) {
+		final String CITY_ALMATY = "Алматы";
+		final String CITY_ASTANA = "Астана";
+
+		var cityAlmaty = getCityByName(CITY_ALMATY);
+		var cityAstana = getCityByName(CITY_ASTANA);
+
+		var priceAtAlmaty = processProductPrice(product, cityAlmaty, row.getCell(4).getNumericCellValue());
+		var priceAtAstana = processProductPrice(product, cityAstana, row.getCell(5).getNumericCellValue());
+
+		product.setPrices(new ArrayList<>());
+		product.getPrices().add(priceAtAlmaty);
+		product.getPrices().add(priceAtAstana);
+	}
+
+	private KaspiCity getCityByName(String cityName) {
+		return kaspiCityRepository.findByName(cityName)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+	}
+
+	private ProductPrice processProductPrice(Product product, KaspiCity city, Double priceValue) {
+		var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+				.orElse(new ProductPrice(city, product, priceValue));
+		productPrice.setKaspiCity(city);
+		productPrice.setPrice(priceValue);
+		productPrice.setUpdatedAt(LocalDateTime.now());
+		return productPriceRepository.save(productPrice);
+	}
+
 	@Override
 	public List<ProductResponse> getProductsByKeycloakId(String keycloakUserId) {
 		return productRepository.findAllByKeycloakId(keycloakUserId)
-				.stream().map(product -> ProductResponse.builder()
-						.id(product.getId())
-						.enabled(product.isEnabled())
-						.name(product.getName())
-						.vendorCode(product.getVendorCode())
-						.keycloakUserId(product.getKeycloakId())
-						.prices(
-								product.getPrices().stream().map(
-										productPrice ->
-												ProductResponse.ProductPriceResponse.builder()
-														.price(productPrice.getPrice())
-														.cityName(productPrice.getKaspiCity().getName())
-														.build()
-								).collect(Collectors.toList())
-						)
+				.stream().map(this::mapToResponse).collect(Collectors.toList());
+	}
 
-						.build()).collect(Collectors.toList())
-				;
+	private ProductResponse mapToResponse(Product product) {
+		return ProductResponse.builder()
+				.id(product.getId())
+				.enabled(product.isEnabled())
+				.name(product.getName())
+				.vendorCode(product.getVendorCode())
+				.keycloakUserId(product.getKeycloakId())
+				.prices(
+						product.getPrices().stream().map(
+								productPrice ->
+										ProductResponse.ProductPriceResponse.builder()
+												.price(productPrice.getPrice())
+												.cityName(productPrice.getKaspiCity().getName())
+												.build()
+						).collect(Collectors.toList())
+				)
+
+				.build();
 	}
 
 }

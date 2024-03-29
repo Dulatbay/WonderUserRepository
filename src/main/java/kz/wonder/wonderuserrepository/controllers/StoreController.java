@@ -6,7 +6,7 @@ import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
-import kz.wonder.wonderuserrepository.security.KeycloakRole;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KaspiStoreService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
