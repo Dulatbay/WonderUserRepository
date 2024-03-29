@@ -8,7 +8,6 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
 public class SellerRegistrationRequest extends KeycloakBaseUser {
     // todo: add validation
 

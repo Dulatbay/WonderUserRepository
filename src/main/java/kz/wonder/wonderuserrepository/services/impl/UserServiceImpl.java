@@ -78,7 +78,6 @@ public class UserServiceImpl implements UserService {
 
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
 				.filter(user -> {
-							log.info("email: {}", user.getEmail());
 							if (user.getEmail().equals("tester@mail.ru")) {
 								testerUserId.set(user.getId());
 								return false;
@@ -120,14 +119,14 @@ public class UserServiceImpl implements UserService {
 
 		if (!testUserExists.get()) {
 			if (testerUserId.get().isEmpty()) {
-				var keycloakTester = keycloakService.createUserByRole(
-						KeycloakBaseUser.builder()
-								.email("tester@mail.ru")
-								.password("test_tester")
-								.firstName("test")
-								.lastName("test")
-								.phoneNumber("test")
-								.build(),
+				var keycloakUser = new KeycloakBaseUser();
+				keycloakUser.setEmail("tester@mail.ru");
+				keycloakUser.setPassword("test_tester");
+				keycloakUser.setEmail("tester@mail.ru");
+				keycloakUser.setFirstName("test");
+				keycloakUser.setLastName("test");
+				keycloakUser.setPhoneNumber("test");
+				var keycloakTester = keycloakService.createUserByRole(keycloakUser,
 						KeycloakRole.SUPER_ADMIN
 				);
 

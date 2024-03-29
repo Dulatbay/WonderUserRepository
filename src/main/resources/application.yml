@@ -17,7 +17,7 @@ spring:
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

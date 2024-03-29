@@ -19,20 +19,6 @@ public class Initializer {
 //			authController.registrationAsSeller(getRandomValue());
 	}
 
-	private SellerRegistrationRequest getRandomValue() {
-		return SellerRegistrationRequest
-				.builder()
-				.email(generateRandomEmail())
-				.firstName(generateRandomName())
-				.lastName(generateRandomName())
-				.password(generateRandomString())
-				.sellerId(generateRandomString())
-				.phoneNumber(generateRandomPhoneNumber())
-				.tokenKaspi(generateRandomString())
-				.sellerName(generateRandomName())
-				.keycloakId(generateRandomString())
-				.build();
-	}
 	private String generateRandomEmail() {
 		return "user" + UUID.randomUUID() + "@example.com";
 	}

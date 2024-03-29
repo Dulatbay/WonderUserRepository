@@ -1,7 +1,5 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
-import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
-import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
@@ -175,6 +173,17 @@ public class KeycloakServiceImpl implements KeycloakService {
 	public List<UserRepresentation> getAllUsers() {
 		return getUsersResource().list();
 	}
+
+	@Override
+	public List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole) {
+		log.info("KeycloakRole: {}", keycloakRole.name());
+		return getRealmResource()
+				.clients()
+				.get(getClient().getId())
+				.roles().get(keycloakRole.name())
+				.getUserMembers();
+	}
+
 
 	@Override
 	public UserResource getUserById(String id) {

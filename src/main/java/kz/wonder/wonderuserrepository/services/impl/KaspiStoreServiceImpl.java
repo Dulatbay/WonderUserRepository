@@ -69,6 +69,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
 		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
 		kaspiStore.setStreet(kaspiStoreCreateRequest.getStreet());
+		kaspiStore.setEnabled(true);
+
 
 		kaspiStoreRepository.save(kaspiStore);
 		kaspiStoreAvailableTimesRepository.saveAll(availableTimes);

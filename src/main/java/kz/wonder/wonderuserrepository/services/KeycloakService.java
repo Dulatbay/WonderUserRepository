@@ -18,6 +18,8 @@ public interface KeycloakService {
 
     List<UserRepresentation> getAllUsers();
 
+    List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
+
     UserResource getUserById(String id);
 
 }
