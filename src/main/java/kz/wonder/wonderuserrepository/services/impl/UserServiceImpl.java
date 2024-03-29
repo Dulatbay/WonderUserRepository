@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
-import kz.wonder.wonderuserrepository.entities.User;
+import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
@@ -16,80 +16,137 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final KaspiTokenRepository kaspiTokenRepository;
-    private final UserRepository userRepository;
-    private final KeycloakService keycloakService;
-    private final KaspiApi kaspiApi;
+	private final KaspiTokenRepository kaspiTokenRepository;
+	private final UserRepository userRepository;
+	private final KeycloakService keycloakService;
+	private final KaspiApi kaspiApi;
 
-    @Override
-    public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
-        if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
-            throw new IllegalArgumentException("Token is invalid");
-        if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
-            throw new IllegalArgumentException("Phone number must be unique");
-        if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
-            throw new IllegalArgumentException("Seller id must be unique");
+	@Override
+	public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
+		if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
+			throw new IllegalArgumentException("Token is invalid");
+		if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
+			throw new IllegalArgumentException("Phone number must be unique");
+		if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
+			throw new IllegalArgumentException("Seller id must be unique");
 
-        User user = new User();
-        user.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
-        user.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
+		WonderUser wonderUser = new WonderUser();
+		wonderUser.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
+		wonderUser.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
 
-        KaspiToken kaspiToken = new KaspiToken();
-        kaspiToken.setEnabled(true);
-        kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
-        kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
-        kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
-        kaspiToken.setUser(user);
-        userRepository.save(user);
-        kaspiTokenRepository.save(kaspiToken);
-    }
+		KaspiToken kaspiToken = new KaspiToken();
+		kaspiToken.setEnabled(true);
+		kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
+		kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
+		kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
+		kaspiToken.setWonderUser(wonderUser);
+		userRepository.save(wonderUser);
+		// todo: возвращает 401 если token is null
+		kaspiTokenRepository.save(kaspiToken);
+	}
 
-    @Override
-    public User getUserByKeycloakId(String keycloakId) {
-        return userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "User doesn't exist"));
+	@Override
+	public WonderUser getUserByKeycloakId(String keycloakId) {
+		return userRepository.findByKeycloakId(keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
-    }
-
-
-    @Override
-    @Transactional
-    public void syncUsersBetweenDBAndKeycloak() {
-        var usersFromDB = userRepository.findAll();
-
-        var usersFromKeycloak = keycloakService.getAllUsers();
-
-        var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
-                .filter(user -> usersFromDB
-                        .stream()
-                        .noneMatch(user1 -> user1.getKeycloakId()
-                                .equals(user.getId()))
-                        &&
-                        !user.getUsername().equals("admin_qit")
-                )
-                .toList();
-
-        for (var user : usersToDeleteFromKeycloak) {
-            keycloakService.deleteUserById(user.getId());
-        }
-
-        List<User> usersToDeleteFromDB = usersFromDB.stream()
-                .filter(user -> usersFromKeycloak
-                        .stream()
-                        .noneMatch(userRepresentation -> userRepresentation.getId().equals(user.getKeycloakId())))
-                .toList();
-
-        userRepository.deleteAll(usersToDeleteFromDB);
-    }
+	}
 
 
-    private boolean isTokenValid(String token) {
+	@Override
+	@Transactional
+	public void syncUsersBetweenDBAndKeycloak() {
+		var usersFromDB = userRepository.findAll();
+
+		var usersFromKeycloak = keycloakService.getAllUsers();
+
+		log.info("usersFromKeycloak(with admin account and testers): {}, usersFromDB: {}", usersFromKeycloak.size(), usersFromDB.size());
+
+		AtomicReference<String> testerUserId = new AtomicReference<>("");
+
+
+		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
+				.filter(user -> {
+							log.info("email: {}", user.getEmail());
+							if (user.getEmail().equals("tester@mail.ru")) {
+								testerUserId.set(user.getId());
+								return false;
+							}
+
+							return usersFromDB
+									.stream()
+									.noneMatch(user1 -> user1.getKeycloakId()
+											.equals(user.getId()))
+									&&
+									!user.getUsername().equals("admin_qit");
+						}
+				)
+				.toList();
+
+		for (var user : usersToDeleteFromKeycloak) {
+			keycloakService.deleteUserById(user.getId());
+		}
+
+		AtomicBoolean testUserExists = new AtomicBoolean(false);
+
+		List<WonderUser> usersToDeleteFromDB = usersFromDB
+				.stream()
+				.filter(user -> {
+					if (user.getKeycloakId().equals(testerUserId.get())) {
+						testUserExists.set(true);
+					}
+					return usersFromKeycloak
+							.stream()
+							.noneMatch(userRepresentation -> userRepresentation
+									.getId()
+									.equals(user.getKeycloakId()));
+				})
+				.toList();
+
+		log.info("Test user exists in db: {}, test user exists in keycloak: {}", testUserExists.get(), !testerUserId.get().isEmpty());
+
+		log.info("Tester id: {}", testerUserId.get());
+
+		if (!testUserExists.get()) {
+			if (testerUserId.get().isEmpty()) {
+				var keycloakTester = keycloakService.createTester(
+						SellerRegistrationRequest
+								.builder()
+								.email("tester@mail.ru")
+								.password("test_tester")
+								.firstName("test")
+								.lastName("test")
+								.phoneNumber("test")
+								.sellerId("test")
+								.sellerName("test")
+								.tokenKaspi("token")
+								.build());
+
+				testerUserId.set(keycloakTester.getId());
+			}
+
+			var wonderUser = new WonderUser();
+			wonderUser.setKeycloakId(testerUserId.get());
+			wonderUser.setPhoneNumber("tester");
+			log.info("New tester created");
+			userRepository.save(wonderUser);
+		}
+
+		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
+
+		userRepository.deleteAll(usersToDeleteFromDB);
+	}
+
+
+	private boolean isTokenValid(String token) {
 //        try {
 //            kaspiApi.getDataCitiesWithToken(token);
 //            return true;
@@ -97,6 +154,6 @@ public class UserServiceImpl implements UserService {
 //            log.info("Exception: ", e);
 //            return false;
 //        }
-        return true;
-    }
+		return true;
+	}
 }

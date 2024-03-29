@@ -1,14 +1,10 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import kz.wonder.wonderuserrepository.entities.User;
+import kz.wonder.wonderuserrepository.entities.WonderUser;
 import lombok.Data;
-import org.hibernate.validator.constraints.Range;
 
 import java.util.List;
 
@@ -16,9 +12,8 @@ import java.util.List;
 @Data
 public class KaspiStoreCreateRequest {
     @JsonIgnore
-    private User user;
+    private WonderUser wonderUser;
     private String kaspiId;
-    private String name;
     private Long cityId;
     private String street;
     private String apartment;

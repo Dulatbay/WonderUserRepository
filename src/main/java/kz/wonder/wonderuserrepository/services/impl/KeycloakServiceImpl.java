@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.security.KeycloakRole;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
+import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
@@ -44,54 +46,72 @@ public class KeycloakServiceImpl implements KeycloakService {
 
     private final Keycloak keycloak;
 
-    @Override
-    public UserResource createUser(SellerRegistrationRequest sellerRegistrationRequest) {
-        UserRepresentation userRepresentation = new UserRepresentation();
-        userRepresentation.setEnabled(true);
-        userRepresentation.setFirstName(sellerRegistrationRequest.getFirstName());
-        userRepresentation.setLastName(sellerRegistrationRequest.getLastName());
-        userRepresentation.setEmail(sellerRegistrationRequest.getEmail());
-        userRepresentation.setUsername(sellerRegistrationRequest.getEmail());
+	@Override
+	public UserRepresentation createUser(SellerRegistrationRequest sellerRegistrationRequest) {
+		return createUserByRole(sellerRegistrationRequest, KeycloakRole.SELLER);
+	}
+
+	@Override
+	public UserRepresentation createTester(SellerRegistrationRequest sellerRegistrationRequest) {
+		return createUserByRole(sellerRegistrationRequest, KeycloakRole.SUPER_ADMIN);
+	}
+
+	private UserRepresentation createUserByRole(SellerRegistrationRequest sellerRegistrationRequest, KeycloakRole keycloakRole) {
+		UserRepresentation userRepresentation = setupUserRepresentation(sellerRegistrationRequest);
         String userId = null;
         try (Response response = getUsersResource().create(userRepresentation)) {
+			handleUnsuccessfulResponse(response);
+			userId = CreatedResponseUtil.getCreatedId(response);
+			UserResource userResource = setupUserResource(sellerRegistrationRequest, keycloakRole, userId);
 
-            if (response.getStatus() != 201) {
-                log.info("response status: {}", response.getStatus());
-                log.info("response entity: {}", response.getEntity());
-                if (response.getStatus() == HttpStatus.SC_CONFLICT) {
-                    var object = response.readEntity(KeycloakError.class);
-                    throw new IllegalArgumentException(object.getErrorMessage());
-                } else {
-                    throw new InternalServerErrorException("Unknown error");
-                }
-            }
+			try {
+				sendEmail(userId);
+			} catch (Exception e) {
+				throw new IllegalArgumentException("Email is incorrect");
+			}
 
-            userId = CreatedResponseUtil.getCreatedId(response);
-            UserResource userResource = getUsersResource().get(userId);
-            userResource.resetPassword(getPasswordCredential(sellerRegistrationRequest.getPassword(), false));
-            userResource.roles() //
-                    .clientLevel(getClient().getId())
-                    .add(Collections.singletonList(getClientRole(getClient(), KeycloakRole.SELLER)));
+			return userResource.toRepresentation();
+		} catch (Exception e) {
+			handleExceptionAfterUserIdCreated(userId);
+			throw e;
+		}
+	}
 
-            try {
-                sendEmail(userId);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Email is incorrect");
-            }
+	private UserRepresentation setupUserRepresentation(SellerRegistrationRequest request) {
+		UserRepresentation userRepresentation = new UserRepresentation();
+		userRepresentation.setEnabled(true);
+		userRepresentation.setFirstName(request.getFirstName());
+		userRepresentation.setLastName(request.getLastName());
+		userRepresentation.setEmail(request.getEmail());
+		userRepresentation.setUsername(request.getEmail());
+		return userRepresentation;
+	}
 
+	private void handleUnsuccessfulResponse(Response response) {
+		if (response.getStatus() != 201) {
+			log.info("response status: {}", response.getStatus());
+			log.info("response entity: {}", response.getEntity());
+			if (response.getStatus() == HttpStatus.SC_CONFLICT) {
+				var object = response.readEntity(KeycloakError.class);
+				throw new IllegalArgumentException(object.getErrorMessage());
+			} else {
+				throw new InternalServerErrorException("Unknown error");
+			}
+		}
+	}
 
-            return userResource;
-        } catch (Exception e) {
-//            if (userId != null) {
-//                try (var response = getUsersResource().delete(userId)) {
-//                    if(response.getStatus() ==
-//                }
-//            }
-            if (userId != null)
-                getUsersResource().delete(userId);
-            throw e;
-        }
-    }
+	private UserResource setupUserResource(SellerRegistrationRequest sellerRegistrationRequest, KeycloakRole keycloakRole, String userId) {
+		UserResource userResource = getUsersResource().get(userId);
+		userResource.resetPassword(getPasswordCredential(sellerRegistrationRequest.getPassword(), false));
+		userResource.roles() //
+				.clientLevel(getClient().getId())
+				.add(Collections.singletonList(getClientRole(getClient(), keycloakRole)));
+		return userResource;
+	}
+
+	private void handleExceptionAfterUserIdCreated(String userId) {
+		if (userId != null) getUsersResource().delete(userId);
+	}
 
     private CredentialRepresentation getPasswordCredential(String password, boolean temporary) {
         CredentialRepresentation passwordCred = new CredentialRepresentation();
@@ -123,7 +143,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 //        getUsersResource().get(userId).sendVerifyEmail();
     }
 
-    private Keycloak getKeycloak(String username, String password){
+    private Keycloak getKeycloak(String username, String password) {
         return KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
                 .realm(realm)
@@ -145,6 +165,8 @@ public class KeycloakServiceImpl implements KeycloakService {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .build();
+        } catch (NotAuthorizedException notAuthorizedException) {
+            throw new IllegalArgumentException("Bad credentials");
         } catch (Exception e) {
             log.error("Error occurred in getting tokens: ", e);
             throw e;

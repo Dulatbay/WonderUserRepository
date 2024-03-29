@@ -17,41 +17,41 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class CityServiceImpl implements CityService {
-    private final KaspiApi kaspiApi;
-    private final KaspiCityRepository cityRepository;
+	private final KaspiApi kaspiApi;
+	private final KaspiCityRepository cityRepository;
 
-    @Override
-    public void syncWithKaspi() {
-        try {
-            log.info("Initializing started");
-            final CitiesDataResponse response = kaspiApi.getDataCities().block();
-            final List<CitiesDataResponse.City> cities = response.getData();
-            var count = 0;
+	@Override
+	public void syncWithKaspi() {
+		try {
+			log.info("Initializing started");
+			final CitiesDataResponse response = kaspiApi.getDataCities().block();
+			final List<CitiesDataResponse.City> cities = response.getData();
+			var count = 0;
 
-            for (var city : cities) {
-                if (!cityRepository.existsByName(city.getAttributes().getName())) {
-                    final var newCity = new KaspiCity();
-                    newCity.setCode(city.getAttributes().getCode());
-                    newCity.setName(city.getAttributes().getName());
-                    newCity.setEnabled(city.getAttributes().isActive());
-                    cityRepository.save(newCity);
-                    count++;
-                }
-            }
-            log.info("Initializing ended, added {} rows", count);
-        } catch (Exception e) {
-            log.error("Initializing ended with error: ", e);
-        }
-    }
+			for (var city : cities) {
+				if (!cityRepository.existsByName(city.getAttributes().getName())) {
+					final var newCity = new KaspiCity();
+					newCity.setCode(city.getAttributes().getCode());
+					newCity.setName(city.getAttributes().getName());
+					newCity.setEnabled(city.getAttributes().isActive());
+					cityRepository.save(newCity);
+					count++;
+				}
+			}
+			log.info("Initializing ended, added {} rows", count);
+		} catch (Exception e) {
+			log.error("Initializing ended with error: ", e);
+		}
+	}
 
-    @Override
-    public List<KaspiCity> getAllCities() {
-        return cityRepository.findAll();
-    }
+	@Override
+	public List<KaspiCity> getAllCities() {
+		return cityRepository.findAll();
+	}
 
-    @Override
-    public KaspiCity getKaspiCityByName(String name) {
-        return cityRepository.findByName(name)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
-    }
+	@Override
+	public KaspiCity getKaspiCityByName(String name) {
+		return cityRepository.findByName(name)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+	}
 }

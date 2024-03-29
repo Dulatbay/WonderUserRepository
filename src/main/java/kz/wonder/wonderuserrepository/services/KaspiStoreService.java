@@ -35,4 +35,8 @@ public interface KaspiStoreService {
     void removeBoxType(Long boxTypeId, Long storeId);
 
     void removeBoxType(Long boxTypeId, Long storeId, String keycloakId);
+
+	StoreResponse getById(Long id, boolean isSuperAdmin, String keycloakId);
+
+    StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId);
 }

@@ -11,50 +11,38 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Map;
+import java.util.Arrays;
 
 @Aspect
 @Slf4j
 @Component
 public class ControllerLoggingAspect {
 
-    @Before("execution(* kz.wonder.wonderuserrepository.controllers..*(..))")
-    public void logControllerMethodCall(JoinPoint joinPoint) {
-        String url = getCurrentRequestUrl();
-        String token = getCurrentRequestToken();
-        Map<String, String[]> parameters = getCurrentRequestParameters();
+	@Before("execution(* kz.wonder.wonderuserrepository.controllers..*(..))")
+	public void logControllerMethodCall(JoinPoint joinPoint) {
+		String url = getCurrentRequestUrl();
+		String token = getCurrentRequestToken();
 
-        log.info("url: {}, method in controller: {}, parameters: {},  user: {}", url, joinPoint.getSignature().toShortString(), parameters.toString(), token);
-    }
 
-//    @AfterReturning(pointcut = "execution(* kz.wonder.wonderuserrepository.controllers.*(..))", returning = "result")
-//    public void logControllerMethodReturn(JoinPoint joinPoint, Object result) {
-//        String url = getCurrentRequestUrl();
-//        String token = getCurrentRequestToken();
-//
-//        log.info("url: {}, method in controller: {}, user: {}, result: {}", url, joinPoint.getSignature().toShortString(), token, result);
-//    }
+		log.info("url: {} by user: {}", url, token);
+		log.info("method in controller: {}", joinPoint.getSignature().toShortString());
+		log.info("requestBody: {}", Arrays.toString(joinPoint.getArgs()));
+	}
 
-    private Map<String, String[]> getCurrentRequestParameters() {
-        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        assert requestAttributes != null;
-        HttpServletRequest request = requestAttributes.getRequest();
-        return request.getParameterMap();
-    }
+	private String getCurrentRequestUrl() {
+		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+		if (requestAttributes == null)
+			return "start from method";
+		HttpServletRequest request = requestAttributes.getRequest();
+		return request.getRequestURI();
+	}
 
-    private String getCurrentRequestUrl() {
-        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        assert requestAttributes != null;
-        HttpServletRequest request = requestAttributes.getRequest();
-        return request.getRequestURI();
-    }
+	private String getCurrentRequestToken() {
+		var tokenAuth = SecurityContextHolder.getContext().getAuthentication();
 
-    private String getCurrentRequestToken() {
-        var tokenAuth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (!tokenAuth.getAuthorities().isEmpty())
-            return "Anonymous";
-        var jwt = (JwtAuthenticationToken) tokenAuth;
-        return jwt.getName();
-    }
+		if (tokenAuth == null || !tokenAuth.getAuthorities().isEmpty())
+			return "Anonymous";
+		var jwt = (JwtAuthenticationToken) tokenAuth;
+		return jwt.getName();
+	}
 }

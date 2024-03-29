@@ -8,7 +8,8 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 
 public interface KeycloakService {
-    UserResource createUser(SellerRegistrationRequest sellerRegistrationRequest);
+    UserRepresentation createUser(SellerRegistrationRequest sellerRegistrationRequest);
+    UserRepresentation createTester(SellerRegistrationRequest sellerRegistrationRequest);
     AuthResponse getAuthResponse(String email, String password);
 
     void deleteUserById(String userId);

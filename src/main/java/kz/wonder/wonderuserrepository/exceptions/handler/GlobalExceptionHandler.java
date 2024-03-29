@@ -4,6 +4,7 @@ import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.security.ErrorDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,6 +27,8 @@ public class GlobalExceptionHandler {
         ErrorDto errorResponse = new ErrorDto(ex.getError(), ex.getMessage(), getStackTrace(ex));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
+
+
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDto> argumentExceptionHandler(IllegalArgumentException e) {
@@ -69,6 +72,13 @@ public class GlobalExceptionHandler {
         log.error("NotAuthorizedException exception: ", ex);
         ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(FileUploadException.class)
+    public ResponseEntity<ErrorDto> handleValidationErrors(FileUploadException ex) {
+        log.error("FileUploadException exception: ", ex);
+        ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     private static String getStackTrace(Throwable e) {

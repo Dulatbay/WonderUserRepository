@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
+import java.util.UUID;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -18,7 +19,7 @@ public class SupplyBox extends AbstractEntity<Long> {
     private BoxType boxType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supply_id", columnDefinition = "integer")
+    @JoinColumn(name = "supply_id", columnDefinition = "integer", nullable = false)
     private Supply supply;
 
     @OneToMany(fetch = FetchType.LAZY,
@@ -26,4 +27,15 @@ public class SupplyBox extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBoxProducts> supplyBoxProducts;
+
+    @Column(name = "vendor_code", nullable = false, unique = true)
+    private UUID vendorCode;
+
+    @Override
+    protected void onCreate() {
+        super.onCreate();
+        if (vendorCode == null) {
+            vendorCode = UUID.randomUUID();
+        }
+    }
 }

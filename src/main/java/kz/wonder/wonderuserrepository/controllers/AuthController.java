@@ -10,6 +10,7 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,9 +27,9 @@ public class AuthController {
 
     @Operation(summary = "Registration")
     @PostMapping("/registration")
-    public ResponseEntity<MessageResponse> registration(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
+    public ResponseEntity<MessageResponse> registrationAsSeller(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
         // todo: унификация данных с keycloak и с бд
-        var userRepresentation = keycloakService.createUser(registrationRequestBody).toRepresentation();
+        var userRepresentation = keycloakService.createUser(registrationRequestBody);
         registrationRequestBody.setKeycloakId(userRepresentation.getId());
         try {
             userService.createUser(registrationRequestBody);
@@ -41,14 +42,9 @@ public class AuthController {
 
 
     @Operation(summary = "Login")
-    @PostMapping("/login")
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid UserAuthRequest userAuthRequest) {
         return ResponseEntity.ok(keycloakService.getAuthResponse(userAuthRequest.email(), userAuthRequest.password()));
-    }
-// уберешь потом ci cd хочу чекать
-    @PostMapping("/cicd")
-    public ResponseEntity<MessageResponse> cicd(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("CiCd check"));
     }
 
 }

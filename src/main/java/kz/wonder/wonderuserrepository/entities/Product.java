@@ -17,7 +17,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "product", schema = schemaName)
 public class Product extends AbstractEntity<Long> {
-    @Column(name = "vendor_code", unique = true, nullable = false)
+    @Column(name = "vendor_code", nullable = false)
     private String vendorCode;
 
     @Column(name = "name", nullable = false)
@@ -43,10 +43,4 @@ public class Product extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private List<SupplyBoxProducts> supplyBoxes;
-
-    @OneToMany(fetch = FetchType.LAZY,
-            mappedBy = "product",
-            orphanRemoval = true,
-            cascade = CascadeType.ALL)
-    private List<ProductQuantity> productQuantities;
 }

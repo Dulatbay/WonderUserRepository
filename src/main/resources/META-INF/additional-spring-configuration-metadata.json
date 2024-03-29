@@ -24,5 +24,10 @@
       "name": "application.password",
       "type": "java.lang.String",
       "description": "Description for application.password."
+    },
+    {
+      "name": "application.sync-users",
+      "type": "java.lang.Boolean",
+      "description": "Description for application.sync-users."
     }
   ] }
