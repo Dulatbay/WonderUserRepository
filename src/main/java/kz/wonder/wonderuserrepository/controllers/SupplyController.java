@@ -76,5 +76,8 @@ public class SupplyController {
 		return ResponseEntity.ok(response);
 	}
 
-
+	@GetMapping("/employee")
+	public ResponseEntity<List<SupplyStorageResponse>> getSuppliesEmployee(){
+		return null;
+	}
 }
