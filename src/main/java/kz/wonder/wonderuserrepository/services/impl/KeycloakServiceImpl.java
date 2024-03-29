@@ -1,9 +1,11 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
-import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
+import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,31 +36,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KeycloakServiceImpl implements KeycloakService {
 
-    @Value("${application.realm}")
-    private String realm;
+	@Value("${application.realm}")
+	private String realm;
 
-    @Value("${application.client-id}")
-    private String clintId;
+	@Value("${application.client-id}")
+	private String clintId;
 
-    @Value("${application.keycloak-url}")
-    private String keycloakUrl;
+	@Value("${application.keycloak-url}")
+	private String keycloakUrl;
 
-    private final Keycloak keycloak;
+	private final Keycloak keycloak;
 
-	@Override
-	public UserRepresentation createUser(SellerRegistrationRequest sellerRegistrationRequest) {
-		return createUserByRole(sellerRegistrationRequest, KeycloakRole.SELLER);
-	}
 
 	@Override
-	public UserRepresentation createTester(SellerRegistrationRequest sellerRegistrationRequest) {
-		return createUserByRole(sellerRegistrationRequest, KeycloakRole.SUPER_ADMIN);
-	}
-
-	private UserRepresentation createUserByRole(SellerRegistrationRequest sellerRegistrationRequest, KeycloakRole keycloakRole) {
+	public UserRepresentation createUserByRole(KeycloakBaseUser sellerRegistrationRequest, KeycloakRole keycloakRole) {
 		UserRepresentation userRepresentation = setupUserRepresentation(sellerRegistrationRequest);
-        String userId = null;
-        try (Response response = getUsersResource().create(userRepresentation)) {
+		String userId = null;
+		try (Response response = getUsersResource().create(userRepresentation)) {
 			handleUnsuccessfulResponse(response);
 			userId = CreatedResponseUtil.getCreatedId(response);
 			UserResource userResource = setupUserResource(sellerRegistrationRequest, keycloakRole, userId);
@@ -76,7 +70,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 		}
 	}
 
-	private UserRepresentation setupUserRepresentation(SellerRegistrationRequest request) {
+	private UserRepresentation setupUserRepresentation(KeycloakBaseUser request) {
 		UserRepresentation userRepresentation = new UserRepresentation();
 		userRepresentation.setEnabled(true);
 		userRepresentation.setFirstName(request.getFirstName());
@@ -99,9 +93,9 @@ public class KeycloakServiceImpl implements KeycloakService {
 		}
 	}
 
-	private UserResource setupUserResource(SellerRegistrationRequest sellerRegistrationRequest, KeycloakRole keycloakRole, String userId) {
+	private UserResource setupUserResource(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole, String userId) {
 		UserResource userResource = getUsersResource().get(userId);
-		userResource.resetPassword(getPasswordCredential(sellerRegistrationRequest.getPassword(), false));
+		userResource.resetPassword(getPasswordCredential(keycloakBaseUser.getPassword(), false));
 		userResource.roles() //
 				.clientLevel(getClient().getId())
 				.add(Collections.singletonList(getClientRole(getClient(), keycloakRole)));
@@ -112,78 +106,78 @@ public class KeycloakServiceImpl implements KeycloakService {
 		if (userId != null) getUsersResource().delete(userId);
 	}
 
-    private CredentialRepresentation getPasswordCredential(String password, boolean temporary) {
-        CredentialRepresentation passwordCred = new CredentialRepresentation();
-        passwordCred.setTemporary(temporary);
-        passwordCred.setType(CredentialRepresentation.PASSWORD);
-        passwordCred.setValue(password);
-        return passwordCred;
-    }
+	private CredentialRepresentation getPasswordCredential(String password, boolean temporary) {
+		CredentialRepresentation passwordCred = new CredentialRepresentation();
+		passwordCred.setTemporary(temporary);
+		passwordCred.setType(CredentialRepresentation.PASSWORD);
+		passwordCred.setValue(password);
+		return passwordCred;
+	}
 
-    private RoleRepresentation getClientRole(ClientRepresentation client, KeycloakRole keycloakRole) {
-        return getRealmResource().clients().get(client.getId())
-                .roles().get(keycloakRole.name()).toRepresentation();
-    }
+	private RoleRepresentation getClientRole(ClientRepresentation client, KeycloakRole keycloakRole) {
+		return getRealmResource().clients().get(client.getId())
+				.roles().get(keycloakRole.name()).toRepresentation();
+	}
 
-    private RealmResource getRealmResource() {
-        return keycloak.realm(realm);
-    }
+	private RealmResource getRealmResource() {
+		return keycloak.realm(realm);
+	}
 
-    private UsersResource getUsersResource() {
-        return getRealmResource().users();
-    }
+	private UsersResource getUsersResource() {
+		return getRealmResource().users();
+	}
 
-    private ClientRepresentation getClient() {
-        return getRealmResource().clients()
-                .findByClientId(clintId).getFirst();
-    }
+	private ClientRepresentation getClient() {
+		return getRealmResource().clients()
+				.findByClientId(clintId).getFirst();
+	}
 
-    private void sendEmail(String userId) {
+	private void sendEmail(String userId) {
 //        getUsersResource().get(userId).sendVerifyEmail();
-    }
+	}
 
-    private Keycloak getKeycloak(String username, String password) {
-        return KeycloakBuilder.builder()
-                .serverUrl(keycloakUrl)
-                .realm(realm)
-                .clientId(clintId)
-                .grantType(OAuth2Constants.PASSWORD)
-                .username(username)
-                .password(password)
-                .resteasyClient(new ResteasyClientBuilderImpl()
-                        .connectionPoolSize(10).build())
-                .build();
-    }
+	private Keycloak getKeycloak(String username, String password) {
+		return KeycloakBuilder.builder()
+				.serverUrl(keycloakUrl)
+				.realm(realm)
+				.clientId(clintId)
+				.grantType(OAuth2Constants.PASSWORD)
+				.username(username)
+				.password(password)
+				.resteasyClient(new ResteasyClientBuilderImpl()
+						.connectionPoolSize(10).build())
+				.build();
+	}
 
-    @Override
-    public AuthResponse getAuthResponse(String username, String password) {
-        try (var userKeycloak = getKeycloak(username, password)) {
-            String accessToken = userKeycloak.tokenManager().getAccessTokenString();
-            String refreshToken = userKeycloak.tokenManager().refreshToken().getRefreshToken();
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .build();
-        } catch (NotAuthorizedException notAuthorizedException) {
-            throw new IllegalArgumentException("Bad credentials");
-        } catch (Exception e) {
-            log.error("Error occurred in getting tokens: ", e);
-            throw e;
-        }
-    }
+	@Override
+	public AuthResponse getAuthResponse(String username, String password) {
+		try (var userKeycloak = getKeycloak(username, password)) {
+			String accessToken = userKeycloak.tokenManager().getAccessTokenString();
+			String refreshToken = userKeycloak.tokenManager().refreshToken().getRefreshToken();
+			return AuthResponse.builder()
+					.accessToken(accessToken)
+					.refreshToken(refreshToken)
+					.build();
+		} catch (NotAuthorizedException notAuthorizedException) {
+			throw new IllegalArgumentException("Bad credentials");
+		} catch (Exception e) {
+			log.error("Error occurred in getting tokens: ", e);
+			throw e;
+		}
+	}
 
-    @Override
-    public void deleteUserById(String userId) {
-        getUserById(userId).remove();
-    }
+	@Override
+	public void deleteUserById(String userId) {
+		getUserById(userId).remove();
+	}
 
-    @Override
-    public List<UserRepresentation> getAllUsers() {
-        return getUsersResource().list();
-    }
+	@Override
+	public List<UserRepresentation> getAllUsers() {
+		return getUsersResource().list();
+	}
 
-    @Override
-    public UserResource getUserById(String id) {
-        return getUsersResource().get(id);
-    }
+	@Override
+	public UserResource getUserById(String id) {
+		return getUsersResource().get(id);
+	}
 }

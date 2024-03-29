@@ -9,13 +9,12 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder
-public class SellerRegistrationRequest extends KeycloakBaseUser {
-    // todo: add validation
-
-    // in kaspi
-    private String sellerName;
-    private String sellerId;
-    private String tokenKaspi;
+public class EmployeeCreateRequest extends KeycloakBaseUser {
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phoneNumber;
+    private Long storeId;
 
     @JsonIgnore
     private String keycloakId;

@@ -4,10 +4,12 @@ import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
+import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +32,7 @@ public class UserServiceImpl implements UserService {
 	private final KaspiApi kaspiApi;
 
 	@Override
-	public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
+	public void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest) {
 		if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
 			throw new IllegalArgumentException("Token is invalid");
 		if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
@@ -52,6 +54,7 @@ public class UserServiceImpl implements UserService {
 		// todo: возвращает 401 если token is null
 		kaspiTokenRepository.save(kaspiToken);
 	}
+
 
 	@Override
 	public WonderUser getUserByKeycloakId(String keycloakId) {
@@ -117,18 +120,16 @@ public class UserServiceImpl implements UserService {
 
 		if (!testUserExists.get()) {
 			if (testerUserId.get().isEmpty()) {
-				var keycloakTester = keycloakService.createTester(
-						SellerRegistrationRequest
-								.builder()
+				var keycloakTester = keycloakService.createUserByRole(
+						KeycloakBaseUser.builder()
 								.email("tester@mail.ru")
 								.password("test_tester")
 								.firstName("test")
 								.lastName("test")
 								.phoneNumber("test")
-								.sellerId("test")
-								.sellerName("test")
-								.tokenKaspi("token")
-								.build());
+								.build(),
+						KeycloakRole.SUPER_ADMIN
+				);
 
 				testerUserId.set(keycloakTester.getId());
 			}

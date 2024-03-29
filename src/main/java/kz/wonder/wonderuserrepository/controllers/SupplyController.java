@@ -77,7 +77,8 @@ public class SupplyController {
 	}
 
 	@GetMapping("/employee")
-	public ResponseEntity<List<SupplyStorageResponse>> getSuppliesEmployee(){
+	public ResponseEntity<List<SupplyStorageResponse>> getSuppliesEmployee(@RequestParam("start-date") LocalDate startDate,
+	                                                                       @RequestParam("end-date") LocalDate endDate){
 		return null;
 	}
 }

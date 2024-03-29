@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.request.UserAuthRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,29 +23,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final KeycloakService keycloakService;
-    private final UserService userService;
+	private final KeycloakService keycloakService;
+	private final UserService userService;
 
-    @Operation(summary = "Registration")
-    @PostMapping("/registration")
-    public ResponseEntity<MessageResponse> registrationAsSeller(@RequestBody @Valid SellerRegistrationRequest registrationRequestBody) {
-        // todo: унификация данных с keycloak и с бд
-        var userRepresentation = keycloakService.createUser(registrationRequestBody);
-        registrationRequestBody.setKeycloakId(userRepresentation.getId());
-        try {
-            userService.createUser(registrationRequestBody);
-        } catch (Exception e) {
-            keycloakService.deleteUserById(userRepresentation.getId());
-            throw e;
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Подтвердите почту чтобы продолжить"));
-    }
+	@Operation(summary = "Registration")
+	@PostMapping("/registration")
+	public ResponseEntity<MessageResponse> registrationAsSeller(@RequestBody
+	                                                            @Valid
+	                                                            SellerRegistrationRequest registrationRequestBody) {
+		var userRepresentation = keycloakService.createUserByRole(registrationRequestBody, KeycloakRole.SELLER);
+		registrationRequestBody.setKeycloakId(userRepresentation.getId());
+		try {
+			userService.createSellerUser(registrationRequestBody);
+		} catch (Exception e) {
+			keycloakService.deleteUserById(userRepresentation.getId());
+			throw e;
+		}
+		return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Подтвердите почту чтобы продолжить"));
+	}
 
 
-    @Operation(summary = "Login")
-    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<AuthResponse> login(@RequestBody @Valid UserAuthRequest userAuthRequest) {
-        return ResponseEntity.ok(keycloakService.getAuthResponse(userAuthRequest.email(), userAuthRequest.password()));
-    }
-
+	@Operation(summary = "Login")
+	@PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<AuthResponse> login(@RequestBody @Valid UserAuthRequest userAuthRequest) {
+		return ResponseEntity.ok(keycloakService.getAuthResponse(userAuthRequest.email(), userAuthRequest.password()));
+	}
 }
