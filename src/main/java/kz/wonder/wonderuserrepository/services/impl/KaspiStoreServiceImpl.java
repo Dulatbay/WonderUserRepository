@@ -121,10 +121,15 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	}
 
 	private StoreResponse mapToResponse(KaspiStore kaspiStore) {
+		var city = kaspiStore.getKaspiCity();
+
 		return StoreResponse.builder()
 				.id(kaspiStore.getId())
 				.kaspiId(kaspiStore.getKaspiId())
-				.city(kaspiStore.getKaspiCity().getName())
+				.city(StoreResponse.City.builder()
+						.id(city.getId())
+						.name(city.getName())
+						.build())
 				.street(kaspiStore.getStreet())
 				.address(kaspiStore.getApartment())
 				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
@@ -139,10 +144,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	}
 
 	private StoreDetailResponse mapToDetailResponse(KaspiStore kaspiStore) {
+		var city = kaspiStore.getKaspiCity();
 		return StoreDetailResponse.builder()
 				.id(kaspiStore.getId())
 				.kaspiId(kaspiStore.getKaspiId())
-				.city(kaspiStore.getKaspiCity().getName())
+				.city(StoreDetailResponse.City.builder()
+						.id(city.getId())
+						.name(city.getName())
+						.build())
 				.street(kaspiStore.getStreet())
 				.address(kaspiStore.getApartment())
 				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
