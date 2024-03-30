@@ -1,4 +1,13 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
-public class EmployeeUpdateRequest {
+
+import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class EmployeeUpdateRequest extends KeycloakBaseUser {
+	private String phoneNumber;
+	private Long storeId;
 }

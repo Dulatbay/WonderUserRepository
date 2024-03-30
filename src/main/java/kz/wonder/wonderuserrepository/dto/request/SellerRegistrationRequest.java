@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 @Data
 public class SellerRegistrationRequest extends KeycloakBaseUser {
     // todo: add validation
+    private String phoneNumber;
 
     // in kaspi
     private String sellerName;

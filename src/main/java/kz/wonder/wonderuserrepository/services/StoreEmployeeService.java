@@ -18,7 +18,9 @@ public interface StoreEmployeeService {
 
     List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations);
 
-    void updateStoreEmployee(Long employeeId, Long storeId);
+    StoreEmployee updateStoreEmployee(Long employeeId, Long storeId);
+
+    StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber);
 
     void deleteStoreEmployee(StoreEmployee id);
 }

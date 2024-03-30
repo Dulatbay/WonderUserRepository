@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.services;
 
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
+import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
@@ -21,5 +22,7 @@ public interface KeycloakService {
     List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
 
     UserResource getUserById(String id);
+    UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
 
+    void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
 }

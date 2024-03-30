@@ -1,6 +1,9 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
+import kz.wonder.wonderuserrepository.dto.request.EmployeeUpdateRequest;
+import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeCreateResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeResponse;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
@@ -9,8 +12,11 @@ import kz.wonder.wonderuserrepository.services.StoreEmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -39,11 +45,15 @@ public class EmployeeController {
 	@GetMapping
 	public ResponseEntity<List<EmployeeResponse>> getEmployees(@RequestParam(value = "store-id", required = false)
 	                                                           Long storeId) {
-		List<EmployeeResponse> result;
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+		var authorities = Utils.getAuthorities(token.getAuthorities());
+
+		List<EmployeeResponse> result = new ArrayList<>();
 		var usersInKeycloak = keycloakService.getAllUsersByRole(KeycloakRole.STORE_EMPLOYEE);
 		if (storeId != null)
 			result = storeEmployeeService.getAllStoreEmployees(storeId, usersInKeycloak);
-		else
+		else if (authorities.contains(KeycloakRole.SUPER_ADMIN.name()))
 			result = storeEmployeeService.getAllStoreEmployees(usersInKeycloak);
 		return ResponseEntity.ok(result);
 	}
@@ -69,4 +79,31 @@ public class EmployeeController {
 		return ResponseEntity.noContent().build();
 	}
 
+	@PutMapping("/update-password/{userId}")
+	public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody StoreEmployeeUpdatePassword updatePassword) {
+		var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
+		var keycloakUser = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId()).toRepresentation();
+
+		updatePassword.setEmail(keycloakUser.getEmail());
+		keycloakService.updatePassword(keycloakUser.getId(), updatePassword);
+		return ResponseEntity.ok().build();
+	}
+
+	@PatchMapping("/{userId}")
+	public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, EmployeeUpdateRequest employeeUpdateRequest) {
+
+		var userResource = keycloakService.updateUser(employeeUpdateRequest).toRepresentation();
+		var employee = storeEmployeeService.updateStoreEmployee(userId, employeeUpdateRequest.getStoreId(), employeeUpdateRequest.getPhoneNumber());
+
+		var updatedEmployee = EmployeeResponse.builder()
+				.id(employee.getId())
+				.email(userResource.getEmail())
+				.firstName(userResource.getFirstName())
+				.lastName(userResource.getLastName())
+				.phoneNumber(employee.getWonderUser().getPhoneNumber())
+				.storeId(employee.getKaspiStore().getId())
+				.build();
+
+		return ResponseEntity.ok(updatedEmployee);
+	}
 }

@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
@@ -176,7 +177,6 @@ public class KeycloakServiceImpl implements KeycloakService {
 
 	@Override
 	public List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole) {
-		log.info("KeycloakRole: {}", keycloakRole.name());
 		return getRealmResource()
 				.clients()
 				.get(getClient().getId())
@@ -188,5 +188,45 @@ public class KeycloakServiceImpl implements KeycloakService {
 	@Override
 	public UserResource getUserById(String id) {
 		return getUsersResource().get(id);
+	}
+
+	@Override
+	public UserResource updateUser(KeycloakBaseUser keycloakBaseUser) {
+		var usersResource = getUsersResource();
+		List<UserRepresentation> users = usersResource.search(keycloakBaseUser.getEmail(), 0, 1);
+
+		if (users.isEmpty()) {
+			throw new IllegalArgumentException("User by email not found");
+		}
+		UserRepresentation userToUpdate = users.get(0);
+		userToUpdate.setFirstName(keycloakBaseUser.getFirstName());
+		userToUpdate.setLastName(keycloakBaseUser.getLastName());
+		userToUpdate.setEmail(keycloakBaseUser.getEmail());
+
+		UserResource userResource = usersResource.get(userToUpdate.getId());
+		userResource.update(userToUpdate);
+
+		return userResource;
+	}
+
+	@Override
+	public void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword) {
+		try {
+			var keycloak = getKeycloak(updatePassword.getEmail(), updatePassword.getOldPassword());
+			keycloak.tokenManager().getAccessTokenString();
+
+			UserResource userResource = getUsersResource().get(keycloakId);
+
+			CredentialRepresentation newPassword = new CredentialRepresentation();
+			newPassword.setType(CredentialRepresentation.PASSWORD);
+			newPassword.setValue(updatePassword.getNewPassword());
+			newPassword.setTemporary(false);
+
+
+			userResource.resetPassword(newPassword);
+		} catch (NotAuthorizedException e) {
+			log.error("Old password is incorrect for user with ID: {}", keycloakId);
+			throw new IllegalArgumentException("Old password is incorrect");
+		}
 	}
 }

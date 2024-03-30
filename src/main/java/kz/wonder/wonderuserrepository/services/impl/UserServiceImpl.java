@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
@@ -30,6 +31,7 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final KeycloakService keycloakService;
 	private final KaspiApi kaspiApi;
+	private final EntityManager entityManager;
 
 	@Override
 	public void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest) {
@@ -112,6 +114,14 @@ public class UserServiceImpl implements UserService {
 									.equals(user.getKeycloakId()));
 				})
 				.toList();
+		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
+
+		if(!usersToDeleteFromDB.isEmpty()){
+			userRepository.deleteAll(usersToDeleteFromDB);
+			entityManager.flush();
+			entityManager.clear();
+		}
+
 
 		log.info("Test user exists in db: {}, test user exists in keycloak: {}", testUserExists.get(), !testerUserId.get().isEmpty());
 
@@ -125,24 +135,20 @@ public class UserServiceImpl implements UserService {
 				keycloakUser.setEmail("tester@mail.ru");
 				keycloakUser.setFirstName("test");
 				keycloakUser.setLastName("test");
-				keycloakUser.setPhoneNumber("test");
 				var keycloakTester = keycloakService.createUserByRole(keycloakUser,
 						KeycloakRole.SUPER_ADMIN
 				);
-
 				testerUserId.set(keycloakTester.getId());
 			}
 
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
-			log.info("New tester created");
 			userRepository.save(wonderUser);
+			log.info("New tester created");
 		}
 
-		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
 
-		userRepository.deleteAll(usersToDeleteFromDB);
 	}
 
 

@@ -30,6 +30,11 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	@Override
 	@Transactional
 	public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest) {
+		var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
+
+		if (isPhoneNumberUsed)
+			throw new IllegalArgumentException("Phone already used");
+
 		WonderUser wonderUser = new WonderUser();
 		wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
 		wonderUser.setKeycloakId(employeeCreateRequest.getKeycloakId());
@@ -47,17 +52,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
 	@Override
 	public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource) {
-		final var wonderUser = storeEmployee.getWonderUser();
-
 		final var keycloakUser = userResource.toRepresentation();
-
-		return EmployeeResponse.builder()
-				.email(keycloakUser.getEmail())
-				.firstName(keycloakUser.getFirstName())
-				.lastName(keycloakUser.getLastName())
-				.storeId(storeEmployee.getKaspiStore().getId())
-				.phoneNumber(wonderUser.getPhoneNumber())
-				.build();
+		return this.buildEmployeeResponse(keycloakUser, storeEmployee);
 	}
 
 	@Override
@@ -90,6 +86,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	private EmployeeResponse buildEmployeeResponse(UserRepresentation keycloakUser, StoreEmployee storeEmployee) {
 		WonderUser wonderUser = storeEmployee.getWonderUser();
 		return EmployeeResponse.builder()
+				.id(storeEmployee.getId())
 				.email(keycloakUser.getEmail())
 				.firstName(keycloakUser.getFirstName())
 				.lastName(keycloakUser.getLastName())
@@ -108,17 +105,29 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	}
 
 	@Override
-	public void updateStoreEmployee(Long employeeId, Long storeId) {
+	public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId) {
+		final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
+
+		return storeEmployeeRepository.save(storeEmployee);
+	}
+
+	@Override
+	public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber) {
+		final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
+
+		storeEmployee.getWonderUser().setPhoneNumber(phoneNumber);
+
+		return storeEmployeeRepository.save(storeEmployee);
+	}
+
+	private StoreEmployee getStoreEmployeeWithStoreId(Long employeeId, Long storeId) {
 		final var storeEmployee = storeEmployeeRepository.findById(employeeId)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Employee doesn't exist", "Please try one more time with another params"));
-
 		final var kaspiStore = kaspiStoreRepository.findById(storeId)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please try one more time with another params"));
 
-
 		storeEmployee.setKaspiStore(kaspiStore);
-
-		storeEmployeeRepository.save(storeEmployee);
+		return storeEmployee;
 	}
 
 	@Override
