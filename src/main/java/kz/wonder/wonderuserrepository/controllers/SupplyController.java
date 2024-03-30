@@ -54,14 +54,14 @@ public class SupplyController {
 	}
 
 	@GetMapping("/admin/detail/{id}")
-	public ResponseEntity<List<SupplyProductResponse>> getSuppliesDetail(@PathVariable("id") Long id){
+	public ResponseEntity<List<SupplyProductResponse>> getSuppliesDetail(@PathVariable("id") Long id) {
 		List<SupplyProductResponse> result = supplyService.getSuppliesDetail(id);
 		return ResponseEntity.ok(result);
 	}
 
 	@GetMapping("/seller")
 	public ResponseEntity<List<SupplySellerResponse>> getSuppliesSeller(@RequestParam("start-date") LocalDate startDate,
-	                                                                    @RequestParam("end-date") LocalDate endDate){
+	                                                                    @RequestParam("end-date") LocalDate endDate) {
 		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		var id = Utils.extractIdFromToken(token);
 		List<SupplySellerResponse> response = supplyService.getSuppliesOfSeller(id, startDate, endDate);
@@ -69,7 +69,7 @@ public class SupplyController {
 	}
 
 	@GetMapping("/seller/{supplyId}")
-	public ResponseEntity<List<SupplyReportResponse>> getSupplyReportSeller(@PathVariable Long supplyId){
+	public ResponseEntity<List<SupplyReportResponse>> getSupplyReportSeller(@PathVariable Long supplyId) {
 		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		var keycloakId = Utils.extractIdFromToken(token);
 		List<SupplyReportResponse> response = supplyService.getSupplyReport(supplyId, keycloakId);
@@ -78,7 +78,23 @@ public class SupplyController {
 
 	@GetMapping("/employee")
 	public ResponseEntity<List<SupplyStorageResponse>> getSuppliesEmployee(@RequestParam("start-date") LocalDate startDate,
-	                                                                       @RequestParam("end-date") LocalDate endDate){
-		return null;
+	                                                                       @RequestParam("end-date") LocalDate endDate) {
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		var keycloakId = Utils.extractIdFromToken(token);
+
+		var result = supplyService.getSuppliesOfStorage(keycloakId, startDate, endDate);
+		return ResponseEntity.ok(result);
 	}
+
+	@GetMapping("/employee/products")
+	public ResponseEntity<ProductStorageResponse> getSuppliesEmployee(@RequestParam("supply-id")
+	                                                                        Long supplyId) {
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		var keycloakId = Utils.extractIdFromToken(token);
+
+		var result = supplyService.getSuppliesProducts(keycloakId, supplyId);
+		return ResponseEntity.ok(result);
+	}
+
+
 }
