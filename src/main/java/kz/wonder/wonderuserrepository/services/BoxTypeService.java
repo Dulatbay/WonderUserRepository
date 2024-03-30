@@ -6,9 +6,8 @@ import kz.wonder.wonderuserrepository.dto.response.BoxTypeResponse;
 import java.util.List;
 
 public interface BoxTypeService {
-	void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest);
+    void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest);
+    List<BoxTypeResponse> getAll();
 
-	List<BoxTypeResponse> getAll();
-
-	void deleteById(Long id);
+    void deleteById(Long id);
 }

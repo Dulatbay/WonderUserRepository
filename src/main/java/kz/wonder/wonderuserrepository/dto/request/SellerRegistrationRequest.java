@@ -8,14 +8,14 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SellerRegistrationRequest extends KeycloakBaseUser {
-	// todo: add validation
-	private String phoneNumber;
+    // todo: add validation
+    private String phoneNumber;
 
-	// in kaspi
-	private String sellerName;
-	private String sellerId;
-	private String tokenKaspi;
+    // in kaspi
+    private String sellerName;
+    private String sellerId;
+    private String tokenKaspi;
 
-	@JsonIgnore
-	private String keycloakId;
+    @JsonIgnore
+    private String keycloakId;
 }

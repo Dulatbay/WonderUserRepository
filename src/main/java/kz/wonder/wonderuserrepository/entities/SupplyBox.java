@@ -14,28 +14,28 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "supply_box", schema = schemaName)
 public class SupplyBox extends AbstractEntity<Long> {
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "box_type_id", columnDefinition = "integer")
-	private BoxType boxType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "box_type_id", columnDefinition = "integer")
+    private BoxType boxType;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "supply_id", columnDefinition = "integer", nullable = false)
-	private Supply supply;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supply_id", columnDefinition = "integer", nullable = false)
+    private Supply supply;
 
-	@OneToMany(fetch = FetchType.LAZY,
-			mappedBy = "supplyBox",
-			orphanRemoval = true,
-			cascade = CascadeType.ALL)
-	private List<SupplyBoxProducts> supplyBoxProducts;
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "supplyBox",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<SupplyBoxProducts> supplyBoxProducts;
 
-	@Column(name = "vendor_code", nullable = false, unique = true)
-	private UUID vendorCode;
+    @Column(name = "vendor_code", nullable = false, unique = true)
+    private UUID vendorCode;
 
-	@Override
-	protected void onCreate() {
-		super.onCreate();
-		if (vendorCode == null) {
-			vendorCode = UUID.randomUUID();
-		}
-	}
+    @Override
+    protected void onCreate() {
+        super.onCreate();
+        if (vendorCode == null) {
+            vendorCode = UUID.randomUUID();
+        }
+    }
 }

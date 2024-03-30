@@ -20,24 +20,24 @@ import java.util.List;
 @Slf4j
 @RequestMapping("/products")
 public class ProductController {
-	private final ProductService productService;
+    private final ProductService productService;
 
-	@PostMapping(name = "/by-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		var userId = Utils.extractIdFromToken(token);
-		List<ProductResponse> result = productService.processExcelFile(file, userId);
+    @PostMapping(name = "/by-file",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var userId = Utils.extractIdFromToken(token);
+        List<ProductResponse> result =  productService.processExcelFile(file, userId);
 
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(result);
-	}
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(result);
+    }
 
-	@GetMapping()
-	public ResponseEntity<List<ProductResponse>> getProducts() {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+    @GetMapping()
+    public ResponseEntity<List<ProductResponse>> getProducts(){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-		return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
-	}
+        return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
+    }
 
 
 }

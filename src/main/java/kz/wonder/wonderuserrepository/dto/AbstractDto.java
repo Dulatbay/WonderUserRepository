@@ -15,17 +15,17 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AbstractDto implements Serializable {
 
-	protected static final long serialVersionUID = -2118915787869082064L;
+    protected static final long serialVersionUID = -2118915787869082064L;
 
-	@JsonProperty("id")
-	protected Long id;
+    @JsonProperty("id")
+    protected Long id;
 
-	@JsonSerialize(using = LocalDateTimeSerializer.class)
-	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-	protected LocalDateTime createdAt;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    protected LocalDateTime createdAt;
 
-	@JsonSerialize(using = LocalDateTimeSerializer.class)
-	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-	protected LocalDateTime updatedAt;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    protected LocalDateTime updatedAt;
 
 }

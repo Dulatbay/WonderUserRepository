@@ -10,12 +10,12 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 public class EmployeeCreateRequest extends KeycloakBaseUser {
-	private String firstName;
-	private String lastName;
-	private String email;
-	private String phoneNumber;
-	private Long storeId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phoneNumber;
+    private Long storeId;
 
-	@JsonIgnore
-	private String keycloakId;
+    @JsonIgnore
+    private String keycloakId;
 }

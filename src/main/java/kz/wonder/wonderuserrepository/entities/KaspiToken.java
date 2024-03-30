@@ -10,19 +10,19 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(schema = schemaName, name = "kaspi_token")
-public class KaspiToken extends AbstractEntity<Long> {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	@Column(name = "token", unique = true, nullable = false)
-	private String token;
-	@Column(name = "seller_name", nullable = false)
-	private String sellerName;
-	@Column(name = "seller_id", unique = true, nullable = false)
-	private String sellerId;
-	@Column(name = "enabled", nullable = false)
-	private boolean enabled;
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(columnDefinition = "integer", name = "user_id")
-	private WonderUser wonderUser;
+public class KaspiToken  extends AbstractEntity<Long>{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "token", unique = true, nullable = false)
+    private String token;
+    @Column(name = "seller_name", nullable = false)
+    private String sellerName;
+    @Column(name = "seller_id", unique = true, nullable = false)
+    private String sellerId;
+    @Column(name = "enabled",  nullable = false)
+    private boolean enabled;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(columnDefinition = "integer", name = "user_id")
+    private WonderUser wonderUser;
 }

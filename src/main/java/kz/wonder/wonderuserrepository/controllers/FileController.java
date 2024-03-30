@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/files")
 public class FileController {
-	private final FileService fileService;
+    private final FileService fileService;
 
-	@GetMapping(value = "/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
-	public @ResponseBody Resource getFileAsResourceByFilename(@PathVariable("filename") String filename) {
-		log.info("Get Resource by name = {}", filename);
-		return fileService.loadAsResource(filename);
-	}
+    @GetMapping(value = "/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    public @ResponseBody Resource getFileAsResourceByFilename(@PathVariable("filename") String filename) {
+        log.info("Get Resource by name = {}", filename);
+        return fileService.loadAsResource(filename);
+    }
 }
 

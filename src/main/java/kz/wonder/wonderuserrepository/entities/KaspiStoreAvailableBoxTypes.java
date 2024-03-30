@@ -11,14 +11,14 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "kaspi_store_available_box_types", schema = schemaName)
 public class KaspiStoreAvailableBoxTypes extends AbstractEntity<Long> {
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kaspi_store", columnDefinition = "integer")
-	private KaspiStore kaspiStore;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kaspi_store", columnDefinition = "integer")
+    private KaspiStore kaspiStore;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "box_type", columnDefinition = "integer")
-	private BoxType boxType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "box_type", columnDefinition = "integer")
+    private BoxType boxType;
 
-	@Column(name = "enabled", nullable = false)
-	private boolean enabled;
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled;
 }

@@ -11,18 +11,18 @@ import java.io.IOException;
 
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-	@Override
-	public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
-		response.setContentType("application/json; charset=utf-8");
-		response.setStatus(HttpStatus.FORBIDDEN.value());
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
+        response.setContentType("application/json; charset=utf-8");
+        response.setStatus(HttpStatus.FORBIDDEN.value());
 
 
-		response.getOutputStream().println(objectMapper.writeValueAsString(
-				new ErrorDto(HttpStatus.FORBIDDEN.getReasonPhrase(),
-						"Access denied to " + request.getRequestURI(),
-						""
-				)));
-	}
+        response.getOutputStream().println(objectMapper.writeValueAsString(
+                new ErrorDto(HttpStatus.FORBIDDEN.getReasonPhrase(),
+                        "Access denied to " + request.getRequestURI(),
+                        ""
+                )));
+    }
 }

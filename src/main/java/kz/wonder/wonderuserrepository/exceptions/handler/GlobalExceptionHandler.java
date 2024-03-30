@@ -21,22 +21,6 @@ import java.util.Arrays;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-	private static String getStackTrace(Throwable e) {
-		filterStackTracesByProjectPackage(e);
-		filterStackTracesByProjectPackage(e.getCause());
-		return ExceptionUtils.getStackTrace(e).trim();
-	}
-
-	private static void filterStackTracesByProjectPackage(Throwable ex) {
-		if (ex == null) return;
-
-		StackTraceElement[] stackTraces = Arrays.stream(ex.getStackTrace())
-				.filter(se -> se.getClassName().startsWith("com."))
-				.toArray(StackTraceElement[]::new);
-
-		ex.setStackTrace(stackTraces);
-	}
-
 	@ExceptionHandler(DbObjectNotFoundException.class)
 	public ResponseEntity<ErrorDto> handlePositionNotFoundException(DbObjectNotFoundException ex) {
 		log.error("DbObjectNotFoundException exception: ", ex);
@@ -44,12 +28,14 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(ex.getHttpStatus()).body(errorResponse);
 	}
 
+
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<ErrorDto> argumentExceptionHandler(IllegalArgumentException e) {
 		log.error("Argument exception: ", e);
 		var errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.toString(), e.getMessage(), getStackTrace(e));
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 	}
+
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorDto> handleValidationErrors(MethodArgumentNotValidException ex) {
@@ -92,5 +78,21 @@ public class GlobalExceptionHandler {
 		log.error("FileUploadException exception: ", ex);
 		ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
+
+	private static String getStackTrace(Throwable e) {
+		filterStackTracesByProjectPackage(e);
+		filterStackTracesByProjectPackage(e.getCause());
+		return ExceptionUtils.getStackTrace(e).trim();
+	}
+
+	private static void filterStackTracesByProjectPackage(Throwable ex) {
+		if (ex == null) return;
+
+		StackTraceElement[] stackTraces = Arrays.stream(ex.getStackTrace())
+				.filter(se -> se.getClassName().startsWith("com."))
+				.toArray(StackTraceElement[]::new);
+
+		ex.setStackTrace(stackTraces);
 	}
 }

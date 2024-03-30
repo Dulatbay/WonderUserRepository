@@ -15,21 +15,21 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "kaspi_store_available_times", schema = schemaName)
 public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "kaspi_store", columnDefinition = "integer")
-	private KaspiStore kaspiStore;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kaspi_store", columnDefinition = "integer")
+    private KaspiStore kaspiStore;
 
-	@Column(name = "day_of_week")
-	@Convert(converter = DayOfWeekIntegerConverter.class)
-	private DayOfWeek dayOfWeek;
+    @Column(name = "day_of_week")
+    @Convert(converter = DayOfWeekIntegerConverter.class)
+    private DayOfWeek dayOfWeek;
 
-	@Column(name = "open_time")
-	private LocalTime openTime;
+    @Column(name = "open_time")
+    private LocalTime openTime;
 
-	@Column(name = "close_time")
-	private LocalTime closeTime;
+    @Column(name = "close_time")
+    private LocalTime closeTime;
 }

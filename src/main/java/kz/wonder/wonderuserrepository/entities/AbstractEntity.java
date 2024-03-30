@@ -11,25 +11,25 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 public abstract class AbstractEntity<T extends Serializable> {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	T id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    T id;
 
-	@Column(name = "created_at", nullable = false)
-	@Convert(converter = LocalDateTimeAttributeConverter.class)
-	private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    @Convert(converter = LocalDateTimeAttributeConverter.class)
+    private LocalDateTime createdAt;
 
-	@Column(name = "updated_at", nullable = false)
-	@Convert(converter = LocalDateTimeAttributeConverter.class)
-	private LocalDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    @Convert(converter = LocalDateTimeAttributeConverter.class)
+    private LocalDateTime updatedAt;
 
-	@PrePersist
-	protected void onCreate() {
-		this.updatedAt = this.createdAt = LocalDateTime.now();
-	}
+    @PrePersist
+    protected void onCreate() {
+        this.updatedAt = this.createdAt = LocalDateTime.now();
+    }
 
-	@PreUpdate
-	protected void onUpdate() {
-		this.updatedAt = LocalDateTime.now();
-	}
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

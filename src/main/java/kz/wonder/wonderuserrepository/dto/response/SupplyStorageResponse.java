@@ -12,7 +12,6 @@ import java.util.List;
 public class SupplyStorageResponse {
 	private LocalDate date;
 	private List<Supply> supplies;
-
 	@Data
 	@Builder
 	public static class Supply {

@@ -13,32 +13,32 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Slf4j
 public class Beans {
-	@Value("${application.keycloak-url}")
-	private String keycloakUrl;
+    @Value("${application.keycloak-url}")
+    private String keycloakUrl;
 
-	@Value("${application.realm}")
-	private String realm;
+    @Value("${application.realm}")
+    private String realm;
 
-	@Value("${application.client-id}")
-	private String clintId;
+    @Value("${application.client-id}")
+    private String clintId;
 
-	@Value("${application.username}")
-	private String username;
+    @Value("${application.username}")
+    private String username;
 
-	@Value("${application.password}")
-	private String password;
+    @Value("${application.password}")
+    private String password;
 
-	@Bean
-	Keycloak keycloak() {
-		return KeycloakBuilder.builder()
-				.serverUrl(keycloakUrl)
-				.realm(realm)
-				.clientId(clintId)
-				.grantType(OAuth2Constants.PASSWORD)
-				.username(username)
-				.password(password)
-				.resteasyClient(new ResteasyClientBuilderImpl()
-						.connectionPoolSize(10).build())
-				.build();
-	}
+    @Bean
+    Keycloak keycloak() {
+        return KeycloakBuilder.builder()
+                .serverUrl(keycloakUrl)
+                .realm(realm)
+                .clientId(clintId)
+                .grantType(OAuth2Constants.PASSWORD)
+                .username(username)
+                .password(password)
+                .resteasyClient(new ResteasyClientBuilderImpl()
+                        .connectionPoolSize(10).build())
+                .build();
+    }
 }

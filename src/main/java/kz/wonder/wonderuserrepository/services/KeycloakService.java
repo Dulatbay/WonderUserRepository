@@ -10,19 +10,17 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 
 public interface KeycloakService {
-	UserRepresentation createUserByRole(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole);
+    UserRepresentation createUserByRole(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole);
+    AuthResponse getAuthResponse(String email, String password);
 
-	AuthResponse getAuthResponse(String email, String password);
+    void deleteUserById(String userId);
 
-	void deleteUserById(String userId);
+    List<UserRepresentation> getAllUsers();
 
-	List<UserRepresentation> getAllUsers();
+    List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
 
-	List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
+    UserResource getUserById(String id);
+    UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
 
-	UserResource getUserById(String id);
-
-	UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
-
-	void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
+    void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
 }

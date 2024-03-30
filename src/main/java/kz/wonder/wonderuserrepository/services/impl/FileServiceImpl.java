@@ -29,94 +29,94 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.UPLOADED_F
 @Slf4j
 public class FileServiceImpl implements FileService {
 
-	private final Path rootLocation;
+    private final Path rootLocation;
 
-	public FileServiceImpl() {
-		this.rootLocation = Paths.get(UPLOADED_FOLDER);
-	}
+    public FileServiceImpl() {
+        this.rootLocation = Paths.get(UPLOADED_FOLDER);
+    }
 
-	@Override
-	public String save(@ValidFile MultipartFile file) {
-		try {
-			if (file.getOriginalFilename() == null || file.isEmpty()) {
-				throw new StorageException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Failed to store empty file.");
-			}
+    @Override
+    public String save(@ValidFile MultipartFile file) {
+        try {
+            if (file.getOriginalFilename() == null || file.isEmpty()) {
+                throw new StorageException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Failed to store empty file.");
+            }
 
-			String filename = UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-
-
-			Path destinationFile = this.rootLocation.resolve(
-							Paths.get(filename))
-					.normalize().toAbsolutePath();
+            String filename = UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
 
 
-			if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
-				throw new StorageException(HttpStatus.BAD_REQUEST.getReasonPhrase(),
-						"Cannot store file outside current directory.");
-			}
-
-			@Cleanup
-			InputStream inputStream = file.getInputStream();
-			Files.copy(inputStream, destinationFile,
-					StandardCopyOption.REPLACE_EXISTING);
+            Path destinationFile = this.rootLocation.resolve(
+                            Paths.get(filename))
+                    .normalize().toAbsolutePath();
 
 
-			return filename;
-		} catch (IOException e) {
-			log.error("IOException: ", e);
-			throw new StorageException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Failed to store file.");
-		}
-	}
+            if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
+                throw new StorageException(HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                        "Cannot store file outside current directory.");
+            }
 
-	private Path load(String filename) {
-		return rootLocation.resolve(filename);
-	}
+            @Cleanup
+            InputStream inputStream = file.getInputStream();
+            Files.copy(inputStream, destinationFile,
+                    StandardCopyOption.REPLACE_EXISTING);
 
-	@Override
-	public Resource loadAsResource(String fileName) {
-		try {
-			Path file = load(fileName);
-			Resource resource = new UrlResource(file.toUri());
-			if (resource.exists() || resource.isReadable()) {
-				return resource;
-			} else {
-				throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),
-						"Could not read file: " + fileName);
-			}
-		} catch (MalformedURLException e) {
-			throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),
-					"Could not read file: " + fileName);
-		}
-	}
 
-	@Override
-	public void init() {
-		try {
-			Files.createDirectories(rootLocation);
-			log.info("Create dir: {}", rootLocation);
-		} catch (IOException e) {
-			log.error("Could not initialize storage.\nIOException: ", e);
-		}
-	}
+            return filename;
+        } catch (IOException e) {
+            log.error("IOException: ", e);
+            throw new StorageException(HttpStatus.BAD_REQUEST.getReasonPhrase(), "Failed to store file.");
+        }
+    }
 
-	@Override
-	public void deleteByName(String filename) {
-		try {
+    private Path load(String filename) {
+        return rootLocation.resolve(filename);
+    }
 
-			Path filePath = rootLocation.resolve(filename);
-			if (Files.exists(filePath)) {
-				Files.delete(filePath);
-				log.info("File deleted successfully: {}", filename);
-			} else {
-				log.warn("File not found: {}", filename);
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public Resource loadAsResource(String fileName) {
+        try {
+            Path file = load(fileName);
+            Resource resource = new UrlResource(file.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),
+                        "Could not read file: " + fileName);
+            }
+        } catch (MalformedURLException e) {
+            throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),
+                    "Could not read file: " + fileName);
+        }
+    }
 
-	@Override
-	public void deleteAll() {
-		FileSystemUtils.deleteRecursively(rootLocation.toFile());
-	}
+    @Override
+    public void init() {
+        try {
+            Files.createDirectories(rootLocation);
+            log.info("Create dir: {}", rootLocation);
+        } catch (IOException e) {
+            log.error("Could not initialize storage.\nIOException: ", e);
+        }
+    }
+
+    @Override
+    public void deleteByName(String filename) {
+        try {
+
+            Path filePath = rootLocation.resolve(filename);
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                log.info("File deleted successfully: {}", filename);
+            } else {
+                log.warn("File not found: {}", filename);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void deleteAll() {
+        FileSystemUtils.deleteRecursively(rootLocation.toFile());
+    }
 }

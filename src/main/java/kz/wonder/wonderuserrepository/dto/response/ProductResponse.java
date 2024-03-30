@@ -12,8 +12,8 @@ public record ProductResponse(Long id,
                               String name,
                               boolean enabled,
                               List<ProductPriceResponse> prices) {
-	@Builder
-	public record ProductPriceResponse(String cityName, Double price) {
+    @Builder
+    public record ProductPriceResponse(String cityName, Double price) {
 
-	}
+    }
 }

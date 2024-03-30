@@ -12,7 +12,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class Initializer {
 	private final AuthController authController;
-
 	public void init() {
 //		for (int i = 0; i < 5; i++)
 //			authController.registrationAsSeller(getRandomValue());

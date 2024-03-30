@@ -11,44 +11,44 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
 
 @OpenAPIDefinition(
-		info = @Info(
-				contact = @Contact(
-						name = "QIT",
-						email = "akhan.dulatbay@gmail.com",
-						url = ""
-				),
-				description = "OpenApi documentation for Wonder Security",
-				title = "OpenApi specification - QIT",
-				version = "1.0",
-				license = @License(
-						name = "Licence name",
-						url = ""
-				),
-				termsOfService = "Terms of service"
-		),
-		servers = {
-				@Server(
-						description = "Local ENV",
-						url = "/api"
-				),
-				@Server(
-						description = "PROD ENV",
-						url = ""
-				)
-		},
-		security = {
-				@SecurityRequirement(
-						name = "bearerAuth"
-				)
-		}
+        info = @Info(
+                contact = @Contact(
+                        name = "QIT",
+                        email = "akhan.dulatbay@gmail.com",
+                        url = ""
+                ),
+                description = "OpenApi documentation for Wonder Security",
+                title = "OpenApi specification - QIT",
+                version = "1.0",
+                license = @License(
+                        name = "Licence name",
+                        url = ""
+                ),
+                termsOfService = "Terms of service"
+        ),
+        servers = {
+                @Server(
+                        description = "Local ENV",
+                        url = "/api"
+                ),
+                @Server(
+                        description = "PROD ENV",
+                        url = ""
+                )
+        },
+        security = {
+                @SecurityRequirement(
+                        name = "bearerAuth"
+                )
+        }
 )
 @SecurityScheme(
-		name = "bearerAuth",
-		description = "JWT auth description",
-		scheme = "bearer",
-		type = SecuritySchemeType.HTTP,
-		bearerFormat = "JWT",
-		in = SecuritySchemeIn.HEADER
+        name = "bearerAuth",
+        description = "JWT auth description",
+        scheme = "bearer",
+        type = SecuritySchemeType.HTTP,
+        bearerFormat = "JWT",
+        in = SecuritySchemeIn.HEADER
 )
 public class OpenApiConfig {
 }
