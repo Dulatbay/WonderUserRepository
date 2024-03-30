@@ -21,14 +21,13 @@ import org.springframework.context.annotation.Import;
 @RequiredArgsConstructor
 //@EnableFeignClients(basePackages = "kz.wonder.kaspi.client.api")
 public class WonderUserRepositoryApplication {
-	public static void main(String[] args) {
-		SpringApplication.run(WonderUserRepositoryApplication.class, args);
-	}
-
+	private final Initializer initializer;
 	@Value("${application.sync-users}")
 	private Boolean syncUsers;
 
-	private final Initializer initializer;
+	public static void main(String[] args) {
+		SpringApplication.run(WonderUserRepositoryApplication.class, args);
+	}
 
 	@Bean
 	CommandLineRunner init(UserService userService,

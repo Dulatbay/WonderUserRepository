@@ -9,18 +9,19 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 
 public interface StoreEmployeeService {
-    void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest);
-    EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource);
+	void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest);
 
-    StoreEmployee getStoreEmployeeById(Long id);
+	EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource);
 
-    List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak);
+	StoreEmployee getStoreEmployeeById(Long id);
 
-    List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations);
+	List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak);
 
-    StoreEmployee updateStoreEmployee(Long employeeId, Long storeId);
+	List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations);
 
-    StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber);
+	StoreEmployee updateStoreEmployee(Long employeeId, Long storeId);
 
-    void deleteStoreEmployee(StoreEmployee id);
+	StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber);
+
+	void deleteStoreEmployee(StoreEmployee id);
 }

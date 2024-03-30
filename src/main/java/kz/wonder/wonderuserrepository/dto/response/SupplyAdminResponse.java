@@ -12,5 +12,7 @@ public class SupplyAdminResponse {
 	private LocalDateTime supplyCreatedTime;
 	private LocalDateTime supplyAcceptTime;
 	private SupplyState supplyState;
-	public record Seller(String keycloakId, String fullName) {}
+
+	public record Seller(String keycloakId, String fullName) {
+	}
 }

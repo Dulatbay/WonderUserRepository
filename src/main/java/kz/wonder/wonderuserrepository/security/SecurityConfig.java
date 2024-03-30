@@ -33,87 +33,87 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${application.client-id}")
-    private String clientId;
-    private static final String[] WHITE_LIST_URL = {"/api/auth/**",
-            "/v2/api-docs",
-            "/v3/api-docs",
-            "/v3/api-docs/**",
-            "/swagger-resources",
-            "/swagger-resources/**",
-            "/configuration/ui",
-            "/configuration/security",
-            "/swagger-ui/**",
-            "/webjars/**",
-            "/swagger-ui.html",
-            "/auth/**",
-    };
+	private static final String[] WHITE_LIST_URL = {"/api/auth/**",
+			"/v2/api-docs",
+			"/v3/api-docs",
+			"/v3/api-docs/**",
+			"/swagger-resources",
+			"/swagger-resources/**",
+			"/configuration/ui",
+			"/configuration/security",
+			"/swagger-ui/**",
+			"/webjars/**",
+			"/swagger-ui.html",
+			"/auth/**",
+	};
+	@Value("${application.client-id}")
+	private String clientId;
 
-    @Bean
-    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+	@Bean
+	public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+		http
+				.csrf(AbstractHttpConfigurer::disable)
+				.cors(AbstractHttpConfigurer::disable)
 
-                .oauth2ResourceServer((oauth2) -> oauth2
-                        .jwt(Customizer.withDefaults())
-                )
-                .authorizeHttpRequests((auth) -> {
-                    auth
-                            .requestMatchers(HttpMethod.POST, "/box-types")
-                            .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
-                    auth
-                            .requestMatchers(HttpMethod.DELETE, "/box-types")
-                            .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
+				.oauth2ResourceServer((oauth2) -> oauth2
+						.jwt(Customizer.withDefaults())
+				)
+				.authorizeHttpRequests((auth) -> {
+					auth
+							.requestMatchers(HttpMethod.POST, "/box-types")
+							.hasAuthority(KeycloakRole.SUPER_ADMIN.name());
+					auth
+							.requestMatchers(HttpMethod.DELETE, "/box-types")
+							.hasAuthority(KeycloakRole.SUPER_ADMIN.name());
 
-                    auth.requestMatchers(WHITE_LIST_URL)
-                            .permitAll();
+					auth.requestMatchers(WHITE_LIST_URL)
+							.permitAll();
 
-                    auth
-                            .anyRequest()
-                            .authenticated();
-                })
-        ;
+					auth
+							.anyRequest()
+							.authenticated();
+				})
+		;
 
-        http
-                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+		http
+				.sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> {
-                    httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(new CustomAccessDeniedHandler());
-                }
-        );
+		http.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> {
+					httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(new CustomAccessDeniedHandler());
+				}
+		);
 
-        http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);
+		http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);
 
-        return http.build();
-    }
-
-
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverterForKeycloak() {
-        Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter = jwt -> {
-            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-            Object client = resourceAccess.get(clientId);
-
-            if (client == null)
-                return List.of();
+		return http.build();
+	}
 
 
-            @SuppressWarnings("unchecked")
-            LinkedTreeMap<String, List<String>> clientRoleMap = (LinkedTreeMap<String, List<String>>) client;
+	@Bean
+	public JwtAuthenticationConverter jwtAuthenticationConverterForKeycloak() {
+		Converter<Jwt, Collection<GrantedAuthority>> jwtGrantedAuthoritiesConverter = jwt -> {
+			Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+			Object client = resourceAccess.get(clientId);
 
-            List<String> clientRoles = new ArrayList<>(clientRoleMap.get("roles"));
+			if (client == null)
+				return List.of();
 
 
-            return clientRoles.stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
-        };
+			@SuppressWarnings("unchecked")
+			LinkedTreeMap<String, List<String>> clientRoleMap = (LinkedTreeMap<String, List<String>>) client;
 
-        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+			List<String> clientRoles = new ArrayList<>(clientRoleMap.get("roles"));
 
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
 
-        return jwtAuthenticationConverter;
-    }
+			return clientRoles.stream()
+					.map(SimpleGrantedAuthority::new)
+					.collect(Collectors.toList());
+		};
+
+		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+
+		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+
+		return jwtAuthenticationConverter;
+	}
 }

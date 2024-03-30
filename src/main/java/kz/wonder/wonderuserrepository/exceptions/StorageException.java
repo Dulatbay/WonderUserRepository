@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 public class StorageException extends RuntimeException {
-    private final String error;
-    private final String message;
+	private final String error;
+	private final String message;
 }

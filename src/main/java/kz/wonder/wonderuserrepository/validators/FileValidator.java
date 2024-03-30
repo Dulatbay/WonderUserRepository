@@ -6,30 +6,30 @@ import org.springframework.web.multipart.MultipartFile;
 
 public class FileValidator implements ConstraintValidator<ValidFile, MultipartFile> {
 
-    @Override
-    public void initialize(ValidFile constraintAnnotation) {
+	@Override
+	public void initialize(ValidFile constraintAnnotation) {
 
-    }
+	}
 
-    @Override
-    public boolean isValid(MultipartFile multipartFile, ConstraintValidatorContext context) {
-        if (multipartFile == null)
-            return false;
+	@Override
+	public boolean isValid(MultipartFile multipartFile, ConstraintValidatorContext context) {
+		if (multipartFile == null)
+			return false;
 
-        boolean result = true;
+		boolean result = true;
 
-        String contentType = multipartFile.getContentType();
+		String contentType = multipartFile.getContentType();
 
-        if (contentType == null || !isSupportedContentType(contentType)) {
-            result = false;
-        }
+		if (contentType == null || !isSupportedContentType(contentType)) {
+			result = false;
+		}
 
-        return result;
-    }
+		return result;
+	}
 
-    private boolean isSupportedContentType(String contentType) {
-        return contentType.equals("image/png")
-                || contentType.equals("image/jpg")
-                || contentType.equals("image/jpeg");
-    }
+	private boolean isSupportedContentType(String contentType) {
+		return contentType.equals("image/png")
+				|| contentType.equals("image/jpg")
+				|| contentType.equals("image/jpeg");
+	}
 }

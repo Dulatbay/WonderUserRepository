@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 public class DbObjectNotFoundException extends RuntimeException {
-    private HttpStatus httpStatus;
-    private final String error;
-    private final String message;
+	private final String error;
+	private final String message;
+	private HttpStatus httpStatus;
 }

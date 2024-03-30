@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface StoreEmployeeRepository extends JpaRepository<StoreEmployee, Long> {
 	List<StoreEmployee> findAllByKaspiStoreId(Long storeId);
+
 	boolean existsByWonderUserPhoneNumber(String phoneNumber);
+
 	Optional<StoreEmployee> findByWonderUserKeycloakId(String keycloakId);
 }

@@ -1,9 +1,7 @@
 package kz.wonder.wonderuserrepository.config;
 
 import kz.wonder.wonderuserrepository.controllers.AuthController;
-import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
@@ -14,6 +12,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class Initializer {
 	private final AuthController authController;
+
 	public void init() {
 //		for (int i = 0; i < 5; i++)
 //			authController.registrationAsSeller(getRandomValue());

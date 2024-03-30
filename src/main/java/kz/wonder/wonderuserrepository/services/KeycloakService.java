@@ -1,7 +1,5 @@
 package kz.wonder.wonderuserrepository.services;
 
-import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
-import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
@@ -12,17 +10,19 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 
 public interface KeycloakService {
-    UserRepresentation createUserByRole(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole);
-    AuthResponse getAuthResponse(String email, String password);
+	UserRepresentation createUserByRole(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole);
 
-    void deleteUserById(String userId);
+	AuthResponse getAuthResponse(String email, String password);
 
-    List<UserRepresentation> getAllUsers();
+	void deleteUserById(String userId);
 
-    List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
+	List<UserRepresentation> getAllUsers();
 
-    UserResource getUserById(String id);
-    UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
+	List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
 
-    void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
+	UserResource getUserById(String id);
+
+	UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
+
+	void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
 }

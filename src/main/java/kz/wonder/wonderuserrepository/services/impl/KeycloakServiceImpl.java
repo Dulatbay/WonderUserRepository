@@ -35,17 +35,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KeycloakServiceImpl implements KeycloakService {
 
+	private final Keycloak keycloak;
 	@Value("${application.realm}")
 	private String realm;
-
 	@Value("${application.client-id}")
 	private String clintId;
-
 	@Value("${application.keycloak-url}")
 	private String keycloakUrl;
-
-	private final Keycloak keycloak;
-
 
 	@Override
 	public UserRepresentation createUserByRole(KeycloakBaseUser sellerRegistrationRequest, KeycloakRole keycloakRole) {

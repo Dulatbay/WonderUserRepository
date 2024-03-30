@@ -10,10 +10,10 @@ import java.util.UUID;
 @Data
 @Builder
 public class ProductStorageResponse {
+	List<Product> products;
 	private Long supplyId;
 	private Long storeId;
 	private String storeAddress;
-	List<Product> products;
 
 	@Data
 	@Builder

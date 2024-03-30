@@ -10,9 +10,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = {FileValidator.class})
 public @interface ValidFile {
-    String message() default "Only PNG or JPG images are allowed";
+	String message() default "Only PNG or JPG images are allowed";
 
-    Class<?>[] groups() default {};
+	Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+	Class<? extends Payload>[] payload() default {};
 }

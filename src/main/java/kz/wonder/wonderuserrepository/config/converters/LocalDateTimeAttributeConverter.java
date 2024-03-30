@@ -16,7 +16,7 @@ public class LocalDateTimeAttributeConverter implements AttributeConverter<Local
 
 	@Override
 	public Long convertToDatabaseColumn(LocalDateTime locDateTime) {
-		if(locDateTime == null) return null;
+		if (locDateTime == null) return null;
 		var epoch = locDateTime.atZone(ZONE_ID).toInstant().getEpochSecond();
 		log.info("locDateTime: {}, epoch: {}", locDateTime, epoch);
 		return epoch;

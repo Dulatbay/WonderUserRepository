@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class KeycloakError {
-    private String errorMessage;
+	private String errorMessage;
 }

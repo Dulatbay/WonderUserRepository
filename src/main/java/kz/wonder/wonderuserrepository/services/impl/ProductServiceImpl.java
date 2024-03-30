@@ -52,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
 				rowIterator.next();
 				rowIterator.next();
 			}
-			if(!rowIterator.hasNext())
+			if (!rowIterator.hasNext())
 				throw new IllegalArgumentException("Send file by requirements!!");
 			while (rowIterator.hasNext()) {
 				Row row = rowIterator.next();

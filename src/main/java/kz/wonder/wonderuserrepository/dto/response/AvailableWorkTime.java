@@ -6,8 +6,8 @@ import lombok.Data;
 @Data
 @Builder
 public class AvailableWorkTime {
-    private Long id;
-    private Integer dayOfWeek;
-    private String openTime;
-    private String closeTime;
+	private Long id;
+	private Integer dayOfWeek;
+	private String openTime;
+	private String closeTime;
 }

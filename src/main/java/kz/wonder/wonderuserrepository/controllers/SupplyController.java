@@ -88,7 +88,7 @@ public class SupplyController {
 
 	@GetMapping("/employee/products")
 	public ResponseEntity<ProductStorageResponse> getSuppliesEmployee(@RequestParam("supply-id")
-	                                                                        Long supplyId) {
+	                                                                  Long supplyId) {
 		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		var keycloakId = Utils.extractIdFromToken(token);
 

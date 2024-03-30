@@ -16,16 +16,16 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/cities")
 public class CityController {
-    private final CityService cityService;
+	private final CityService cityService;
 
-    @GetMapping()
-    public ResponseEntity<List<KaspiCity>> getCities() {
-        return ResponseEntity.ok(cityService.getAllCities());
-    }
+	@GetMapping()
+	public ResponseEntity<List<KaspiCity>> getCities() {
+		return ResponseEntity.ok(cityService.getAllCities());
+	}
 
-    @PostMapping("/sync")
-    public ResponseEntity<Void> sync() {
-        cityService.syncWithKaspi();
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+	@PostMapping("/sync")
+	public ResponseEntity<Void> sync() {
+		cityService.syncWithKaspi();
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
 }

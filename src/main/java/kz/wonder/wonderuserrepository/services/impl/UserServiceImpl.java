@@ -116,7 +116,7 @@ public class UserServiceImpl implements UserService {
 				.toList();
 		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
 
-		if(!usersToDeleteFromDB.isEmpty()){
+		if (!usersToDeleteFromDB.isEmpty()) {
 			userRepository.deleteAll(usersToDeleteFromDB);
 			entityManager.flush();
 			entityManager.clear();

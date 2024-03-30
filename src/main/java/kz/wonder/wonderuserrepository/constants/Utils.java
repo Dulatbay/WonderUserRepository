@@ -14,19 +14,20 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.USER_ID_CL
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Utils {
-    public static String extractIdFromToken(JwtAuthenticationToken token){
-        return token.getToken().getClaim(USER_ID_CLAIM);
-    }
+	public static String extractIdFromToken(JwtAuthenticationToken token) {
+		return token.getToken().getClaim(USER_ID_CLAIM);
+	}
 
-    public static String getStringFromExcelCell(Cell vendorCodeCell) {
-        return vendorCodeCell.getCellType() == CellType.NUMERIC ?
-                String.valueOf(vendorCodeCell.getNumericCellValue()) :
-                vendorCodeCell.getStringCellValue();
-    }
-    public static List<String> getAuthorities(Collection<GrantedAuthority> authorities){
-        return authorities
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-    }
+	public static String getStringFromExcelCell(Cell vendorCodeCell) {
+		return vendorCodeCell.getCellType() == CellType.NUMERIC ?
+				String.valueOf(vendorCodeCell.getNumericCellValue()) :
+				vendorCodeCell.getStringCellValue();
+	}
+
+	public static List<String> getAuthorities(Collection<GrantedAuthority> authorities) {
+		return authorities
+				.stream()
+				.map(GrantedAuthority::getAuthority)
+				.toList();
+	}
 }

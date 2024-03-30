@@ -11,8 +11,8 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.DATE_TIME_
 
 public class LocalDateTimeSerializer extends JsonSerializer<LocalDateTime> {
 
-    @Override
-    public void serialize(LocalDateTime value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        gen.writeString(value.format(DATE_TIME_FORMATTER));
-    }
+	@Override
+	public void serialize(LocalDateTime value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+		gen.writeString(value.format(DATE_TIME_FORMATTER));
+	}
 }

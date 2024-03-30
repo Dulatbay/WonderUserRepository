@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
-    List<KaspiStore> findAllByWonderUserKeycloakId(String id);
-    Optional<KaspiStore> findByWonderUserKeycloakIdAndId(String keycloakId, Long id);
+	List<KaspiStore> findAllByWonderUserKeycloakId(String id);
+
+	Optional<KaspiStore> findByWonderUserKeycloakIdAndId(String keycloakId, Long id);
 }

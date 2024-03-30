@@ -5,7 +5,9 @@ import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import java.util.List;
 
 public interface CityService {
-    void syncWithKaspi();
-    List<KaspiCity> getAllCities();
-    KaspiCity getKaspiCityByName(String name);
+	void syncWithKaspi();
+
+	List<KaspiCity> getAllCities();
+
+	KaspiCity getKaspiCityByName(String name);
 }

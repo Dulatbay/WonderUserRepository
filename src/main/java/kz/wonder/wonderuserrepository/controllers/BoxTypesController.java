@@ -17,23 +17,23 @@ import java.util.List;
 @RequestMapping("/box-types")
 public class BoxTypesController {
 
-    private final BoxTypeService boxTypeService;
+	private final BoxTypeService boxTypeService;
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> create(@ModelAttribute @Valid BoxTypeCreateRequest boxTypeCreateRequest) {
-        boxTypeService.createBoxType(boxTypeCreateRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Void> create(@ModelAttribute @Valid BoxTypeCreateRequest boxTypeCreateRequest) {
+		boxTypeService.createBoxType(boxTypeCreateRequest);
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
 
-    @GetMapping
-    public ResponseEntity<List<BoxTypeResponse>> getAll() {
-        return ResponseEntity.ok(boxTypeService.getAll());
-    }
+	@GetMapping
+	public ResponseEntity<List<BoxTypeResponse>> getAll() {
+		return ResponseEntity.ok(boxTypeService.getAll());
+	}
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        boxTypeService.deleteById(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
+	@DeleteMapping("{id}")
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		boxTypeService.deleteById(id);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
 
 }

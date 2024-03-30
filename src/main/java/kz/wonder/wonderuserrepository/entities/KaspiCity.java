@@ -11,18 +11,18 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Table(name = "kaspi_city", schema = schemaName)
 @Entity
 public class KaspiCity extends AbstractEntity<Long> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(name = "name", unique = true)
-    private String name;
+	@Column(name = "name", unique = true)
+	private String name;
 
-    @Column(name = "code", unique = true)
-    private String code;
+	@Column(name = "code", unique = true)
+	private String code;
 
-    @Column
-    private boolean enabled;
+	@Column
+	private boolean enabled;
 }
 
 
