@@ -21,79 +21,78 @@ import java.util.Arrays;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-    @ExceptionHandler(DbObjectNotFoundException.class)
-    public ResponseEntity<ErrorDto> handlePositionNotFoundException(DbObjectNotFoundException ex) {
-        log.error("DbObjectNotFoundException exception: ", ex);
-        ErrorDto errorResponse = new ErrorDto(ex.getError(), ex.getMessage(), getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-    }
+	@ExceptionHandler(DbObjectNotFoundException.class)
+	public ResponseEntity<ErrorDto> handlePositionNotFoundException(DbObjectNotFoundException ex) {
+		log.error("DbObjectNotFoundException exception: ", ex);
+		ErrorDto errorResponse = new ErrorDto(ex.getError(), ex.getMessage(), getStackTrace(ex));
+		return ResponseEntity.status(ex.getHttpStatus()).body(errorResponse);
+	}
 
 
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorDto> argumentExceptionHandler(IllegalArgumentException e) {
+		log.error("Argument exception: ", e);
+		var errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.toString(), e.getMessage(), getStackTrace(e));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorDto> argumentExceptionHandler(IllegalArgumentException e) {
-        log.error("Argument exception: ", e);
-        var errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.toString(), e.getMessage(), getStackTrace(e));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
 
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<ErrorDto> handleValidationErrors(MethodArgumentNotValidException ex) {
+		log.error("MethodArgumentNotValidException exception: ", ex);
+		String error = ex.getBindingResult().getFieldErrors().getFirst().getDefaultMessage();
+		ErrorDto errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.getReasonPhrase(), error, getStackTrace(ex));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorDto> handleValidationErrors(MethodArgumentNotValidException ex) {
-        log.error("MethodArgumentNotValidException exception: ", ex);
-        String error = ex.getBindingResult().getFieldErrors().getFirst().getDefaultMessage();
-        ErrorDto errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.getReasonPhrase(), error, getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
+	@ExceptionHandler(ClientErrorException.class)
+	public ResponseEntity<ErrorDto> handleValidationErrors(ClientErrorException ex) {
+		log.error("ClientErrorException exception: ", ex);
+		ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
 
-    @ExceptionHandler(ClientErrorException.class)
-    public ResponseEntity<ErrorDto> handleValidationErrors(ClientErrorException ex) {
-        log.error("ClientErrorException exception: ", ex);
-        ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
+	@ExceptionHandler(BadRequestException.class)
+	public ResponseEntity<ErrorDto> handleValidationErrors(BadRequestException ex) {
+		log.error("BadRequestException exception: ", ex);
+		ErrorDto errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage(), getStackTrace(ex));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorDto> handleValidationErrors(BadRequestException ex) {
-        log.error("BadRequestException exception: ", ex);
-        ErrorDto errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage(), getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
+	@ExceptionHandler(NotFoundException.class)
+	public ResponseEntity<ErrorDto> handleValidationErrors(NotFoundException ex) {
+		log.error("NotFoundException exception: ", ex);
+		ErrorDto errorResponse = new ErrorDto(HttpStatus.NOT_FOUND.getReasonPhrase(), ex.getMessage(), getStackTrace(ex));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorDto> handleValidationErrors(NotFoundException ex) {
-        log.error("NotFoundException exception: ", ex);
-        ErrorDto errorResponse = new ErrorDto(HttpStatus.NOT_FOUND.getReasonPhrase(), ex.getMessage(), getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
+	@ExceptionHandler(NotAuthorizedException.class)
+	public ResponseEntity<ErrorDto> handleValidationErrors(NotAuthorizedException ex) {
+		log.error("NotAuthorizedException exception: ", ex);
+		ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+	}
 
-    @ExceptionHandler(NotAuthorizedException.class)
-    public ResponseEntity<ErrorDto> handleValidationErrors(NotAuthorizedException ex) {
-        log.error("NotAuthorizedException exception: ", ex);
-        ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-    }
+	@ExceptionHandler(FileUploadException.class)
+	public ResponseEntity<ErrorDto> handleValidationErrors(FileUploadException ex) {
+		log.error("FileUploadException exception: ", ex);
+		ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+	}
 
-    @ExceptionHandler(FileUploadException.class)
-    public ResponseEntity<ErrorDto> handleValidationErrors(FileUploadException ex) {
-        log.error("FileUploadException exception: ", ex);
-        ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
+	private static String getStackTrace(Throwable e) {
+		filterStackTracesByProjectPackage(e);
+		filterStackTracesByProjectPackage(e.getCause());
+		return ExceptionUtils.getStackTrace(e).trim();
+	}
 
-    private static String getStackTrace(Throwable e) {
-        filterStackTracesByProjectPackage(e);
-        filterStackTracesByProjectPackage(e.getCause());
-        return ExceptionUtils.getStackTrace(e).trim();
-    }
+	private static void filterStackTracesByProjectPackage(Throwable ex) {
+		if (ex == null) return;
 
-    private static void filterStackTracesByProjectPackage(Throwable ex) {
-        if (ex == null) return;
+		StackTraceElement[] stackTraces = Arrays.stream(ex.getStackTrace())
+				.filter(se -> se.getClassName().startsWith("com."))
+				.toArray(StackTraceElement[]::new);
 
-        StackTraceElement[] stackTraces = Arrays.stream(ex.getStackTrace())
-                .filter(se -> se.getClassName().startsWith("com."))
-                .toArray(StackTraceElement[]::new);
-
-        ex.setStackTrace(stackTraces);
-    }
+		ex.setStackTrace(stackTraces);
+	}
 }

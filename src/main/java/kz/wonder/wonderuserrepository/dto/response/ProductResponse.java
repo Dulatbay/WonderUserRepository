@@ -1,9 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 

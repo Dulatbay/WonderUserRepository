@@ -1,13 +1,16 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
+import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +31,10 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final KeycloakService keycloakService;
 	private final KaspiApi kaspiApi;
+	private final EntityManager entityManager;
 
 	@Override
-	public void createUser(SellerRegistrationRequest sellerRegistrationRequest) {
+	public void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest) {
 		if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
 			throw new IllegalArgumentException("Token is invalid");
 		if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
@@ -52,6 +56,7 @@ public class UserServiceImpl implements UserService {
 		// todo: возвращает 401 если token is null
 		kaspiTokenRepository.save(kaspiToken);
 	}
+
 
 	@Override
 	public WonderUser getUserByKeycloakId(String keycloakId) {
@@ -75,7 +80,6 @@ public class UserServiceImpl implements UserService {
 
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
 				.filter(user -> {
-							log.info("email: {}", user.getEmail());
 							if (user.getEmail().equals("tester@mail.ru")) {
 								testerUserId.set(user.getId());
 								return false;
@@ -110,6 +114,14 @@ public class UserServiceImpl implements UserService {
 									.equals(user.getKeycloakId()));
 				})
 				.toList();
+		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
+
+		if(!usersToDeleteFromDB.isEmpty()){
+			userRepository.deleteAll(usersToDeleteFromDB);
+			entityManager.flush();
+			entityManager.clear();
+		}
+
 
 		log.info("Test user exists in db: {}, test user exists in keycloak: {}", testUserExists.get(), !testerUserId.get().isEmpty());
 
@@ -117,32 +129,26 @@ public class UserServiceImpl implements UserService {
 
 		if (!testUserExists.get()) {
 			if (testerUserId.get().isEmpty()) {
-				var keycloakTester = keycloakService.createTester(
-						SellerRegistrationRequest
-								.builder()
-								.email("tester@mail.ru")
-								.password("test_tester")
-								.firstName("test")
-								.lastName("test")
-								.phoneNumber("test")
-								.sellerId("test")
-								.sellerName("test")
-								.tokenKaspi("token")
-								.build());
-
+				var keycloakUser = new KeycloakBaseUser();
+				keycloakUser.setEmail("tester@mail.ru");
+				keycloakUser.setPassword("test_tester");
+				keycloakUser.setEmail("tester@mail.ru");
+				keycloakUser.setFirstName("test");
+				keycloakUser.setLastName("test");
+				var keycloakTester = keycloakService.createUserByRole(keycloakUser,
+						KeycloakRole.SUPER_ADMIN
+				);
 				testerUserId.set(keycloakTester.getId());
 			}
 
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
-			log.info("New tester created");
 			userRepository.save(wonderUser);
+			log.info("New tester created");
 		}
 
-		log.info("usersToDeleteFromKeycloak: {}, usersToDeleteFromDB: {}", usersToDeleteFromKeycloak.size(), usersToDeleteFromDB.size());
 
-		userRepository.deleteAll(usersToDeleteFromDB);
 	}
 
 

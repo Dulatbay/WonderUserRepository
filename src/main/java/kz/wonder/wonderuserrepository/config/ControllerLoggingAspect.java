@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -38,11 +39,12 @@ public class ControllerLoggingAspect {
 	}
 
 	private String getCurrentRequestToken() {
-		var tokenAuth = SecurityContextHolder.getContext().getAuthentication();
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-		if (tokenAuth == null || !tokenAuth.getAuthorities().isEmpty())
-			return "Anonymous";
-		var jwt = (JwtAuthenticationToken) tokenAuth;
-		return jwt.getName();
+		if (authentication instanceof JwtAuthenticationToken jwtToken) {
+			return jwtToken.getName();
+		}
+
+		return "Anonymous";
 	}
 }

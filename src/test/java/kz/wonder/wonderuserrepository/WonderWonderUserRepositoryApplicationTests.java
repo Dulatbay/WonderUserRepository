@@ -39,17 +39,17 @@ class WonderWonderUserRepositoryApplicationTests {
 	private static final String BOX_TYPES = "/box-types";
 
 	private SellerRegistrationRequest getRandomUser() {
-		return SellerRegistrationRequest
-				.builder()
-				.email("tester@mail.ru")
-				.password("test_tester")
-				.firstName("test")
-				.lastName("test")
-				.phoneNumber("test2")
-				.sellerId("test2")
-				.sellerName("test2")
-				.tokenKaspi("token2")
-				.build();
+		var seller = new SellerRegistrationRequest();
+		seller.setEmail("tester@mail.ru");
+		seller.setPassword("test_tester");
+		seller.setEmail("tester@mail.ru");
+		seller.setFirstName("tester");
+		seller.setLastName("testorovich");
+		seller.setPhoneNumber("ttt");
+		seller.setSellerId("ttt");
+		seller.setSellerName("test");
+		seller.setTokenKaspi("test");
+		return seller;
 	}
 
 	private static UserAuthRequest getAuthRequest() {

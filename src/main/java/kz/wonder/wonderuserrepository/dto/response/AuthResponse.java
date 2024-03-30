@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 

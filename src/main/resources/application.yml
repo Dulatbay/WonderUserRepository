@@ -17,12 +17,13 @@ spring:
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     generate-ddl: true
     defer-datasource-initialization: true
+    show-sql: false
   sql:
     init:
       mode: always

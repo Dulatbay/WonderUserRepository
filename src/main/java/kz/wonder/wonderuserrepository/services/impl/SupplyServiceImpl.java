@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @Slf4j
@@ -32,6 +33,8 @@ public class SupplyServiceImpl implements SupplyService {
 	private final BoxTypeRepository boxTypeRepository;
 	private final UserRepository userRepository;
 	private final SupplyRepository supplyRepository;
+	private final StoreEmployeeRepository storeEmployeeRepository;
+
 
 	@Override
 	public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -87,6 +90,7 @@ public class SupplyServiceImpl implements SupplyService {
 		supply.setKaspiStore(store);
 		supply.setSupplyState(SupplyState.START);
 		supply.setSupplyBoxes(new ArrayList<>());
+		supply.setSelectedTime(createRequest.getSelectedTime());
 
 		createRequest.getSelectedBoxes()
 				.forEach(selectedBox -> {
@@ -131,8 +135,7 @@ public class SupplyServiceImpl implements SupplyService {
 
 	@Override
 	public List<SupplyProductResponse> getSuppliesDetail(Long id) {
-		var supply = supplyRepository.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Supply doesn't exist"));
+		var supply = findSupplyById(id);
 
 		var supplyProductsRes = new ArrayList<SupplyProductResponse>();
 
@@ -187,6 +190,114 @@ public class SupplyServiceImpl implements SupplyService {
 		processSupplyBoxes(supply, supplyReportResponseMap);
 
 		return new ArrayList<>(supplyReportResponseMap.values());
+	}
+
+	@Override
+	public List<SupplyStorageResponse> getSuppliesOfStorage(Long employeeId, LocalDate startDate, LocalDate endDate) {
+
+		long startUnixTimestamp = startDate.atStartOfDay().atZone(ZONE_ID).toInstant().getEpochSecond();
+		long endUnixTimestamp = endDate.atStartOfDay().plusDays(1).atZone(ZONE_ID).toInstant().getEpochSecond();
+
+
+		var supplies = supplyRepository.findAllSuppliesOfStorage(
+				employeeId, startUnixTimestamp, endUnixTimestamp);
+
+		var suppliesByDayOfWeek = getSuppliesByDay(supplies);
+
+		return suppliesByDayOfWeek.entrySet()
+				.stream().map(
+						entry -> SupplyStorageResponse.builder()
+								.date(entry.getKey())
+								.supplies(entry.getValue()
+										.stream()
+										.map(this::buildSupplyOfStorageResponse)
+										.collect(Collectors.toList()))
+								.build()
+				).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate) {
+		var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store employee doesn't exist", "Create store employee"));
+		return this.getSuppliesOfStorage(storeEmployee.getId(), startDate, endDate);
+	}
+
+	@Override
+	public ProductStorageResponse getSuppliesProducts(String keycloakId, Long supplyId) {
+		final var storeEmployee = findStoreEmployeeByKeycloakId(keycloakId);
+		final var supply = findSupplyById(supplyId);
+		validateStoreEmployeeAndSupply(storeEmployee, supply);
+
+		return ProductStorageResponse.builder()
+				.storeId(supply.getKaspiStore().getId())
+				.supplyId(supplyId)
+				.products(buildProducts(supply))
+				.storeAddress(createStoreAddress(supply))
+				.build();
+	}
+
+	private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
+		return storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store employee doesn't exist", "Create store employee"));
+	}
+
+	private Supply findSupplyById(Long supplyId) {
+		return supplyRepository.findById(supplyId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Supply doesn't exist", "Try with another params"));
+	}
+
+	private void validateStoreEmployeeAndSupply(StoreEmployee storeEmployee, Supply supply) {
+		if (!Objects.equals(supply.getKaspiStore().getId(), storeEmployee.getKaspiStore().getId())) {
+			throw new IllegalArgumentException("Supply doesn't exist");
+		}
+	}
+
+	private ArrayList<ProductStorageResponse.Product> buildProducts(Supply supply) {
+		ArrayList<ProductStorageResponse.Product> products = new ArrayList<>();
+
+		supply.getSupplyBoxes().forEach(supplyBox ->
+				supplyBox.getSupplyBoxProducts().forEach(supplyBoxProducts -> {
+					var product = ProductStorageResponse.Product.builder()
+							.article(supplyBoxProducts.getArticle())
+							.productStateInStore(supplyBoxProducts.getState())
+							.typeOfBoxName(supplyBox.getBoxType().getName())
+							.vendorCodeOfBox(supplyBox.getVendorCode())
+							.vendorCode(supplyBoxProducts.getProduct().getVendorCode())
+							.name(supplyBoxProducts.getProduct().getName())
+							.build();
+					products.add(product);
+				})
+		);
+
+		return products;
+	}
+
+	private String createStoreAddress(Supply supply) {
+		return supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment();
+	}
+
+	private SupplyStorageResponse.Supply buildSupplyOfStorageResponse(Supply supply) {
+		var author = supply.getAuthor();
+		return SupplyStorageResponse.Supply.builder()
+				.supplyId(supply.getId())
+				.sellerId(author.getId())
+				.sellerName(author.getKaspiToken() != null ? author.getKaspiToken().getSellerName() : "N/A")
+				.supplyState(supply.getSupplyState())
+				.build();
+	}
+
+	private Map<LocalDate, List<Supply>> getSuppliesByDay(List<Supply> supplies) {
+		Map<LocalDate, List<Supply>> suppliesPerDayOfWeek = new HashMap<>();
+
+
+		for (Supply supply : supplies) {
+			var createdDate = supply.getSelectedTime().toLocalDate();
+			var suppliesInDayOfWeek = suppliesPerDayOfWeek.getOrDefault(createdDate, new ArrayList<>());
+			suppliesInDayOfWeek.add(supply);
+			suppliesPerDayOfWeek.put(createdDate, suppliesInDayOfWeek);
+		}
+		return suppliesPerDayOfWeek;
 	}
 
 	private void processSupplyBoxes(Supply supply, Map<Long, SupplyReportResponse> reportMap) {

@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 import kz.wonder.wonderuserrepository.entities.KaspiCity;
-import kz.wonder.wonderuserrepository.entities.KaspiStore;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
