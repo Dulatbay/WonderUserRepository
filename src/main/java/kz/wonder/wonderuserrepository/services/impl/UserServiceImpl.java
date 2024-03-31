@@ -132,7 +132,6 @@ public class UserServiceImpl implements UserService {
 				var keycloakUser = new KeycloakBaseUser();
 				keycloakUser.setEmail("tester@mail.ru");
 				keycloakUser.setPassword("test_tester");
-				keycloakUser.setEmail("tester@mail.ru");
 				keycloakUser.setFirstName("test");
 				keycloakUser.setLastName("test");
 				var keycloakTester = keycloakService.createUserByRole(keycloakUser,
