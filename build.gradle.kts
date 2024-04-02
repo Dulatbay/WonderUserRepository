@@ -70,6 +70,12 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
 
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
+
+    // Для обработки аннотаций @Xml* при компиляции
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:2.3.3")
+
 }
 
 dependencyManagement {

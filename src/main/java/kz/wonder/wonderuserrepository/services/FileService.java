@@ -3,6 +3,8 @@ package kz.wonder.wonderuserrepository.services;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 public interface FileService {
     String save(MultipartFile file);
 
@@ -13,4 +15,7 @@ public interface FileService {
     void deleteByName(String url);
 
     void deleteAll();
+
+
+    String save(byte[] bytes, String fileExtension) throws IOException;
 }

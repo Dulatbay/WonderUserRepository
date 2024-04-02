@@ -1,14 +1,19 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.KaspiCity;
+import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.Product;
 import kz.wonder.wonderuserrepository.entities.ProductPrice;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
+import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductPriceRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductRepository;
+import kz.wonder.wonderuserrepository.services.FileService;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,6 +45,10 @@ public class ProductServiceImpl implements ProductService {
 	private final ProductRepository productRepository;
 	private final ProductPriceRepository productPriceRepository;
 	private final KaspiCityRepository kaspiCityRepository;
+	private final KaspiTokenRepository kaspiTokenRepository;
+	private final FileService fileService;
+	private static final String XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
+	private static final String JAXB_SCHEMA_LOCATION = "kaspiShopping http://kaspi.kz/kaspishopping.xsd";
 
 
 	@Override
@@ -52,7 +66,7 @@ public class ProductServiceImpl implements ProductService {
 				rowIterator.next();
 				rowIterator.next();
 			}
-			if(!rowIterator.hasNext())
+			if (!rowIterator.hasNext())
 				throw new IllegalArgumentException("Send file by requirements!!");
 			while (rowIterator.hasNext()) {
 				Row row = rowIterator.next();
@@ -120,6 +134,90 @@ public class ProductServiceImpl implements ProductService {
 	public List<ProductResponse> getProductsByKeycloakId(String keycloakUserId) {
 		return productRepository.findAllByKeycloakId(keycloakUserId)
 				.stream().map(this::mapToResponse).collect(Collectors.toList());
+	}
+
+
+	@Override
+	public String generateOfProductsXmlByKeycloakId(String keycloakId) throws IOException, JAXBException {
+		final var listOfProducts = productRepository.findAllByKeycloakId(keycloakId);
+		final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
+						"Kaspi token doesn't exists",
+						"Create your kaspi token before request"));
+		KaspiCatalog kaspiCatalog = buildKaspiCatalog(listOfProducts, kaspiToken);
+
+		log.info("keycloakId: {}, kaspiCatalog: {}", keycloakId, kaspiCatalog);
+		Marshaller marshaller = initJAXBContextAndProperties();
+		String xmlContent = marshalObjectToXML(kaspiCatalog, marshaller);
+		return fileService.save(xmlContent.getBytes(), "xml");
+	}
+
+	private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
+		KaspiCatalog kaspiCatalog = new KaspiCatalog();
+		kaspiCatalog.setCompany(kaspiToken.getSellerName());
+		kaspiCatalog.setMerchantid(kaspiToken.getSellerId());
+		kaspiCatalog.setOffers(getOffers(listOfProducts));
+		return kaspiCatalog;
+	}
+
+	private Marshaller initJAXBContextAndProperties() throws JAXBException {
+		JAXBContext context = JAXBContext.newInstance(KaspiCatalog.class);
+		Marshaller marshaller = context.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		marshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, JAXB_SCHEMA_LOCATION);
+		marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new NamespacePrefixMapper() {
+			@Override
+			public String getPreferredPrefix(String namespaceUri, String suggestion, boolean requirePrefix) {
+				if (XML_SCHEMA_INSTANCE.equals(namespaceUri)) {
+					return "xsi";
+				}
+				return suggestion;
+			}
+
+			@Override
+			public String[] getPreDeclaredNamespaceUris() {
+				return new String[]{XML_SCHEMA_INSTANCE};
+			}
+		});
+		return marshaller;
+	}
+
+	private List<KaspiCatalog.Offer> getOffers(List<Product> listOfProducts) {
+		return listOfProducts.stream().map(this::mapToOffer).collect(Collectors.toList());
+	}
+
+	private String marshalObjectToXML(KaspiCatalog kaspiCatalog, Marshaller marshaller) throws JAXBException {
+		StringWriter writer = new StringWriter();
+		marshaller.marshal(kaspiCatalog, writer);
+		return writer.toString();
+	}
+
+	private KaspiCatalog.Offer mapToOffer(Product product) {
+		KaspiCatalog.Offer offer = new KaspiCatalog.Offer();
+		offer.setSku(product.getVendorCode());
+		offer.setModel(product.getName());
+
+		List<KaspiCatalog.Offer.Availability> availabilities = product.getPrices().stream()
+				.map(price -> {
+					KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
+					availability.setAvailable(price.getPrice() != null ? "yes" : "no");
+					availability.setStoreId(price.getKaspiCity().getId().toString());
+					return availability;
+				})
+				.toList();
+
+		List<KaspiCatalog.Offer.CityPrice> cityPrices = product.getPrices().stream()
+				.map(price -> {
+					KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
+					cityPrice.setCityId(price.getKaspiCity().getId().toString());
+					cityPrice.setPrice(price.getPrice().toString());
+					return cityPrice;
+				})
+				.toList();
+
+		offer.setAvailabilities(availabilities);
+		offer.setCityprices(cityPrices);
+		return offer;
 	}
 
 	private ProductResponse mapToResponse(Product product) {
