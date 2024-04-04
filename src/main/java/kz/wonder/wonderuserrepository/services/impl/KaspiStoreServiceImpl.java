@@ -300,8 +300,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 						HttpStatus.BAD_REQUEST.getReasonPhrase(),
 						"Store doesn't exist"));
 
-		if (!isSuperAdmin && store.getWonderUser().getKeycloakId().equals(keycloakId))
-			throw new IllegalStateException("Store doesn't exist");
+		if (!isSuperAdmin && !store.getWonderUser().getKeycloakId().equals(keycloakId))
+			throw new IllegalArgumentException("Store doesn't exist");
 
 		return mapToDetailResponse(store);
 	}

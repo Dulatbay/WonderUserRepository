@@ -92,6 +92,8 @@ public class SupplyServiceImpl implements SupplyService {
 		supply.setSupplyBoxes(new ArrayList<>());
 		supply.setSelectedTime(createRequest.getSelectedTime());
 
+		// todo: check that product his own
+
 		createRequest.getSelectedBoxes()
 				.forEach(selectedBox -> {
 					final var boxType = boxTypeRepository.findById(selectedBox.getSelectedBoxId())
@@ -219,7 +221,8 @@ public class SupplyServiceImpl implements SupplyService {
 	@Override
 	public List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate) {
 		var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store employee doesn't exist", "Create store employee"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
+						"Store employee doesn't exist", "Create store employee"));
 		return this.getSuppliesOfStorage(storeEmployee.getId(), startDate, endDate);
 	}
 

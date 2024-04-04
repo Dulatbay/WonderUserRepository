@@ -43,6 +43,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please write correct ID of store"));
 
 
+		// todo: проверка на то, что склад его
+
 		StoreEmployee storeEmployee = new StoreEmployee();
 		storeEmployee.setKaspiStore(store);
 		storeEmployee.setWonderUser(wonderUser);
@@ -53,6 +55,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	@Override
 	public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource) {
 		final var keycloakUser = userResource.toRepresentation();
+		// todo: проверка на то, что склад его
+
 		return this.buildEmployeeResponse(keycloakUser, storeEmployee);
 	}
 
@@ -97,7 +101,12 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
 	@Override
 	public List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations) {
+		// todo: check that it's his own store
+
 		final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
+
+
+
 		return storeEmployees.stream()
 				.map(storeEmployee -> toEmployeeResponse(storeEmployee, userRepresentations))
 				.filter(Objects::nonNull)

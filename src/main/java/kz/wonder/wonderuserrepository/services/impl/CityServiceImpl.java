@@ -29,7 +29,7 @@ public class CityServiceImpl implements CityService {
 			var count = 0;
 
 			for (var city : cities) {
-				if (!cityRepository.existsByName(city.getAttributes().getName())) {
+				if (!cityRepository.existsByName(city.getAttributes().getName()) && !cityRepository.existsByCode(city.getAttributes().getCode())) {
 					final var newCity = new KaspiCity();
 					newCity.setCode(city.getAttributes().getCode());
 					newCity.setName(city.getAttributes().getName());
