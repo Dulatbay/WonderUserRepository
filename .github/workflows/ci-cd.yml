@@ -34,4 +34,4 @@ jobs:
             docker pull guinnod/wonder-spring-boot:latest
             docker stop wonder-spring-boot || true
             docker rm wonder-spring-boot || true
-            docker run --rm -d --name wonder-spring-boot -e DATABASE_DOMAIN=${{ secrets.DATABASE_DOMAIN }} guinnod/wonder-spring-boot:latest
+            docker run --rm -d --name wonder-spring-boot -p 8181:8181 guinnod/wonder-spring-boot:latest
