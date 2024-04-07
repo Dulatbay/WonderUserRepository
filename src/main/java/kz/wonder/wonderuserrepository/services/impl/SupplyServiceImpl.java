@@ -104,16 +104,17 @@ public class SupplyServiceImpl implements SupplyService {
 					supplyBox.setSupplyBoxProducts(new ArrayList<>());
 					supplyBox.setSupply(supply);
 
-					selectedBox.getProductIds()
-							.forEach(productId -> {
-								var product = productRepository.findById(productId)
-										.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
-								SupplyBoxProducts boxProducts = new SupplyBoxProducts();
-								boxProducts.setSupplyBox(supplyBox);
-								boxProducts.setProduct(product);
-								boxProducts.setState(ProductStateInStore.PENDING);
-								supplyBox.getSupplyBoxProducts().add(boxProducts);
-							});
+					var product = productRepository.findById(selectedBox.getProductId())
+							.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+
+					for (int i = 0; i < selectedBox.getQuantity(); i++) {
+						SupplyBoxProducts boxProducts = new SupplyBoxProducts();
+						boxProducts.setSupplyBox(supplyBox);
+						boxProducts.setProduct(product);
+						boxProducts.setState(ProductStateInStore.PENDING);
+						supplyBox.getSupplyBoxProducts().add(boxProducts);
+					}
 
 					supply.getSupplyBoxes().add(supplyBox);
 				});
