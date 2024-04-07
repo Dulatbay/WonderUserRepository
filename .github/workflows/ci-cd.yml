@@ -15,6 +15,23 @@ jobs:
       - name: Build Docker image
         run: docker build . --tag guinnod/wonder-spring-boot:latest
 
+      - name: Run Docker image
+        run: docker run -d --name wonder-spring-boot-test -p 8181:8181 guinnod/wonder-spring-boot:latest
+
+      - name: Wait for Application to Start
+        run: |
+          echo "Waiting for the application to start..."
+          timeout=60 # wait for 60 seconds
+          while ! curl --fail http://localhost:8181/api/swagger-ui/index.html; do
+            timeout=$((timeout-1))
+            if [[ "$timeout" -le 0 ]]; then
+              echo "Health check failed!"
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "Application started successfully."
+
       - name: Push to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u guinnod --password-stdin
