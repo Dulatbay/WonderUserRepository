@@ -1,1 +1,1 @@
-create schema if not exists schema_wonder
+create schema if not exists schema_wonder;
