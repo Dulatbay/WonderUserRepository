@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface BoxTypeService {
     void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest);
-    List<BoxTypeResponse> getAll();
+    List<BoxTypeResponse> getAll(Long storeId);
 
     void deleteById(Long id);
 }

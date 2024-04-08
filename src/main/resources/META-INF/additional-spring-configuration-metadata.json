@@ -29,5 +29,15 @@
       "name": "application.sync-users",
       "type": "java.lang.Boolean",
       "description": "Description for application.sync-users."
+    },
+    {
+      "name": "application.sync-cities",
+      "type": "java.lang.Boolean",
+      "description": "Description for application.sync-cities."
+    },
+    {
+      "name": "application.init-users",
+      "type": "java.lang.Boolean",
+      "description": "Description for application.init-users."
     }
   ] }

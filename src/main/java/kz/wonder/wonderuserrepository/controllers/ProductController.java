@@ -42,6 +42,16 @@ public class ProductController {
 
 		return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
 	}
+	@DeleteMapping("/{productId}")
+	public ResponseEntity<Void> getProduct(@PathVariable Long productId) {
+		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		// todo: make also for superAdmin
+		var keycloakId = Utils.extractIdFromToken(token);
+
+		productService.deleteProductById(keycloakId, productId);
+
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
 
 	@GetMapping("/xml")
 	public ResponseEntity<MessageResponse> getXmlOfProducts() {

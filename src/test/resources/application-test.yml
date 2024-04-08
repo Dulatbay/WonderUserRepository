@@ -6,9 +6,7 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: true
-#  keycloak-url: ${KEYCLOAK_URL:http://192.168.0.101:8484/auth}
-#  keycloak-url: ${KEYCLOAK_URL:http://172.20.10.11:8484/auth}
+  sync-users: false
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS SCHEMA_WONDER;MODE=postgresql

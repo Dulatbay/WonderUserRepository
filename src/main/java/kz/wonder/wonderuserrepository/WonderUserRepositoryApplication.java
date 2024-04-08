@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Import;
 //@EnableScheduling
 @Slf4j
 @RequiredArgsConstructor
-//@EnableFeignClients(basePackages = "kz.wonder.kaspi.client.api")
 public class WonderUserRepositoryApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(WonderUserRepositoryApplication.class, args);
@@ -27,6 +26,12 @@ public class WonderUserRepositoryApplication {
 
 	@Value("${application.sync-users}")
 	private Boolean syncUsers;
+
+	@Value("${application.sync-cities}")
+	private Boolean syncCities;
+
+	@Value("${application.init-users}")
+	private Boolean initUsers;
 
 	private final Initializer initializer;
 
@@ -37,10 +42,24 @@ public class WonderUserRepositoryApplication {
 		return args -> {
 			if (syncUsers)
 				userService.syncUsersBetweenDBAndKeycloak();
-			cityService.syncWithKaspi();
+
+			if (syncCities)
+				cityService.syncWithKaspi();
+
+			if (initUsers)
+				initializer.init();
+
 			fileService.init();
-			initializer.init();
-			log.info("Successfully started");
+
+			// completed:
+			// 1. Переделал эндпоинт по созданию поставки(там теперь достаточно указать просто кол-во)
+			// 2. Переделал баркоды/артикли
+			// 3. Добавил настройки для запуска приложения
+			// 4. Удаление продукта
+			// 5. Создать эндпоинт по возвращанию типы поставок по айди склада
+			// 6. Проверки при создании поставки(если юзер указал продукт который НЕ его или тип коробки который не принимает склад, выбрасываем ошибку)
+
+			log.info("Application Successfully Started");
 		};
 	}
 }

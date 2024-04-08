@@ -4,8 +4,10 @@ import kz.wonder.wonderuserrepository.dto.request.BoxTypeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.BoxTypeResponse;
 import kz.wonder.wonderuserrepository.entities.BoxType;
 import kz.wonder.wonderuserrepository.entities.BoxTypeImages;
+import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableBoxTypes;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
+import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
 import kz.wonder.wonderuserrepository.services.FileService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class BoxTypeServiceImpl implements BoxTypeService {
 
 	private final BoxTypeRepository boxTypeRepository;
+	private final KaspiStoreRepository storeRepository;
 	private final FileService fileService;
 
 	@Override
@@ -47,15 +50,32 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 	}
 
 	@Override
-	public List<BoxTypeResponse> getAll() {
-		return boxTypeRepository.findAll().stream().map(
-				i -> BoxTypeResponse.builder()
-						.id(i.getId())
-						.name(i.getName())
-						.description(i.getDescription())
-						.imageUrls(i.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
-						.build()
-		).toList();
+	public List<BoxTypeResponse> getAll(Long storeId) {
+		if (storeId != null) {
+			final var store = storeRepository.findById(storeId)
+					.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), ""));
+
+			return store
+					.getAvailableBoxTypes()
+					.stream()
+					.map(KaspiStoreAvailableBoxTypes::getBoxType)
+					.map(BoxTypeServiceImpl::getBoxTypeResponse)
+					.toList();
+		}
+
+
+		return boxTypeRepository.findAll()
+				.stream()
+				.map(BoxTypeServiceImpl::getBoxTypeResponse).toList();
+	}
+
+	private static BoxTypeResponse getBoxTypeResponse(BoxType boxType) {
+		return BoxTypeResponse.builder()
+				.id(boxType.getId())
+				.name(boxType.getName())
+				.description(boxType.getDescription())
+				.imageUrls(boxType.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
+				.build();
 	}
 
 	@Override

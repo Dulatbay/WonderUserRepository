@@ -18,10 +18,10 @@ public class ProductStorageResponse {
 	@Data
 	@Builder
 	public static class Product {
-		private UUID article;
+		private String article;
 		private String name;
 		private String vendorCode;
-		private UUID vendorCodeOfBox;
+		private String vendorCodeOfBox;
 		private String typeOfBoxName;
 		private ProductStateInStore productStateInStore;
 	}

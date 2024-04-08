@@ -9,24 +9,37 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.USER_ID_CLAIM;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Utils {
-    public static String extractIdFromToken(JwtAuthenticationToken token){
-        return token.getToken().getClaim(USER_ID_CLAIM);
-    }
+	private final static Random random = new Random();
+	private final static Integer lengthOfBarcode = 10;
 
-    public static String getStringFromExcelCell(Cell vendorCodeCell) {
-        return vendorCodeCell.getCellType() == CellType.NUMERIC ?
-                String.valueOf(vendorCodeCell.getNumericCellValue()) :
-                vendorCodeCell.getStringCellValue();
-    }
-    public static List<String> getAuthorities(Collection<GrantedAuthority> authorities){
-        return authorities
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-    }
+	public static String extractIdFromToken(JwtAuthenticationToken token) {
+		return token.getToken().getClaim(USER_ID_CLAIM);
+	}
+
+	public static String getStringFromExcelCell(Cell vendorCodeCell) {
+		return vendorCodeCell.getCellType() == CellType.NUMERIC ?
+				String.valueOf(vendorCodeCell.getNumericCellValue()) :
+				vendorCodeCell.getStringCellValue();
+	}
+
+	public static List<String> getAuthorities(Collection<GrantedAuthority> authorities) {
+		return authorities
+				.stream()
+				.map(GrantedAuthority::getAuthority)
+				.toList();
+	}
+
+	public static String generateRandomNumber() {
+		StringBuilder randomNumber = new StringBuilder(lengthOfBarcode);
+		for (int i = 0; i < lengthOfBarcode; i++) {
+			randomNumber.append(random.nextInt(10));
+		}
+		return randomNumber.toString();
+	}
 }
