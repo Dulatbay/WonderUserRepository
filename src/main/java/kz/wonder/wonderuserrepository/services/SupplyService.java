@@ -15,6 +15,8 @@ public interface SupplyService {
 	List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username);
 
 	List<SupplyProductResponse> getSuppliesDetail(Long id);
+	List<SupplyProductResponse> getSuppliesDetail(Long id, String keycloakId);
+	List<SupplyProductResponse> getSuppliesDetailOfSeller(Long id, String keycloakId);
 
 	List<SupplySellerResponse> getSuppliesOfSeller(String id, LocalDate startDate, LocalDate endDate);
 
@@ -25,4 +27,5 @@ public interface SupplyService {
 	List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate);
 
 	ProductStorageResponse getSuppliesProducts(String keycloakId, Long supplyId);
+
 }

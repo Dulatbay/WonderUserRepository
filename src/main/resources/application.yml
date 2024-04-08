@@ -6,9 +6,9 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: true
-#  keycloak-url: ${KEYCLOAK_URL:http://192.168.0.101:8484/auth}
-#  keycloak-url: ${KEYCLOAK_URL:http://172.20.10.11:8484/auth}
+  sync-users: false
+  sync-cities: false
+  init-users: false
 spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
@@ -31,7 +31,6 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-#          issuer-uri: ${OAUTH2_ISSUER:http://localhost:8484/auth/realms/miniland}
           issuer-uri: ${OAUTH2_ISSUER:${application.keycloak-url}/realms/${application.realm}}
           jwk-set-uri: ${OAUTH2_JWK:${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs}
   servlet:

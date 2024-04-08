@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.constants.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -29,13 +30,13 @@ public class SupplyBox extends AbstractEntity<Long> {
     private List<SupplyBoxProducts> supplyBoxProducts;
 
     @Column(name = "vendor_code", nullable = false, unique = true)
-    private UUID vendorCode;
+    private String vendorCode;
 
     @Override
     protected void onCreate() {
         super.onCreate();
         if (vendorCode == null) {
-            vendorCode = UUID.randomUUID();
+            vendorCode = Utils.generateRandomNumber();
         }
     }
 }

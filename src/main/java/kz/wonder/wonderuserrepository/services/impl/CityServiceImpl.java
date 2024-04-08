@@ -23,7 +23,7 @@ public class CityServiceImpl implements CityService {
 	@Override
 	public void syncWithKaspi() {
 		try {
-			log.info("Initializing started");
+			log.info("Cities Initializing started");
 			final CitiesDataResponse response = kaspiApi.getDataCities().block();
 			final List<CitiesDataResponse.City> cities = response.getData();
 			var count = 0;
@@ -38,7 +38,7 @@ public class CityServiceImpl implements CityService {
 					count++;
 				}
 			}
-			log.info("Initializing ended, added {} rows", count);
+			log.info("Cities Initializing ended, added {} rows", count);
 		} catch (Exception e) {
 			log.error("Initializing ended with error: ", e);
 		}

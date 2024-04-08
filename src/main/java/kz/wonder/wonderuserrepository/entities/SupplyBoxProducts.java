@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.constants.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -22,7 +23,7 @@ public class SupplyBoxProducts extends AbstractEntity<Long> {
     private Product product;
 
     @Column(name = "article", nullable = false, unique = true)
-    private UUID article;
+    private String article;
 
     @Column(name = "product_state", nullable = false)
     @Enumerated(value = EnumType.STRING)
@@ -32,7 +33,7 @@ public class SupplyBoxProducts extends AbstractEntity<Long> {
     protected void onCreate() {
         super.onCreate();
         if (article == null) {
-            article = UUID.randomUUID();
+            article = Utils.generateRandomNumber();
         }
     }
 }

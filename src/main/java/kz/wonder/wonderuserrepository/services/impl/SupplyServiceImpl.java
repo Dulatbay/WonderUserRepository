@@ -92,11 +92,10 @@ public class SupplyServiceImpl implements SupplyService {
 		supply.setSupplyBoxes(new ArrayList<>());
 		supply.setSelectedTime(createRequest.getSelectedTime());
 
-		// todo: check that product his own
 
 		createRequest.getSelectedBoxes()
 				.forEach(selectedBox -> {
-					final var boxType = boxTypeRepository.findById(selectedBox.getSelectedBoxId())
+					final var boxType = boxTypeRepository.findByIdInStore(selectedBox.getSelectedBoxId(), store.getId())
 							.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box doesn't exist"));
 
 					var supplyBox = new SupplyBox();
@@ -104,7 +103,7 @@ public class SupplyServiceImpl implements SupplyService {
 					supplyBox.setSupplyBoxProducts(new ArrayList<>());
 					supplyBox.setSupply(supply);
 
-					var product = productRepository.findById(selectedBox.getProductId())
+					var product = productRepository.findByIdAndKeycloakId(selectedBox.getProductId(), userId)
 							.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
 
@@ -139,9 +138,33 @@ public class SupplyServiceImpl implements SupplyService {
 	@Override
 	public List<SupplyProductResponse> getSuppliesDetail(Long id) {
 		var supply = findSupplyById(id);
+		return mapSupplyDetailsToResponse(supply);
+	}
 
+	@Override
+	public List<SupplyProductResponse> getSuppliesDetail(Long id, String keycloakId) {
+		var supply = findSupplyById(id);
+
+		String keycloakIdOfStoreOwner = supply.getKaspiStore().getWonderUser().getKeycloakId();
+		if (!isIdentityMatched(keycloakId, keycloakIdOfStoreOwner))
+			throw new IllegalArgumentException("Supply doesn't exist");
+
+		return mapSupplyDetailsToResponse(supply);
+	}
+
+	@Override
+	public List<SupplyProductResponse> getSuppliesDetailOfSeller(Long id, String keycloakId) {
+		var supply = findSupplyById(id);
+
+		String keycloakIdOfSupplyOwner = supply.getAuthor().getKeycloakId();
+		if (!isIdentityMatched(keycloakId, keycloakIdOfSupplyOwner))
+			throw new IllegalArgumentException("Supply doesn't exist");
+
+		return mapSupplyDetailsToResponse(supply);
+	}
+
+	private List<SupplyProductResponse> mapSupplyDetailsToResponse(Supply supply) {
 		var supplyProductsRes = new ArrayList<SupplyProductResponse>();
-
 
 		supply.getSupplyBoxes()
 				.forEach(supplyBox ->
@@ -151,16 +174,19 @@ public class SupplyServiceImpl implements SupplyService {
 									var product = supplyBoxProducts.getProduct();
 									SupplyProductResponse supplyProductResponse = new SupplyProductResponse();
 									supplyProductResponse.setName(product.getName());
-									supplyProductResponse.setArticle(supplyBoxProducts.getArticle().toString());
+									supplyProductResponse.setArticle(supplyBoxProducts.getArticle());
 									supplyProductResponse.setVendorCode(product.getVendorCode());
-									supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode().toString());
+									supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode());
 									supplyProductResponse.setStoreAddress(supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment());
 									supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
 									supplyProductsRes.add(supplyProductResponse);
 								})
 				);
-
 		return supplyProductsRes;
+	}
+
+	private boolean isIdentityMatched(String requestedIdentity, String entityIdentity) {
+		return requestedIdentity.equals(entityIdentity);
 	}
 
 	@Override
@@ -317,7 +343,7 @@ public class SupplyServiceImpl implements SupplyService {
 
 		var report = reportMap.computeIfAbsent(productId, id -> SupplyReportResponse.builder()
 				.productName(product.getName())
-				.productArticle(supplyBoxProduct.getArticle())
+				.productBarcode(product.getVendorCode())
 				.countOfProductDeclined(0L)
 				.countOfProductAccepted(0L)
 				.countOfProductPending(0L)

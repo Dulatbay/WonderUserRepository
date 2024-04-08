@@ -13,4 +13,6 @@ public interface ProductService {
     List<ProductResponse> getProductsByKeycloakId(String keycloakUserId);
 
     String generateOfProductsXmlByKeycloakId(String userId) throws IOException, javax.xml.bind.JAXBException;
+
+	void deleteProductById(String keycloakId, Long productId);
 }

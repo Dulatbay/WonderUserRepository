@@ -152,6 +152,14 @@ public class ProductServiceImpl implements ProductService {
 		return fileService.save(xmlContent.getBytes(), "xml");
 	}
 
+	@Override
+	public void deleteProductById(String keycloakId, Long productId) {
+		final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product doesn't exist"));
+
+		productRepository.delete(product);
+	}
+
 	private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
 		KaspiCatalog kaspiCatalog = new KaspiCatalog();
 		kaspiCatalog.setCompany(kaspiToken.getSellerName());
