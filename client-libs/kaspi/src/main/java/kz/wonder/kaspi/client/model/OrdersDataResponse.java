@@ -26,10 +26,12 @@ public class OrdersDataResponse {
         private Double totalPrice;
         private PaymentMode paymentMode;
         private Address originAddress;
+        private Long plannedDeliveryDate;
         private Long creationDate;
         private Double deliveryCostForSeller;
         private Boolean isKaspiDelivery;
         private String deliveryMode;
+        private DeliveryAddress deliveryAddress;
         private Boolean signatureRequired;
         private Integer creditTerm;
         private KaspiDelivery kaspiDelivery;
