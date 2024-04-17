@@ -29,10 +29,10 @@ public class Scheduler {
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
 
-    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
-    public void updateCitiesFromKaspiApi() {
-        cityService.syncWithKaspi();
-    }
+//    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
+//    public void updateCitiesFromKaspiApi() {
+//        cityService.syncWithKaspi();
+//    }
 
     @Scheduled(fixedRate = 36000 * 10)
     public void updateOrders() {
@@ -57,6 +57,8 @@ public class Scheduler {
                                     ordersDataResponse.getData().size());
                             ordersDataResponse.getData().forEach(order -> processOrder(order, token));
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
+                            createdCount = 0;
+                            updatedCount = 0;
                         },
                         error -> log.error("Error updating orders: {}", error.getMessage(), error)
                 );
@@ -83,22 +85,27 @@ public class Scheduler {
         kaspiOrder.setCode(orderAttributes.getCode());
         kaspiOrder.setTotalPrice(orderAttributes.getTotalPrice());
         kaspiOrder.setPaymentMode(orderAttributes.getPaymentMode());
-        kaspiOrder.setAddressStreetName(orderAttributes.getDeliveryAddress().getStreetName());
-        kaspiOrder.setAddressStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
-        kaspiOrder.setAddressTown(orderAttributes.getDeliveryAddress().getTown());
-        kaspiOrder.setAddressDistrict(orderAttributes.getDeliveryAddress().getDistrict());
-        kaspiOrder.setAddressBuilding(orderAttributes.getDeliveryAddress().getBuilding());
-        kaspiOrder.setAddressApartment(orderAttributes.getDeliveryAddress().getApartment());
-        kaspiOrder.setAddressFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
-        kaspiOrder.setAddressLatitude(orderAttributes.getDeliveryAddress().getLatitude());
-        kaspiOrder.setAddressLongitude(orderAttributes.getDeliveryAddress().getLongitude());
+
+        if (orderAttributes.getDeliveryAddress() != null) {
+            kaspiOrder.setAddressStreetName(orderAttributes.getDeliveryAddress().getStreetName());
+            kaspiOrder.setAddressStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
+            kaspiOrder.setAddressTown(orderAttributes.getDeliveryAddress().getTown());
+            kaspiOrder.setAddressDistrict(orderAttributes.getDeliveryAddress().getDistrict());
+            kaspiOrder.setAddressBuilding(orderAttributes.getDeliveryAddress().getBuilding());
+            kaspiOrder.setAddressApartment(orderAttributes.getDeliveryAddress().getApartment());
+            kaspiOrder.setAddressFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
+            kaspiOrder.setAddressLatitude(orderAttributes.getDeliveryAddress().getLatitude());
+            kaspiOrder.setAddressLongitude(orderAttributes.getDeliveryAddress().getLongitude());
+            kaspiOrder.setDeliveryAddress(getKaspiDeliveryAddress(orderAttributes));
+        }
+
+        kaspiOrder.setCreditTerm(orderAttributes.getCreditTerm());
         kaspiOrder.setKaspiCity(getKaspiCity(orderAttributes));
         kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
         kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
         kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
         kaspiOrder.setIsKaspiDelivery(orderAttributes.getIsKaspiDelivery());
         kaspiOrder.setDeliveryMode(orderAttributes.getDeliveryMode());
-        kaspiOrder.setDeliveryAddress(getKaspiDeliveryAddress(orderAttributes));
         kaspiOrder.setSignatureRequired(orderAttributes.getSignatureRequired());
         kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
         kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());
@@ -120,7 +127,6 @@ public class Scheduler {
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
         kaspiOrderRepository.save(kaspiOrder);
     }
-
 
 
     private KaspiCity getKaspiCity(OrdersDataResponse.OrderAttributes orderAttributes) {
