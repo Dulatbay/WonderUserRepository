@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
@@ -22,9 +23,15 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @Enumerated(value = EnumType.STRING)
     private PaymentMode paymentMode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer")
-    private KaspiStore kaspiStore;
+    private String addressStreetName;
+    private String addressStreetNumber;
+    private String addressTown;
+    private String addressDistrict;
+    private String addressBuilding;
+    private String addressApartment;
+    private String addressFormattedAddress;
+    private Double addressLatitude;
+    private Double addressLongitude;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")

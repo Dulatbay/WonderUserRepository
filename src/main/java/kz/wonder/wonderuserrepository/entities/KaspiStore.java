@@ -31,7 +31,7 @@ public class KaspiStore extends AbstractEntity<Long> {
 	private boolean enabled;
 
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id", columnDefinition = "integer")
 	private WonderUser wonderUser;
 

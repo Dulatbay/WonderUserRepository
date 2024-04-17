@@ -9,6 +9,7 @@ application:
   sync-users: false
   sync-cities: false
   init-users: false
+  kaspi-token: paste-your-token
 spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}

@@ -39,5 +39,10 @@
       "name": "application.init-users",
       "type": "java.lang.Boolean",
       "description": "Description for application.init-users."
+    },
+    {
+      "name": "application.kaspi-token",
+      "type": "java.lang.String",
+      "description": "Description for application.kaspi-token."
     }
   ] }

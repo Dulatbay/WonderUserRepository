@@ -7,7 +7,6 @@ import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,6 @@ public class Scheduler {
     private final CityService cityService;
     private final KaspiApi kaspiApi;
     private final KaspiOrderRepository kaspiOrderRepository;
-    private final KaspiStoreRepository kaspiStoreRepository;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
 
@@ -45,7 +43,6 @@ public class Scheduler {
 
         var tokens = kaspiTokenRepository.findAll();
         tokens.forEach(token -> processTokenOrders(token, startDate, currentTime));
-        log.info("Updating ended");
     }
 
     int createdCount = 0, updatedCount = 0;
@@ -72,21 +69,29 @@ public class Scheduler {
             var kaspiOrder = optionalKaspiOrder.get();
             if (kaspiOrder.getUpdatedAt().isAfter(LocalDateTime.now().minusMinutes(15))) {
                 updatedCount++;
-                getKaspiOrderByParams(order, token, orderAttributes, kaspiOrder);
+                getKaspiOrderByParams(order, orderAttributes, kaspiOrder);
             }
         } else {
             createdCount++;
             KaspiOrder kaspiOrder = new KaspiOrder();
-            getKaspiOrderByParams(order, token, orderAttributes, kaspiOrder);
+            getKaspiOrderByParams(order, orderAttributes, kaspiOrder);
         }
     }
 
-    private void getKaspiOrderByParams(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
+    private void getKaspiOrderByParams(OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
         kaspiOrder.setKaspiId(order.getOrderId());
         kaspiOrder.setCode(orderAttributes.getCode());
         kaspiOrder.setTotalPrice(orderAttributes.getTotalPrice());
         kaspiOrder.setPaymentMode(orderAttributes.getPaymentMode());
-        kaspiOrder.setKaspiStore(getKaspiStore(token, orderAttributes));
+        kaspiOrder.setAddressStreetName(orderAttributes.getDeliveryAddress().getStreetName());
+        kaspiOrder.setAddressStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
+        kaspiOrder.setAddressTown(orderAttributes.getDeliveryAddress().getTown());
+        kaspiOrder.setAddressDistrict(orderAttributes.getDeliveryAddress().getDistrict());
+        kaspiOrder.setAddressBuilding(orderAttributes.getDeliveryAddress().getBuilding());
+        kaspiOrder.setAddressApartment(orderAttributes.getDeliveryAddress().getApartment());
+        kaspiOrder.setAddressFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
+        kaspiOrder.setAddressLatitude(orderAttributes.getDeliveryAddress().getLatitude());
+        kaspiOrder.setAddressLongitude(orderAttributes.getDeliveryAddress().getLongitude());
         kaspiOrder.setKaspiCity(getKaspiCity(orderAttributes));
         kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
         kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
@@ -116,11 +121,7 @@ public class Scheduler {
         kaspiOrderRepository.save(kaspiOrder);
     }
 
-    private KaspiStore getKaspiStore(KaspiToken token, OrdersDataResponse.OrderAttributes orderAttributes) {
-        return kaspiStoreRepository.findByWonderUserIdAndKaspiId(token.getWonderUser().getId(),
-                        orderAttributes.getOriginAddress().getDisplayName())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi store not found", ""));
-    }
+
 
     private KaspiCity getKaspiCity(OrdersDataResponse.OrderAttributes orderAttributes) {
         return kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())

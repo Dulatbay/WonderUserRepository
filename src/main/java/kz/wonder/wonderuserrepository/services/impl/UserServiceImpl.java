@@ -15,6 +15,7 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,9 @@ public class UserServiceImpl implements UserService {
 	private final KeycloakService keycloakService;
 	private final KaspiApi kaspiApi;
 	private final EntityManager entityManager;
+
+	@Value("${application.kaspi-token}")
+	private String apiToken;
 
 	@Override
 	public void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest) {
@@ -143,7 +147,16 @@ public class UserServiceImpl implements UserService {
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
+
+			KaspiToken kaspiToken = new KaspiToken();
+			kaspiToken.setEnabled(true);
+			kaspiToken.setSellerName(testerUserId.get());
+			kaspiToken.setSellerId(testerUserId.get());
+			kaspiToken.setToken(apiToken);
+			kaspiToken.setWonderUser(wonderUser);
+
 			userRepository.save(wonderUser);
+			kaspiTokenRepository.save(kaspiToken);
 			log.info("New tester created");
 		}
 
