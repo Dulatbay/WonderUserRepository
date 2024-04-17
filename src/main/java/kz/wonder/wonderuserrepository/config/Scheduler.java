@@ -45,6 +45,7 @@ public class Scheduler {
 
         var tokens = kaspiTokenRepository.findAll();
         tokens.forEach(token -> processTokenOrders(token, startDate, currentTime));
+        log.info("Updating ended");
     }
 
     int createdCount = 0, updatedCount = 0;
