@@ -42,6 +42,9 @@ public class Scheduler {
         long startDate = currentTime - twoWeeksTime;
 
         var tokens = kaspiTokenRepository.findAll();
+
+        log.info("Found {} tokens", tokens.size());
+
         tokens.forEach(token -> processTokenOrders(token, startDate, currentTime));
     }
 
@@ -71,16 +74,16 @@ public class Scheduler {
             var kaspiOrder = optionalKaspiOrder.get();
             if (kaspiOrder.getUpdatedAt().isAfter(LocalDateTime.now().minusMinutes(15))) {
                 updatedCount++;
-                getKaspiOrderByParams(order, orderAttributes, kaspiOrder);
+                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder);
             }
         } else {
             createdCount++;
             KaspiOrder kaspiOrder = new KaspiOrder();
-            getKaspiOrderByParams(order, orderAttributes, kaspiOrder);
+            getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder);
         }
     }
 
-    private void getKaspiOrderByParams(OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
+    private void getKaspiOrderByParams(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
         kaspiOrder.setKaspiId(order.getOrderId());
         kaspiOrder.setCode(orderAttributes.getCode());
         kaspiOrder.setTotalPrice(orderAttributes.getTotalPrice());
@@ -125,6 +128,7 @@ public class Scheduler {
         kaspiOrder.setCustomerFirstName(orderAttributes.getCustomer().getFirstName());
         kaspiOrder.setCustomerLastName(orderAttributes.getCustomer().getLastName());
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
+        kaspiOrder.setWonderUser(token.getWonderUser());
         kaspiOrderRepository.save(kaspiOrder);
     }
 

@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
 
 			KaspiToken kaspiToken = new KaspiToken();
 			kaspiToken.setEnabled(true);
-			kaspiToken.setSellerName(testerUserId.get());
+			kaspiToken.setSellerName("Tester");
 			kaspiToken.setSellerId(testerUserId.get());
 			kaspiToken.setToken(apiToken);
 			kaspiToken.setWonderUser(wonderUser);

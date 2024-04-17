@@ -18,18 +18,38 @@ public class KaspiStore extends AbstractEntity<Long> {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "street", nullable = false)
-	private String street;
+	@Column(name = "streetName")
+	private String streetName;
+
+	@Column(name = "streetNumber")
+	private String streetNumber;
+
+	@Column(name = "town")
+	private String town;
+
+	@Column(name = "district")
+	private String district;
+
+	@Column(name = "building")
+	private String building;
 
 	@Column(name = "apartment", nullable = false)
 	private String apartment;
+
+	@Column(name = "formattedAddress", nullable = false)
+	private String formattedAddress;
+
+	@Column(name = "latitude")
+	private Long latitude;
+
+	@Column(name = "longitude")
+	private Long longitude;
 
 	@Column(name = "kaspi_id", nullable = false)
 	private String kaspiId;
 
 	@Column
 	private boolean enabled;
-
 
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "user_id", columnDefinition = "integer")
