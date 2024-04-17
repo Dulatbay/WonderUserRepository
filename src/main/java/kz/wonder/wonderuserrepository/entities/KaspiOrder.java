@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.kaspi.client.model.PaymentMode;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
