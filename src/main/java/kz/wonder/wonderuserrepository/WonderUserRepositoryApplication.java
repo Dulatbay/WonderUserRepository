@@ -36,6 +36,12 @@ public class WonderUserRepositoryApplication {
 
 	private final Initializer initializer;
 
+	// Проследить циклы в объектах
+	// Не логировать большие массивы, вместо этого указать просто размер
+	// Не логировать контроллеры
+	// Не логировать в циклах
+	//
+
 	@Bean
 	CommandLineRunner init(UserService userService,
 	                       FileService fileService,

@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @EqualsAndHashCode(callSuper = true)
@@ -30,6 +32,19 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer")
     private KaspiStore kaspiStore;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "kaspi_order_products",
+            schema = schemaName,
+            joinColumns = @JoinColumn(
+                    name = "product_id",
+                    referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "kaspi_order_id",
+                    referencedColumnName = "id"
+            )
+    )
+    private List<Product> products;
 
     private Long plannedDeliveryDate;
     private Long creationDate;

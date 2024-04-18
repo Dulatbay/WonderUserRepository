@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.config;
 
-import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
+import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.entities.*;
@@ -29,6 +29,8 @@ public class Scheduler {
     private final KaspiTokenRepository kaspiTokenRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final UserRepository userRepository;
+    private final KaspiOrderProductRepository kaspiOrderProductRepository;
+    private final ProductRepository productRepository;
 
 //    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
 //    public void updateCitiesFromKaspiApi() {
@@ -59,7 +61,16 @@ public class Scheduler {
                                     startDate,
                                     currentTime,
                                     ordersDataResponse.getData().size());
-                            ordersDataResponse.getData().forEach(order -> processOrder(order, token));
+//                            ordersDataResponse.getData().forEach(order -> processOrder(order, token));
+                            var orders = ordersDataResponse.getData();
+                            var products = ordersDataResponse.getIncluded();
+
+                            int i = 0;
+                            for (var order : orders) {
+                                processOrder(order, token, products.get(i));
+                                i++;
+                            }
+
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
                             createdCount = 0;
                             updatedCount = 0;
@@ -68,23 +79,23 @@ public class Scheduler {
                 );
     }
 
-    private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
+    private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
             if (kaspiOrder.getUpdatedAt().isAfter(LocalDateTime.now().minusMinutes(15))) {
                 updatedCount++;
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder);
+                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
             }
         } else {
             createdCount++;
             KaspiOrder kaspiOrder = new KaspiOrder();
-            getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder);
+            getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
         }
     }
 
-    private void getKaspiOrderByParams(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
+    private void getKaspiOrderByParams(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
         kaspiOrder.setKaspiId(order.getOrderId());
         kaspiOrder.setCode(orderAttributes.getCode());
         kaspiOrder.setTotalPrice(orderAttributes.getTotalPrice());
@@ -125,7 +136,20 @@ public class Scheduler {
         kaspiOrder.setCustomerLastName(orderAttributes.getCustomer().getLastName());
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
         kaspiOrder.setWonderUser(token.getWonderUser());
+
+
+        // todo: может ли один и тот же артикул товара(каспи) быть у двух разных продавцов
+        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Product not found", ""));
+
+
+        KaspiOrderProduct kaspiOrderProduct = new KaspiOrderProduct();
+        kaspiOrderProduct.setOrder(kaspiOrder);
+        kaspiOrderProduct.setProduct(product);
+        kaspiOrderProduct.setQuantity(kaspiOrderProduct.getQuantity());
+
         kaspiOrderRepository.save(kaspiOrder);
+        kaspiOrderProductRepository.save(kaspiOrderProduct);
     }
 
 
@@ -149,7 +173,6 @@ public class Scheduler {
     }
 
 
-    @Transactional
     public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity, WonderUser wonderUser) {
         var optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(address.getAddress().getApartment(),
                 address.getAddress().getStreetName(),
