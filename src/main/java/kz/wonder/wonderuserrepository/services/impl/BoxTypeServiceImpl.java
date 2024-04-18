@@ -11,6 +11,7 @@ import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
 import kz.wonder.wonderuserrepository.services.FileService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoxTypeServiceImpl implements BoxTypeService {
 
 	private final BoxTypeRepository boxTypeRepository;
@@ -87,5 +89,6 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 				.forEach(i -> fileService.deleteByName(i.imageUrl));
 
 		boxTypeRepository.delete(boxTypeToDelete);
+		log.info("Box Type with ID {} was deleted", id);
 	}
 }
