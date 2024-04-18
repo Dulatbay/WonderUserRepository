@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import static kz.wonder.wonderuserrepository.constants.Utils.getAuthorities;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/supplies")
 public class SupplyController {
 
@@ -69,12 +71,18 @@ public class SupplyController {
         var keycloakId = extractIdFromToken(token);
         List<SupplyProductResponse> result = new ArrayList<>();
 
-        if (authorities.contains(KeycloakRole.SUPER_ADMIN.name()))
+        if (authorities.contains(KeycloakRole.SUPER_ADMIN.name())){
+            log.info("Getting supply product details for super-admin");
             result = supplyService.getSuppliesDetail(id);
-        else if (authorities.contains(KeycloakRole.ADMIN.name()))
+        }
+        else if (authorities.contains(KeycloakRole.ADMIN.name())){
+            log.info("Getting supply product details for admin");
             result = supplyService.getSuppliesDetail(id, keycloakId);
-        else if (authorities.contains(KeycloakRole.SELLER.name()))
+        }
+        else if (authorities.contains(KeycloakRole.SELLER.name())){
+            log.info("Getting supply product details for seller");
             result = supplyService.getSuppliesDetailOfSeller(id, keycloakId);
+        }
         return ResponseEntity.ok(result);
     }
 

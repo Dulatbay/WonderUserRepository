@@ -3,8 +3,10 @@ package kz.wonder.wonderuserrepository.constants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ValueConstants {
@@ -15,4 +17,6 @@ public class ValueConstants {
     public static final String UPLOADED_FOLDER = "upload-dir/";
 
     public static final String USER_ID_CLAIM = "user_id";
+
+    public static final LocalDateTime SERVER_INIT_TIME = LocalDateTime.parse("01.04.2024 00:00", DATE_TIME_FORMATTER);
 }

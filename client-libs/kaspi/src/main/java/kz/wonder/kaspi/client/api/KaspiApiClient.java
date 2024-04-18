@@ -16,4 +16,5 @@ public interface KaspiApiClient {
             produces = "*/*"
     )
     ResponseEntity<Object> getCities();
+
 }

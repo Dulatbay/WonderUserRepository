@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
@@ -28,13 +29,14 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 @RequiredArgsConstructor
 public class SupplyServiceImpl implements SupplyService {
 
+
+
     private final ProductRepository productRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final BoxTypeRepository boxTypeRepository;
     private final UserRepository userRepository;
     private final SupplyRepository supplyRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
-
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -84,6 +86,7 @@ public class SupplyServiceImpl implements SupplyService {
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
+        log.info("Found store id: {}", store.getId());
 
         Supply supply = new Supply();
         supply.setAuthor(user);
@@ -119,12 +122,19 @@ public class SupplyServiceImpl implements SupplyService {
                 });
 
         var created = supplyRepository.save(supply);
+
+        log.info("Created supply id: {}", created.getId());
+        log.info("Products size in create supply: {}", created.getSupplyBoxes().size());
+
         return created.getId();
     }
 
     @Override
     public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName) {
         var supplies = supplyRepository.findAllByCreatedAtBetween(startDate.atStartOfDay(), endDate.atStartOfDay());
+
+        log.info("Supplies size: {}", supplies.size());
+
         return supplies.stream().map(supply -> {
             SupplyAdminResponse supplyAdminResponse = new SupplyAdminResponse();
             supplyAdminResponse.setId(supply.getId());
@@ -178,7 +188,7 @@ public class SupplyServiceImpl implements SupplyService {
                                     supplyProductResponse.setArticle(supplyBoxProducts.getArticle());
                                     supplyProductResponse.setVendorCode(product.getVendorCode());
                                     supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode());
-                                    supplyProductResponse.setStoreAddress(supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment());
+                                    supplyProductResponse.setStoreAddress(supply.getKaspiStore().getFormattedAddress());
                                     supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
                                     supplyProductsRes.add(supplyProductResponse);
                                 })
@@ -264,7 +274,7 @@ public class SupplyServiceImpl implements SupplyService {
                 .storeId(supply.getKaspiStore().getId())
                 .supplyId(supplyId)
                 .products(buildProducts(supply))
-                .storeAddress(createStoreAddress(supply))
+                .storeAddress(supply.getKaspiStore().getFormattedAddress())
                 .build();
     }
 
@@ -302,10 +312,6 @@ public class SupplyServiceImpl implements SupplyService {
         );
 
         return products;
-    }
-
-    private String createStoreAddress(Supply supply) {
-        return supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment();
     }
 
     private SupplyStorageResponse.Supply buildSupplyOfStorageResponse(Supply supply) {

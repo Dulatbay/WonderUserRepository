@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @EqualsAndHashCode(callSuper = false)
@@ -23,6 +25,14 @@ public class KaspiCity extends AbstractEntity<Long> {
 
     @Column
     private boolean enabled;
+
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "kaspiCity",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<KaspiOrder> kaspiOrders;
+
 }
 
 

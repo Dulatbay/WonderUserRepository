@@ -43,8 +43,6 @@ public class StoreController {
 		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		var userId = Utils.extractIdFromToken(token);
 
-		log.info("userId: {}", userId);
-
 		var user = userService.getUserByKeycloakId(userId);
 
 		kaspiStoreCreateRequest.setWonderUser(user);

@@ -13,10 +13,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @Import(KaspiApi.class)
-//@EnableScheduling
+@EnableScheduling
 @Slf4j
 @RequiredArgsConstructor
 public class WonderUserRepositoryApplication {
@@ -35,6 +36,12 @@ public class WonderUserRepositoryApplication {
 
 	private final Initializer initializer;
 
+	// Проследить циклы в объектах
+	// Не логировать большие массивы, вместо этого указать просто размер
+	// Не логировать контроллеры
+	// Не логировать в циклах
+	//
+
 	@Bean
 	CommandLineRunner init(UserService userService,
 	                       FileService fileService,
@@ -50,14 +57,6 @@ public class WonderUserRepositoryApplication {
 				initializer.init();
 
 			fileService.init();
-
-			// completed:
-			// 1. Переделал эндпоинт по созданию поставки(там теперь достаточно указать просто кол-во)
-			// 2. Переделал баркоды/артикли
-			// 3. Добавил настройки для запуска приложения
-			// 4. Удаление продукта
-			// 5. Создать эндпоинт по возвращанию типы поставок по айди склада
-			// 6. Проверки при создании поставки(если юзер указал продукт который НЕ его или тип коробки который не принимает склад, выбрасываем ошибку)
 
 			log.info("Application Successfully Started");
 		};

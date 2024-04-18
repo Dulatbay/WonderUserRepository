@@ -16,7 +16,6 @@ public class FileController {
 
     @GetMapping(value = "/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public @ResponseBody Resource getFileAsResourceByFilename(@PathVariable("filename") String filename) {
-        log.info("Get Resource by name = {}", filename);
         return fileService.loadAsResource(filename);
     }
 }

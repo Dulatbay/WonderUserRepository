@@ -6,9 +6,10 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: false
-  sync-cities: false
+  sync-users: true
+  sync-cities: true
   init-users: false
+  kaspi-token: paste-your-token
 spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
