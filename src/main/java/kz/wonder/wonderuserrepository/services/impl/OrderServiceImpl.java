@@ -55,9 +55,12 @@ public class OrderServiceImpl implements OrderService {
 
         var result = new ArrayList<OrderResponse>();
 
-        stores.stream().map(store -> {
-            store.get
+        stores.forEach(store -> {
+            var orders = store.getOrders();
+            orders.forEach(order -> {
+                result.add(getOrderResponse(order));
+            });
         });
-
+        return result;
     }
 }

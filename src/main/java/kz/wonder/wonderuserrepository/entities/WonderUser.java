@@ -25,7 +25,7 @@ public class WonderUser extends AbstractEntity<Long> {
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.MERGE)
     private KaspiToken kaspiToken;
 
     @OneToOne(fetch = FetchType.LAZY,

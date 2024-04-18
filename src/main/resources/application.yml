@@ -7,7 +7,7 @@ application:
   username: admin_qit
   password: admin_password
   sync-users: true
-  sync-cities: false
+  sync-cities: true
   init-users: false
   kaspi-token: paste-your-token
 spring:

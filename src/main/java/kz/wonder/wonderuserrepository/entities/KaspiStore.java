@@ -33,10 +33,10 @@ public class KaspiStore extends AbstractEntity<Long> {
 	@Column(name = "building")
 	private String building;
 
-	@Column(name = "apartment", nullable = false)
+	@Column(name = "apartment")
 	private String apartment;
 
-	@Column(name = "formattedAddress", nullable = false)
+	@Column(name = "formattedAddress")
 	private String formattedAddress;
 
 	@Column(name = "latitude")
@@ -51,7 +51,7 @@ public class KaspiStore extends AbstractEntity<Long> {
 	@Column
 	private boolean enabled;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
 	@JoinColumn(name = "user_id", columnDefinition = "integer")
 	private WonderUser wonderUser;
 
@@ -60,6 +60,12 @@ public class KaspiStore extends AbstractEntity<Long> {
 			orphanRemoval = true,
 			cascade = CascadeType.ALL)
 	private List<StoreEmployee> employees;
+
+	@OneToMany(fetch = FetchType.LAZY,
+			mappedBy = "kaspiStore",
+			orphanRemoval = true,
+			cascade = CascadeType.ALL)
+	private List<KaspiOrder> orders;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")

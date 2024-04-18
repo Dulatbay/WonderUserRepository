@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 @Component
@@ -27,6 +28,7 @@ public class KaspiApi {
         webClient = WebClient.builder()
                 .baseUrl(kaspiUrl)
                 .build();
+
     }
 
     private Consumer<HttpHeaders> httpHeaders(String token) {
@@ -41,7 +43,8 @@ public class KaspiApi {
                 .uri("/cities")
                 .headers(httpHeaders(token))
                 .retrieve()
-                .bodyToMono(CitiesDataResponse.class);
+                .bodyToMono(CitiesDataResponse.class)
+                .timeout(Duration.ofSeconds(100));
     }
 
     public Mono<CitiesDataResponse> getDataCitiesWithToken(String token) {
@@ -49,7 +52,8 @@ public class KaspiApi {
                 .uri("/cities")
                 .headers(httpHeaders(token))
                 .retrieve()
-                .bodyToMono(CitiesDataResponse.class);
+                .bodyToMono(CitiesDataResponse.class)
+                .timeout(Duration.ofSeconds(100));
     }
 
     public Mono<OrdersDataResponse> getOrders(String token,
@@ -80,6 +84,7 @@ public class KaspiApi {
                 .uri(uriBuilder -> uriBuilder.path(path).query(queryParams).build())
                 .headers(httpHeaders(token))
                 .retrieve()
-                .bodyToMono(OrdersDataResponse.class);
+                .bodyToMono(OrdersDataResponse.class)
+                .timeout(Duration.ofSeconds(100));
     }
 }

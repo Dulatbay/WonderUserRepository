@@ -67,8 +67,13 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
 		kaspiStore.setKaspiCity(selectedCity);
 		kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
+		kaspiStore.setStreetName(kaspiStoreCreateRequest.getStreetName());
+		kaspiStore.setStreetNumber(kaspiStoreCreateRequest.getStreetNumber());
+		kaspiStore.setTown(kaspiStoreCreateRequest.getTown());
+		kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
+		kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
 		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
-		kaspiStore.setStreet(kaspiStoreCreateRequest.getStreet());
+		kaspiStore.setFormattedAddress("Formatted address:"); // todo: formatted address
 		kaspiStore.setEnabled(true);
 
 
@@ -130,8 +135,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 						.id(city.getId())
 						.name(city.getName())
 						.build())
-				.street(kaspiStore.getStreet())
-				.address(kaspiStore.getApartment())
+				.address(kaspiStore.getFormattedAddress())
 				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
 				.enabled(kaspiStore.isEnabled())
 				.userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
@@ -152,8 +156,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 						.id(city.getId())
 						.name(city.getName())
 						.build())
-				.street(kaspiStore.getStreet())
-				.address(kaspiStore.getApartment())
+				.address(kaspiStore.getFormattedAddress())
 				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
 				.availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
 						j -> StoreDetailResponse.AvailableBoxType.builder()
@@ -307,10 +310,16 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	}
 
 	private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
-		kaspiStore.setStreet(changeRequest.getStreet());
 		kaspiStore.setApartment(changeRequest.getApartment());
 		kaspiStore.setKaspiId(changeRequest.getKaspiId());
 		kaspiStore.setEnabled(changeRequest.isEnabled());
+		kaspiStore.setStreetName(changeRequest.getStreetName());
+		kaspiStore.setStreetNumber(changeRequest.getStreetNumber());
+		kaspiStore.setTown(changeRequest.getTown());
+		kaspiStore.setDistrict(changeRequest.getDistrict());
+		kaspiStore.setBuilding(changeRequest.getBuilding());
+		kaspiStore.setApartment(changeRequest.getApartment());
+
 		kaspiStore.setKaspiCity(
 				kaspiCityRepository.findById(changeRequest.getCityId())
 						.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"))

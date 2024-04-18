@@ -178,7 +178,7 @@ public class SupplyServiceImpl implements SupplyService {
                                     supplyProductResponse.setArticle(supplyBoxProducts.getArticle());
                                     supplyProductResponse.setVendorCode(product.getVendorCode());
                                     supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode());
-                                    supplyProductResponse.setStoreAddress(supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment());
+                                    supplyProductResponse.setStoreAddress(supply.getKaspiStore().getFormattedAddress());
                                     supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
                                     supplyProductsRes.add(supplyProductResponse);
                                 })
@@ -264,7 +264,7 @@ public class SupplyServiceImpl implements SupplyService {
                 .storeId(supply.getKaspiStore().getId())
                 .supplyId(supplyId)
                 .products(buildProducts(supply))
-                .storeAddress(createStoreAddress(supply))
+                .storeAddress(supply.getKaspiStore().getFormattedAddress())
                 .build();
     }
 
@@ -302,10 +302,6 @@ public class SupplyServiceImpl implements SupplyService {
         );
 
         return products;
-    }
-
-    private String createStoreAddress(Supply supply) {
-        return supply.getKaspiStore().getStreet() + ", " + supply.getKaspiStore().getApartment();
     }
 
     private SupplyStorageResponse.Supply buildSupplyOfStorageResponse(Supply supply) {

@@ -1,13 +1,12 @@
 package kz.wonder.wonderuserrepository.config;
 
+import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
-import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
+import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,8 @@ public class Scheduler {
     private final KaspiOrderRepository kaspiOrderRepository;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
+    private final KaspiStoreRepository kaspiStoreRepository;
+    private final UserRepository userRepository;
 
 //    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
 //    public void updateCitiesFromKaspiApi() {
@@ -90,20 +91,15 @@ public class Scheduler {
         kaspiOrder.setPaymentMode(orderAttributes.getPaymentMode());
 
         if (orderAttributes.getDeliveryAddress() != null) {
-            kaspiOrder.setAddressStreetName(orderAttributes.getDeliveryAddress().getStreetName());
-            kaspiOrder.setAddressStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
-            kaspiOrder.setAddressTown(orderAttributes.getDeliveryAddress().getTown());
-            kaspiOrder.setAddressDistrict(orderAttributes.getDeliveryAddress().getDistrict());
-            kaspiOrder.setAddressBuilding(orderAttributes.getDeliveryAddress().getBuilding());
-            kaspiOrder.setAddressApartment(orderAttributes.getDeliveryAddress().getApartment());
-            kaspiOrder.setAddressFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
-            kaspiOrder.setAddressLatitude(orderAttributes.getDeliveryAddress().getLatitude());
-            kaspiOrder.setAddressLongitude(orderAttributes.getDeliveryAddress().getLongitude());
             kaspiOrder.setDeliveryAddress(getKaspiDeliveryAddress(orderAttributes));
         }
+        var kaspiCity = getKaspiCity(orderAttributes);
 
+        var wonderUser = token.getWonderUser();
+
+        kaspiOrder.setKaspiStore(getKaspiStore(orderAttributes.getOriginAddress(), getKaspiCity(orderAttributes), wonderUser));
         kaspiOrder.setCreditTerm(orderAttributes.getCreditTerm());
-        kaspiOrder.setKaspiCity(getKaspiCity(orderAttributes));
+        kaspiOrder.setKaspiCity(kaspiCity);
         kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
         kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
         kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
@@ -150,5 +146,38 @@ public class Scheduler {
         kaspiDeliveryAddress.setLatitude(orderAttributes.getDeliveryAddress().getLatitude());
         kaspiDeliveryAddress.setLongitude(orderAttributes.getDeliveryAddress().getLongitude());
         return kaspiDeliveryAddress;
+    }
+
+
+    @Transactional
+    public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity, WonderUser wonderUser) {
+        var optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(address.getAddress().getApartment(),
+                address.getAddress().getStreetName(),
+                address.getAddress().getStreetNumber(),
+                address.getAddress().getTown(),
+                address.getAddress().getDistrict(),
+                address.getAddress().getBuilding());
+
+        if (optionalKaspiStore.isPresent()) {
+            return optionalKaspiStore.get();
+        } else {
+            WonderUser persistedWonderUser = userRepository.findById(wonderUser.getId())
+                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "WonderUser not found", ""));
+            KaspiStore kaspiStore = getStore(address, kaspiCity, persistedWonderUser);
+            return kaspiStoreRepository.save(kaspiStore);
+        }
+    }
+
+    private static @NotNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity, WonderUser wonderUser) {
+        KaspiStore kaspiStore = new KaspiStore();
+        kaspiStore.setKaspiId(address.getDisplayName());
+        kaspiStore.setKaspiCity(kaspiCity);
+        kaspiStore.setTown(address.getAddress().getTown());
+        kaspiStore.setDistrict(address.getAddress().getDistrict());
+        kaspiStore.setBuilding(address.getAddress().getBuilding());
+        kaspiStore.setApartment(address.getAddress().getApartment());
+        kaspiStore.setFormattedAddress(address.getAddress().getFormattedAddress());
+        kaspiStore.setWonderUser(wonderUser);
+        return kaspiStore;
     }
 }
