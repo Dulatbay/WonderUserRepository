@@ -6,14 +6,15 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: true
-  sync-cities: true
+  sync-users: false
+  sync-cities: false
   init-users: false
-  kaspi-token: paste-your-token
+  kaspi-token: 1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=
   admin-keycloak-id: e6f17bcd-384e-4403-95b9-059e5fbe0f69
 spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
+#    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
     username: ${DATABASE_USERNAME:user_qit}
     password: ${DATABASE_PASSWORD:123}
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}

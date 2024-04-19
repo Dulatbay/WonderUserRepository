@@ -13,7 +13,13 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     Optional<KaspiStore> findByWonderUserKeycloakIdAndId(String keycloakId, Long id);
     Optional<KaspiStore> findByWonderUserIdAndKaspiId(Long userId, String kaspiId);
 
-    @Query("SELECT ks FROM KaspiStore ks WHERE ks.apartment = :apartment and ks.streetName = :streetName and ks.streetNumber = :streetNumber and ks.town = :town and ks.building = :building and ks.district = :district")
+    @Query("SELECT ks FROM KaspiStore ks " +
+            "WHERE (:apartment is null or ks.apartment = :apartment) and " +
+            "      (:streetName is null  or ks.streetName = :streetName) and " +
+            "      (:streetNumber is null or ks.streetNumber = :streetNumber) and " +
+            "      (:town is null or ks.town = :town) and " +
+            "      (:building is null or ks.building = :building) and  " +
+            "      (:district is null or ks.district = :district)")
     Optional<KaspiStore> findByStoreAddress(
             @Param("apartment") String apartment,
             @Param("streetName") String streetName,

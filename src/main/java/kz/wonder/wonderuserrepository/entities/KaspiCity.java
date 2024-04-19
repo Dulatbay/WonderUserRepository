@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.List;
 
@@ -26,7 +27,9 @@ public class KaspiCity extends AbstractEntity<Long> {
     @Column
     private boolean enabled;
 
+    // todo: create dto
 
+    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiCity",
             orphanRemoval = true,

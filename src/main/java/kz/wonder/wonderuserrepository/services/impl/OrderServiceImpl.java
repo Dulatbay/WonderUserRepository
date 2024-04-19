@@ -12,12 +12,9 @@ import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-<<<<<<< HEAD
-=======
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
->>>>>>> origin/main
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -131,11 +128,12 @@ public class OrderServiceImpl implements OrderService {
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
-            if (kaspiOrder.getUpdatedAt().isAfter(LocalDateTime.now().minusMinutes(15))) {
+            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
                 try {
                     getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+
                     updatedCount++;
-                }catch (Exception e){
+                } catch (Exception e) {
                     log.error("Error processing order: {}", e.getMessage(), e);
                 }
             }
@@ -246,12 +244,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
-        var optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(address.getAddress().getApartment(),
-                address.getAddress().getStreetName(),
-                address.getAddress().getStreetNumber(),
-                address.getAddress().getTown(),
-                address.getAddress().getDistrict(),
-                address.getAddress().getBuilding());
+        String apartment = address.getAddress().getApartment();
+        String streetName = address.getAddress().getStreetName();
+        String streetNumber = address.getAddress().getStreetNumber();
+        String town = address.getAddress().getTown();
+        String building = address.getAddress().getBuilding();
+        String district = address.getAddress().getDistrict();
+
+        var optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(apartment, streetName, streetNumber, town, building, district);
 
         if (optionalKaspiStore.isPresent()) {
             return optionalKaspiStore.get();
@@ -264,13 +264,20 @@ public class OrderServiceImpl implements OrderService {
     private @NotNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         // todo: этот store создается для какого юзера(сделаю пока для main админа)
         KaspiStore kaspiStore = new KaspiStore();
+
+
         kaspiStore.setKaspiId(address.getDisplayName());
-        kaspiStore.setKaspiCity(kaspiCity);
+        kaspiStore.setStreetName(address.getAddress().getStreetName());
+        kaspiStore.setStreetNumber(address.getAddress().getStreetNumber());
         kaspiStore.setTown(address.getAddress().getTown());
         kaspiStore.setDistrict(address.getAddress().getDistrict());
         kaspiStore.setBuilding(address.getAddress().getBuilding());
         kaspiStore.setApartment(address.getAddress().getApartment());
         kaspiStore.setFormattedAddress(address.getAddress().getFormattedAddress());
+        kaspiStore.setLatitude(address.getAddress().getLatitude());
+        kaspiStore.setLongitude(address.getAddress().getLongitude());
+        kaspiStore.setKaspiCity(kaspiCity);
+
 
         if (admin == null)
             admin = userService.getUserByKeycloakId(adminKeycloakId);
