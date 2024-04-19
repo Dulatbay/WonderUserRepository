@@ -72,6 +72,7 @@ public class ProductServiceImpl implements ProductService {
                 throw new IllegalArgumentException("Send file by requirements!!");
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
+
                 String vendorCode = getStringFromExcelCell(row.getCell(0));
                 if (vendorCode.isEmpty())
                     continue;
