@@ -57,6 +57,10 @@ public class UserServiceImpl implements UserService {
 		kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
 		kaspiToken.setWonderUser(wonderUser);
 		userRepository.save(wonderUser);
+
+		log.info("Created user with id {}", wonderUser.getId());
+		log.info("Created kaspiToken with id {}", kaspiToken.getId());
+
 		// todo: возвращает 401 если token is null
 		kaspiTokenRepository.save(kaspiToken);
 	}
