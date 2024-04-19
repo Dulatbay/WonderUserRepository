@@ -51,6 +51,8 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 		boxTypeRepository.save(boxType);
 	}
 
+	// test
+
 	@Override
 	public List<BoxTypeResponse> getAll(Long storeId) {
 		if (storeId != null) {
