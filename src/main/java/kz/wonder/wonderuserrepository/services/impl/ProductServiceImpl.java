@@ -172,15 +172,9 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProductById(String keycloakId, Long productId) {
         final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product doesn't exist"));
-
-<<<<<<< HEAD
 		log.warn("Product with id {} was deleted", productId);
-		productRepository.delete(product);
-	}
-=======
         productRepository.delete(product);
     }
->>>>>>> origin/main
 
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
         KaspiCatalog kaspiCatalog = new KaspiCatalog();
