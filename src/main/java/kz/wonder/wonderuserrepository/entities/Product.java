@@ -23,7 +23,7 @@ public class Product extends AbstractEntity<Long> {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "link", nullable = false)
+    @Column(name = "link")
     private String link;
 
     @Column(name = "enabled", nullable = false)
