@@ -31,6 +31,7 @@ public class Scheduler {
     private final UserRepository userRepository;
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
+    private final SupplyBoxProductsRepository supplyBoxProductsRepository;
 
 //    @Scheduled(fixedRate = 3600000 * 24) // 24 hours
 //    public void updateCitiesFromKaspiApi() {
@@ -61,7 +62,6 @@ public class Scheduler {
                                     startDate,
                                     currentTime,
                                     ordersDataResponse.getData().size());
-//                            ordersDataResponse.getData().forEach(order -> processOrder(order, token));
                             var orders = ordersDataResponse.getData();
                             var products = ordersDataResponse.getIncluded();
 
@@ -137,11 +137,29 @@ public class Scheduler {
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
         kaspiOrder.setWonderUser(token.getWonderUser());
 
-
         // todo: может ли один и тот же артикул товара(каспи) быть у двух разных продавцов
-        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Product not found", ""));
 
+
+//        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
+//                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Product not found", ""));
+
+
+        // Null because this product doesn't exist in our db
+        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
+                .orElse(null);
+
+        if (product != null) {
+            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByProductVendorCodeAndProductKeycloakId(product.getVendorCode(), token.getWonderUser().getKeycloakId());
+
+            // если этого баркода у нас нет в складе, то останавливаемся
+            if (optionalSupplyBoxProduct.isEmpty()) {
+                return;
+            }
+
+            var supplyBoxProduct = optionalSupplyBoxProduct.get();
+            supplyBoxProduct.setState(ProductStateInStore.SOLD); // продукт продан у нас
+            supplyBoxProductsRepository.save(supplyBoxProduct);
+        }
 
         KaspiOrderProduct kaspiOrderProduct = new KaspiOrderProduct();
         kaspiOrderProduct.setOrder(kaspiOrder);
