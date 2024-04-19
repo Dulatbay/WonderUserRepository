@@ -11,6 +11,7 @@ import kz.wonder.wonderuserrepository.repositories.StoreEmployeeRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
 import kz.wonder.wonderuserrepository.services.StoreEmployeeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	private final StoreEmployeeRepository storeEmployeeRepository;
 	private final KaspiStoreRepository kaspiStoreRepository;
@@ -30,10 +32,13 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	@Override
 	@Transactional
 	public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest) {
+		log.info("Employee Initialize started");
 		var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
-		if (isPhoneNumberUsed)
+		if (isPhoneNumberUsed) {
+			log.error("Phone number in already use. Employee creation failed");
 			throw new IllegalArgumentException("Phone already used");
+		}
 
 		WonderUser wonderUser = new WonderUser();
 		wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
@@ -50,6 +55,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 		storeEmployee.setWonderUser(wonderUser);
 		userRepository.save(wonderUser);
 		storeEmployeeRepository.save(storeEmployee);
+		log.info("Employee successfully created. EmployeeID: {}", storeEmployee.getId());
 	}
 
 	@Override
@@ -69,6 +75,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	@Override
 	public List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak) {
 		final var storeEmployees = storeEmployeeRepository.findAll();
+		log.info("Getting all store employees. Size: {}", employeesInKeycloak.size());
 		return storeEmployees.stream()
 				.map(storeEmployee -> toEmployeeResponse(storeEmployee, employeesInKeycloak))
 				.filter(Objects::nonNull)
@@ -136,11 +143,13 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please try one more time with another params"));
 
 		storeEmployee.setKaspiStore(kaspiStore);
+		log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
 		return storeEmployee;
 	}
 
 	@Override
 	public void deleteStoreEmployee(StoreEmployee storeEmployee) {
+		log.warn("Deleting Employee");
 		storeEmployeeRepository.delete(storeEmployee);
 	}
 }
