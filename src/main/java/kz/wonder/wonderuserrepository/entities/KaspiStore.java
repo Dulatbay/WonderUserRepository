@@ -40,10 +40,10 @@ public class KaspiStore extends AbstractEntity<Long> {
 	private String formattedAddress;
 
 	@Column(name = "latitude")
-	private Long latitude;
+	private Double latitude;
 
 	@Column(name = "longitude")
-	private Long longitude;
+	private Double longitude;
 
 	@Column(name = "kaspi_id", nullable = false)
 	private String kaspiId;
