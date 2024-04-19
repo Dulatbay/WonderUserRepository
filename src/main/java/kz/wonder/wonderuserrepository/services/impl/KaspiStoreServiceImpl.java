@@ -73,7 +73,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
 		kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
 		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
-		kaspiStore.setFormattedAddress("Formatted address:"); // todo: formatted address
+		String formattedAddress = String.format("%s, %s, %s, %s, %s, %s",
+				selectedCity.getName(),
+				kaspiStoreCreateRequest.getStreetName(),
+				kaspiStoreCreateRequest.getStreetNumber(),
+				kaspiStoreCreateRequest.getTown(),
+				kaspiStoreCreateRequest.getDistrict(),
+				kaspiStoreCreateRequest.getBuilding());
+		kaspiStore.setFormattedAddress(formattedAddress);
 		kaspiStore.setEnabled(true);
 
 

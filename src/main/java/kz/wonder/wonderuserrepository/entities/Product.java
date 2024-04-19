@@ -38,6 +38,9 @@ public class Product extends AbstractEntity<Long> {
     @Column(name = "keycloak_id", nullable = false)
     private String keycloakId;
 
+    @Column(name = "trade_price")
+    private Double tradePrice;
+
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "product",
             orphanRemoval = true,

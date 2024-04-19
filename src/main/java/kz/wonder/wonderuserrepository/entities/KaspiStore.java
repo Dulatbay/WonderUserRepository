@@ -65,6 +65,12 @@ public class KaspiStore extends AbstractEntity<Long> {
 			mappedBy = "kaspiStore",
 			orphanRemoval = true,
 			cascade = CascadeType.ALL)
+	private List<StoreCell> storeCells;
+
+	@OneToMany(fetch = FetchType.LAZY,
+			mappedBy = "kaspiStore",
+			orphanRemoval = true,
+			cascade = CascadeType.ALL)
 	private List<KaspiOrder> orders;
 
 	@ManyToOne(fetch = FetchType.LAZY)

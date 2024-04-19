@@ -30,7 +30,6 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 public class SupplyServiceImpl implements SupplyService {
 
 
-
     private final ProductRepository productRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final BoxTypeRepository boxTypeRepository;
@@ -181,6 +180,8 @@ public class SupplyServiceImpl implements SupplyService {
     private List<SupplyProductResponse> mapSupplyDetailsToResponse(Supply supply) {
         var supplyProductsRes = new ArrayList<SupplyProductResponse>();
 
+        var shopName = supply.getAuthor().getKaspiToken().getSellerName();
+
         supply.getSupplyBoxes()
                 .forEach(supplyBox ->
                         supplyBox
@@ -194,6 +195,7 @@ public class SupplyServiceImpl implements SupplyService {
                                     supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode());
                                     supplyProductResponse.setStoreAddress(supply.getKaspiStore().getFormattedAddress());
                                     supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
+                                    supplyProductResponse.setShopName(shopName);
                                     supplyProductsRes.add(supplyProductResponse);
                                 })
                 );
