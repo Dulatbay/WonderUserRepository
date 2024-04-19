@@ -27,9 +27,6 @@ public class KaspiCity extends AbstractEntity<Long> {
     @Column
     private boolean enabled;
 
-    // todo: create dto
-
-    @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiCity",
             orphanRemoval = true,
