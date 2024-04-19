@@ -32,7 +32,7 @@ public class StoreCellServiceImpl implements StoreCellService {
         storeCell.setWidth(storeCellCreateRequest.getWidth());
         storeCell.setHeight(storeCellCreateRequest.getHeight());
         storeCell.setKaspiStore(kaspiStore);
-        storeCellRepository.save(storeCellRepository);
+        storeCellRepository.save(storeCell);
     }
 
     @Override
@@ -54,5 +54,16 @@ public class StoreCellServiceImpl implements StoreCellService {
                     return storeCell;
                 })
                 .toList();
+    }
+
+    @Override
+    public void delete(Long cellId, String keycloakId) {
+        final var storeCell = storeCellRepository.findById(cellId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Cell doesn't exist"));
+
+        if(!storeCell.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakId)) {
+            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist");
+        }
+        storeCellRepository.delete(storeCell);
     }
 }
