@@ -41,4 +41,15 @@ public class StoreCellController {
 
         return ResponseEntity.ok(storeCellResponses);
     }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deleteStoreCell(@PathVariable("id") Long cellId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+
+        storeCellService.delete(cellId, keycloakId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

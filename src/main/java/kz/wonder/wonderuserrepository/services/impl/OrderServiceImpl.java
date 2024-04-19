@@ -17,9 +17,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,21 +52,23 @@ public class OrderServiceImpl implements OrderService {
     int createdCount = 0, updatedCount = 0;
 
     @Override
-    public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId) {
+    public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
         log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
-        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakId(keycloakId);
-
+        startDate = startDate.minusDays(1);
+        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime());
         log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
         return kaspiOrderInDb
                 .stream()
-                .map(OrderServiceImpl::getOrderResponse)
+                .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0)) // todo: переделать оптовую цену
                 .toList();
     }
 
-    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder) {
+    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
+
         return OrderResponse.builder()
                 .id(kaspiOrder.getId())
                 .code(kaspiOrder.getCode())
+                .tradePrice(tradePrice)
                 .kaspiId(kaspiOrder.getKaspiId())
                 .totalPrice(kaspiOrder.getTotalPrice())
                 .paymentMode(kaspiOrder.getPaymentMode())
@@ -79,19 +88,24 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId) {
+    public List<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
         log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
         var stores = wonderUser.getStores();
 
-        var result = new ArrayList<OrderResponse>();
+        final LocalDate finalStartDate = startDate.minusDays(1);
 
-        stores.forEach(store -> {
-            var orders = store.getOrders();
-            orders.forEach(order -> {
-                result.add(getOrderResponse(order));
-            });
-        });
+        var result = stores.stream()
+                .flatMap(store -> store.getOrders().stream()
+                        .filter(kaspiOrder -> {
+                            LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
+                            return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate));
+                        })
+                        .map(order -> getOrderResponse(order, 0.0))
+                )
+                .collect(Collectors.toList());
+
+
         log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
         return result;
     }

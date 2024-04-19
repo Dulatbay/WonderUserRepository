@@ -33,19 +33,6 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer")
     private KaspiStore kaspiStore;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(name = "kaspi_order_products",
-            schema = schemaName,
-            joinColumns = @JoinColumn(
-                    name = "product_id",
-                    referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(
-                    name = "kaspi_order_id",
-                    referencedColumnName = "id"
-            )
-    )
-    private List<Product> products;
-
     private Long plannedDeliveryDate;
     private Long creationDate;
     private Double deliveryCostForSeller;

@@ -9,4 +9,6 @@ public interface StoreCellService {
     void create(StoreCellCreateRequest storeCellCreateRequest, String keycloakId);
 
     List<StoreCellResponse> getAllByParams(Long storeId, String keycloakId);
+
+    void delete(Long cellId, String keycloakId);
 }

@@ -10,4 +10,5 @@ public class SupplyProductResponse {
 	private String boxBarCode;
 	private String boxTypeName;
 	private String storeAddress;
+	private String shopName;
 }
