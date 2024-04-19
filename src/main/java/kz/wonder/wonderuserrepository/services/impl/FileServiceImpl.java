@@ -61,6 +61,7 @@ public class FileServiceImpl implements FileService {
 	public String save(byte[] bytes, String fileExtension) throws IOException {
 		String filename = constructUniqueFileName(fileExtension);
 		saveFile(new ByteArrayInputStream(bytes), filename);
+		log.info("{} file was saved", filename);
 
 		return filename;
 	}
@@ -133,6 +134,7 @@ public class FileServiceImpl implements FileService {
 				log.warn("File not found: {}", filename);
 			}
 		} catch (IOException e) {
+			log.error("Couldn't delete a file by name.\nIOException: ", e);
 			throw new RuntimeException(e);
 		}
 	}
@@ -140,6 +142,7 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public void deleteAll() {
 		FileSystemUtils.deleteRecursively(rootLocation.toFile());
+		log.warn("All files were deleted");
 	}
 
 
