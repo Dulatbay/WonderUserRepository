@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.config;
 
 import kz.wonder.wonderuserrepository.repositories.*;
-import kz.wonder.wonderuserrepository.services.CityService;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.CITIES_INIT_DURATION;
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ORDERS_INIT_DURATION;
 
 @RequiredArgsConstructor
@@ -18,22 +16,22 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ORDERS_INI
 @Slf4j
 public class Scheduler {
     private final KaspiTokenRepository kaspiTokenRepository;
-    private final CityService cityService;
+//    private final CityService cityService;
     private final OrderService orderService;
 
 
-    @Scheduled(fixedRate = CITIES_INIT_DURATION)
-    public void updateCitiesFromKaspiApi() {
-        cityService.syncWithKaspi();
-    }
+//    @Scheduled(fixedRate = CITIES_INIT_DURATION)
+//    public void updateCitiesFromKaspiApi() {
+//        cityService.syncWithKaspi();
+//    }
 
     @Scheduled(fixedRate = ORDERS_INIT_DURATION)
     public void updateOrders() {
         try {
             log.info("Updating orders started");
             long currentTime = System.currentTimeMillis();
-            long fiveMinutes = Duration.ofMinutes(5).toMillis();// 5 minutes
-            long startDate = currentTime - fiveMinutes;
+            long oneDay = Duration.ofDays(1).toMillis(); // 1 day
+            long startDate = currentTime - oneDay;
 
             var tokens = kaspiTokenRepository.findAll();
 

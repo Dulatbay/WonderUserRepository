@@ -10,6 +10,7 @@ application:
   sync-cities: true
   init-users: false
   kaspi-token: paste-your-token
+  admin-keycloak-id: e6f17bcd-384e-4403-95b9-059e5fbe0f69
 spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}

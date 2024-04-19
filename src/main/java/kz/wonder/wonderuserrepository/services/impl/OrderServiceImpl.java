@@ -13,6 +13,7 @@ import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +21,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class OrderServiceImpl implements OrderService {
     private final KaspiOrderRepository kaspiOrderRepository;
     private final UserService userService;
@@ -33,6 +34,15 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
+
+
+    // todo: переделать этот говно код
+    @Value("${application.admin-keycloak-id}")
+    private String adminKeycloakId;
+
+    private WonderUser admin;
+
+    int createdCount = 0, updatedCount = 0;
 
     @Override
     public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId) {
@@ -81,8 +91,6 @@ public class OrderServiceImpl implements OrderService {
         return result;
     }
 
-    int createdCount = 0, updatedCount = 0;
-
 
     @Override
     public void processTokenOrders(KaspiToken token, long startDate, long currentTime) {
@@ -109,6 +117,7 @@ public class OrderServiceImpl implements OrderService {
                         error -> log.error("Error updating orders: {}", error.getMessage(), error)
                 );
     }
+
 
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
@@ -137,9 +146,9 @@ public class OrderServiceImpl implements OrderService {
         }
         var kaspiCity = getKaspiCity(orderAttributes);
 
-        var wonderUser = token.getWonderUser();
+        var kaspiStore = getKaspiStore(orderAttributes.getOriginAddress(), getKaspiCity(orderAttributes));
 
-        kaspiOrder.setKaspiStore(getKaspiStore(orderAttributes.getOriginAddress(), getKaspiCity(orderAttributes), wonderUser));
+        kaspiOrder.setKaspiStore(kaspiStore);
         kaspiOrder.setCreditTerm(orderAttributes.getCreditTerm());
         kaspiOrder.setKaspiCity(kaspiCity);
         kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
@@ -169,7 +178,7 @@ public class OrderServiceImpl implements OrderService {
         kaspiOrder.setWonderUser(token.getWonderUser());
 
         // todo: может ли один и тот же артикул товара(каспи) быть у двух разных продавцов
-
+        // todo: внедрить мапперы в проект
 
 //        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
 //                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Product not found", ""));
@@ -180,7 +189,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElse(null);
 
         if (product != null) {
-            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByProductVendorCodeAndProductKeycloakId(product.getVendorCode(), token.getWonderUser().getKeycloakId());
+            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId());
 
             // если этого баркода у нас нет в складе, то останавливаемся
             if (optionalSupplyBoxProduct.isEmpty()) {
@@ -201,7 +210,6 @@ public class OrderServiceImpl implements OrderService {
         kaspiOrderProductRepository.save(kaspiOrderProduct);
     }
 
-
     private @NotNull KaspiCity getKaspiCity(OrdersDataResponse.OrderAttributes orderAttributes) {
         return kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
@@ -221,8 +229,7 @@ public class OrderServiceImpl implements OrderService {
         return kaspiDeliveryAddress;
     }
 
-
-    public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity, WonderUser wonderUser) {
+    public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         var optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(address.getAddress().getApartment(),
                 address.getAddress().getStreetName(),
                 address.getAddress().getStreetNumber(),
@@ -233,14 +240,13 @@ public class OrderServiceImpl implements OrderService {
         if (optionalKaspiStore.isPresent()) {
             return optionalKaspiStore.get();
         } else {
-            WonderUser persistedWonderUser = userRepository.findById(wonderUser.getId())
-                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "WonderUser not found", ""));
-            KaspiStore kaspiStore = getStore(address, kaspiCity, persistedWonderUser);
+            KaspiStore kaspiStore = getStore(address, kaspiCity);
             return kaspiStoreRepository.save(kaspiStore);
         }
     }
 
-    private static @NotNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity, WonderUser wonderUser) {
+    private @NotNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
+        // todo: этот store создается для какого юзера(сделаю пока для main админа)
         KaspiStore kaspiStore = new KaspiStore();
         kaspiStore.setKaspiId(address.getDisplayName());
         kaspiStore.setKaspiCity(kaspiCity);
@@ -249,7 +255,11 @@ public class OrderServiceImpl implements OrderService {
         kaspiStore.setBuilding(address.getAddress().getBuilding());
         kaspiStore.setApartment(address.getAddress().getApartment());
         kaspiStore.setFormattedAddress(address.getAddress().getFormattedAddress());
-        kaspiStore.setWonderUser(wonderUser);
+
+        if (admin == null)
+            admin = userService.getUserByKeycloakId(adminKeycloakId);
+
+        kaspiStore.setWonderUser(admin);
         return kaspiStore;
     }
 }

@@ -66,7 +66,7 @@ public class KaspiApi {
         String path = "/orders";
 
         String filterParams = String.format(
-                "filter[orders][state]=%s&filter[orders][creationDate][$ge]=%d&filter[orders][creationDate][$le]=%d",
+                "filter[orders][state]=%s&filter[orders][creationDate][$ge]=%d&filter[orders][creationDate][$le]=%d&include[orders]=entries",
                 orderState.name(),
                 startDate,
                 endDate
