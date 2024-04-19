@@ -71,7 +71,7 @@ public class SupplyServiceImpl implements SupplyService {
             }
             return response;
         } catch (IllegalStateException e) {
-            log.info("IllegalStateException :", e);
+            log.error("IllegalStateException :", e);
             throw new IllegalArgumentException("File process failed");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -294,6 +294,7 @@ public class SupplyServiceImpl implements SupplyService {
 
     private void validateStoreEmployeeAndSupply(StoreEmployee storeEmployee, Supply supply) {
         if (!Objects.equals(supply.getKaspiStore().getId(), storeEmployee.getKaspiStore().getId())) {
+            log.error("Supply doesn't exist!");
             throw new IllegalArgumentException("Supply doesn't exist");
         }
     }
