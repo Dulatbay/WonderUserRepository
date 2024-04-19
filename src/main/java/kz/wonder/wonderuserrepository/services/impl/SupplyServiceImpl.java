@@ -106,19 +106,23 @@ public class SupplyServiceImpl implements SupplyService {
                     supplyBox.setSupplyBoxProducts(new ArrayList<>());
                     supplyBox.setSupply(supply);
 
-                    var product = productRepository.findByIdAndKeycloakId(selectedBox.getProductId(), userId)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+                    var selectedProducts = selectedBox.getProductQuantities();
+                    selectedProducts.forEach(selectedProduct -> {
+                        var product = productRepository.findByIdAndKeycloakId(selectedProduct.getProductId(), userId)
+                                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
 
-                    for (int i = 0; i < selectedBox.getQuantity(); i++) {
-                        SupplyBoxProducts boxProducts = new SupplyBoxProducts();
-                        boxProducts.setSupplyBox(supplyBox);
-                        boxProducts.setProduct(product);
-                        boxProducts.setState(ProductStateInStore.PENDING);
-                        supplyBox.getSupplyBoxProducts().add(boxProducts);
-                    }
+                        for (int i = 0; i < selectedProduct.getQuantity(); i++) {
+                            SupplyBoxProducts boxProducts = new SupplyBoxProducts();
+                            boxProducts.setSupplyBox(supplyBox);
+                            boxProducts.setProduct(product);
+                            boxProducts.setState(ProductStateInStore.PENDING);
+                            supplyBox.getSupplyBoxProducts().add(boxProducts);
+                        }
 
-                    supply.getSupplyBoxes().add(supplyBox);
+                        supply.getSupplyBoxes().add(supplyBox);
+                    });
                 });
 
         var created = supplyRepository.save(supply);
