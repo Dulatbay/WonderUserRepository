@@ -24,6 +24,7 @@ public class StoreCell extends AbstractEntity<Long> {
     private String comment;
     private Double width;
     private Double height;
+    private Double depth;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer", nullable = false)

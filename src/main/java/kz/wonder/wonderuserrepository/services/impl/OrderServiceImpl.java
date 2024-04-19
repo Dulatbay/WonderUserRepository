@@ -63,6 +63,7 @@ public class OrderServiceImpl implements OrderService {
                 .kaspiId(kaspiOrder.getKaspiId())
                 .totalPrice(kaspiOrder.getTotalPrice())
                 .paymentMode(kaspiOrder.getPaymentMode())
+                .state(kaspiOrder.getState())
                 .plannedDeliveryDate(kaspiOrder.getPlannedDeliveryDate())
                 .creationDate(kaspiOrder.getCreationDate())
                 .deliveryCostForSeller(kaspiOrder.getDeliveryCostForSeller())
