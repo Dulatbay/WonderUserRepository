@@ -102,6 +102,7 @@ public class ProductServiceImpl implements ProductService {
 
         var isPublic = row.getCell(3).getStringCellValue();
         product.setEnabled(getBooleanFromString(isPublic));
+        product.setTradePrice(row.getCell(4).getNumericCellValue());
         product.setKeycloakId(keycloakUserId);
         product.setDeleted(false);
         return productRepository.save(product);
@@ -122,9 +123,9 @@ public class ProductServiceImpl implements ProductService {
         var cityAstana = getCityByName(CITY_ASTANA);
         var cityShymkent = getCityByName(CITY_SHYMKENT);
 
-        var priceAtAlmaty = processProductPrice(product, cityAlmaty, row.getCell(4).getNumericCellValue());
-        var priceAtAstana = processProductPrice(product, cityAstana, row.getCell(5).getNumericCellValue());
-        var priceAtShymkent = processProductPrice(product, cityShymkent, row.getCell(6).getNumericCellValue());
+        var priceAtAlmaty = processProductPrice(product, cityAlmaty, row.getCell(5).getNumericCellValue());
+        var priceAtAstana = processProductPrice(product, cityAstana, row.getCell(6).getNumericCellValue());
+        var priceAtShymkent = processProductPrice(product, cityShymkent, row.getCell(7).getNumericCellValue());
 
         product.setPrices(new ArrayList<>());
         product.getPrices().add(priceAtAlmaty);

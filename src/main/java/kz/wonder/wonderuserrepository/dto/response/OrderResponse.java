@@ -17,6 +17,7 @@ public class OrderResponse {
     private Double deliveryCostForSeller;
     private Boolean isKaspiDelivery;
     private String deliveryMode;
+    private Double tradePrice;
     private String state;
     private String waybill;
     private Long courierTransmissionDate;

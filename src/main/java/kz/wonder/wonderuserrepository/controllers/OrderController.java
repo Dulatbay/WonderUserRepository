@@ -8,8 +8,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
@@ -22,21 +24,23 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/seller")
-    public ResponseEntity<List<OrderResponse>> getSellerOrders(){
+    public ResponseEntity<List<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
+                                                               @RequestParam("end-date") LocalDate endDate){
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        List<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId);
+        List<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate);
 
         return ResponseEntity.ok().body(sellerOrderResponseList);
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<List<OrderResponse>> getAdminOrders(){
+    public ResponseEntity<List<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
+                                                              @RequestParam("end-date") LocalDate endDate){
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        List<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId);
+        List<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate);
 
         return ResponseEntity.ok().body(orderResponseList);
     }
