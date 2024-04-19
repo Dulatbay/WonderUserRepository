@@ -125,13 +125,21 @@ public class OrderServiceImpl implements OrderService {
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
             if (kaspiOrder.getUpdatedAt().isAfter(LocalDateTime.now().minusMinutes(15))) {
-                updatedCount++;
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+                try {
+                    getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+                    updatedCount++;
+                }catch (Exception e){
+                    log.error("Error processing order: {}", e.getMessage(), e);
+                }
             }
         } else {
-            createdCount++;
-            KaspiOrder kaspiOrder = new KaspiOrder();
-            getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+            try {
+                KaspiOrder kaspiOrder = new KaspiOrder();
+                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+                createdCount++;
+            } catch (Exception e) {
+                log.error("Error processing order: {}", e.getMessage(), e);
+            }
         }
     }
 
@@ -189,11 +197,11 @@ public class OrderServiceImpl implements OrderService {
                 .orElse(null);
 
         if (product != null) {
-            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId());
+            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId(), ProductStateInStore.ACCEPTED);
 
             // если этого баркода у нас нет в складе, то останавливаемся
             if (optionalSupplyBoxProduct.isEmpty()) {
-                return;
+                throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product with code " + product.getVendorCode() + " not found in kaspi store(maybe user didn't create supply with product)");
             }
 
             var supplyBoxProduct = optionalSupplyBoxProduct.get();
@@ -201,10 +209,11 @@ public class OrderServiceImpl implements OrderService {
             supplyBoxProductsRepository.save(supplyBoxProduct);
         }
 
-        KaspiOrderProduct kaspiOrderProduct = new KaspiOrderProduct();
+        KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderId(product == null ? null : product.getId(), kaspiOrder.getId())
+                .orElse(new KaspiOrderProduct());
         kaspiOrderProduct.setOrder(kaspiOrder);
         kaspiOrderProduct.setProduct(product);
-        kaspiOrderProduct.setQuantity(kaspiOrderProduct.getQuantity());
+        kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
 
         kaspiOrderRepository.save(kaspiOrder);
         kaspiOrderProductRepository.save(kaspiOrderProduct);
