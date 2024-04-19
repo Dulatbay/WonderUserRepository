@@ -12,12 +12,9 @@ import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-<<<<<<< HEAD
-=======
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
->>>>>>> origin/main
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -131,15 +128,15 @@ public class OrderServiceImpl implements OrderService {
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
-//            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
-            try {
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
+                try {
+                    getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
 
-                updatedCount++;
-            } catch (Exception e) {
-                log.error("Error processing order: {}", e.getMessage(), e);
+                    updatedCount++;
+                } catch (Exception e) {
+                    log.error("Error processing order: {}", e.getMessage(), e);
+                }
             }
-//            }
         } else {
             try {
                 KaspiOrder kaspiOrder = new KaspiOrder();
