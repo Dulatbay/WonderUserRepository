@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.constants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -19,4 +20,7 @@ public class ValueConstants {
     public static final String USER_ID_CLAIM = "user_id";
 
     public static final LocalDateTime SERVER_INIT_TIME = LocalDateTime.parse("01.04.2024 00:00", DATE_TIME_FORMATTER);
+
+    public static final long ORDERS_INIT_DURATION = 300000L; // five minutes
+    public static final long CITIES_INIT_DURATION = 604800000L; // one week
 }
