@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,14 +14,17 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
     private final KaspiOrderRepository kaspiOrderRepository;
     private final UserService userService;
 
     @Override
     public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId) {
+        log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
         var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakId(keycloakId);
 
+        log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
         return kaspiOrderInDb
                 .stream()
                 .map(OrderServiceImpl::getOrderResponse)
@@ -50,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId) {
+        log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
         var stores = wonderUser.getStores();
 
@@ -61,6 +66,7 @@ public class OrderServiceImpl implements OrderService {
                 result.add(getOrderResponse(order));
             });
         });
+        log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
         return result;
     }
 }
