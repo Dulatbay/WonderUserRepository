@@ -67,6 +67,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public WonderUser getUserByKeycloakId(String keycloakId) {
+		log.info("Retrieving user with keycloakId: {}", keycloakId);
 		return userRepository.findByKeycloakId(keycloakId)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
