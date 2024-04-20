@@ -79,6 +79,10 @@ public class SupplyServiceImpl implements SupplyService {
 
     @Override
     public long createSupply(SupplyCreateRequest createRequest, String userId) {
+        // todo: при создании поставки нужно проверить:
+        //  1) время(работает ли в этот день склад)
+        //  2) Есть ли там доступные места(хотя это врядли)
+        //  3)
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
 
