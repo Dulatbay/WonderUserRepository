@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.repositories.StoreCellRepository;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreCellServiceImpl implements StoreCellService {
     private final StoreCellRepository storeCellRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
@@ -32,6 +34,9 @@ public class StoreCellServiceImpl implements StoreCellService {
         storeCell.setWidth(storeCellCreateRequest.getWidth());
         storeCell.setHeight(storeCellCreateRequest.getHeight());
         storeCell.setKaspiStore(kaspiStore);
+
+        log.info("Created store cell with id: {}", storeCell.getId());
+
         storeCellRepository.save(storeCell);
     }
 
