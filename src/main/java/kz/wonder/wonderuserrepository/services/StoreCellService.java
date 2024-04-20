@@ -11,4 +11,8 @@ public interface StoreCellService {
     List<StoreCellResponse> getAllByParams(Long storeId, String keycloakId);
 
     void delete(Long cellId, String keycloakId);
+
+    void addProductToCell(Long cellId, Long productId, String keycloakId);
+    void moveProductToCell(Long cellId, Long productId, String keycloakId);
+    void deleteProductFromCell(Long cellId, Long productId, String keycloakId);
 }

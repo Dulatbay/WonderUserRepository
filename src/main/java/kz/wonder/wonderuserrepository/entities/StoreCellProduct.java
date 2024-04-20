@@ -19,4 +19,10 @@ public class StoreCellProduct extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "supply_product_id", columnDefinition = "integer", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "employee_id", columnDefinition = "integer", nullable = false)
+    private StoreEmployee storeEmployee;
+
+
 }
