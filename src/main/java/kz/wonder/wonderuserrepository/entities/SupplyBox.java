@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
-import java.util.UUID;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -27,7 +26,7 @@ public class SupplyBox extends AbstractEntity<Long> {
             mappedBy = "supplyBox",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<SupplyBoxProducts> supplyBoxProducts;
+    private List<SupplyBoxProduct> supplyBoxProducts;
 
     @Column(name = "vendor_code", nullable = false, unique = true)
     private String vendorCode;

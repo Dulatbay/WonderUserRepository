@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
@@ -79,10 +78,12 @@ public class SupplyServiceImpl implements SupplyService {
 
     @Override
     public long createSupply(SupplyCreateRequest createRequest, String userId) {
+
         // todo: при создании поставки нужно проверить:
         //  1) время(работает ли в этот день склад)
         //  2) Есть ли там доступные места(хотя это врядли)
-        //  3)
+        //  3) Генерация номера ячейки
+
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
 
@@ -117,7 +118,7 @@ public class SupplyServiceImpl implements SupplyService {
 
 
                         for (int i = 0; i < selectedProduct.getQuantity(); i++) {
-                            SupplyBoxProducts boxProducts = new SupplyBoxProducts();
+                            SupplyBoxProduct boxProducts = new SupplyBoxProduct();
                             boxProducts.setSupplyBox(supplyBox);
                             boxProducts.setProduct(product);
                             boxProducts.setState(ProductStateInStore.PENDING);
@@ -354,7 +355,7 @@ public class SupplyServiceImpl implements SupplyService {
         });
     }
 
-    private void processSupplyBoxProduct(SupplyBoxProducts supplyBoxProduct, Map<Long, SupplyReportResponse> reportMap) {
+    private void processSupplyBoxProduct(SupplyBoxProduct supplyBoxProduct, Map<Long, SupplyReportResponse> reportMap) {
         var product = supplyBoxProduct.getProduct();
         var productId = product.getId();
 
@@ -369,7 +370,7 @@ public class SupplyServiceImpl implements SupplyService {
         updateReportCounts(supplyBoxProduct, report);
     }
 
-    private void updateReportCounts(SupplyBoxProducts supplyBoxProduct, SupplyReportResponse report) {
+    private void updateReportCounts(SupplyBoxProduct supplyBoxProduct, SupplyReportResponse report) {
         switch (supplyBoxProduct.getState()) {
             case ACCEPTED:
                 report.setCountOfProductAccepted(report.getCountOfProductAccepted() + 1);

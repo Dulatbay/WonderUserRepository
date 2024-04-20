@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @EqualsAndHashCode(callSuper = true)
@@ -25,6 +27,12 @@ public class StoreCell extends AbstractEntity<Long> {
     private Double width;
     private Double height;
     private Double depth;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "storeCell",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<StoreCellProduct> storeCellProducts;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer", nullable = false)
