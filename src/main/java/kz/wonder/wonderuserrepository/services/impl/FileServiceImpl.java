@@ -101,6 +101,7 @@ public class FileServiceImpl implements FileService {
 			Path file = load(fileName);
 			Resource resource = new UrlResource(file.toUri());
 			if (resource.exists() || resource.isReadable()) {
+				log.info("Resource: {}", resource);
 				return resource;
 			} else {
 				throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),

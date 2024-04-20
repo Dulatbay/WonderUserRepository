@@ -83,12 +83,13 @@ public class ProductServiceImpl implements ProductService {
 
                 productResponses.add(mapToResponse(product));
             }
+            log.info("Product responses with size: {}", productResponses.size());
             return productResponses;
         } catch (IllegalStateException e) {
             log.error("IllegalStateException: ", e);
             throw new IllegalArgumentException("File process failed");
         } catch (Exception e) {
-            log.info("Exception: ", e);
+            log.error("Exception: ", e);
             throw new IllegalArgumentException("File process failed");
         }
     }
@@ -150,6 +151,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductResponse> getProductsByKeycloakId(String keycloakUserId) {
+        log.info("Retrieving products with keycloak id: {}", keycloakUserId);
         return productRepository.findAllByKeycloakId(keycloakUserId)
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
@@ -172,6 +174,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProductById(String keycloakId, Long productId) {
+
         final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product doesn't exist"));
 		log.warn("Product with id {} was deleted", productId);

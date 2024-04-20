@@ -61,6 +61,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 	@Override
 	public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource) {
 		final var keycloakUser = userResource.toRepresentation();
+
 		// todo: проверка на то, что склад его
 
 		return this.buildEmployeeResponse(keycloakUser, storeEmployee);
@@ -112,7 +113,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
 		final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
 
-
+		log.info("Getting all store employees with size: {}", storeEmployees.size());
 
 		return storeEmployees.stream()
 				.map(storeEmployee -> toEmployeeResponse(storeEmployee, userRepresentations))
@@ -132,6 +133,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 		final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
 
 		storeEmployee.getWonderUser().setPhoneNumber(phoneNumber);
+
+		log.info("Store employee update with id: {}", storeEmployee.getId());
 
 		return storeEmployeeRepository.save(storeEmployee);
 	}
