@@ -12,7 +12,7 @@ public interface StoreCellService {
 
     void delete(Long cellId, String keycloakId);
 
-    void addProductToCell(Long cellId, Long productId, String keycloakId);
+    void addProductToCell(Long cellId, String productArticle, String keycloakId);
     void moveProductToCell(Long cellId, Long productId, String keycloakId);
     void deleteProductFromCell(Long cellId, Long productId, String keycloakId);
 }

@@ -42,6 +42,8 @@ public class WonderUserRepositoryApplication {
 	// Не логировать в циклах
 	//
 
+	// todo: на некоторые сущности вместо keycloakId написать userId
+
 	@Bean
 	CommandLineRunner init(UserService userService,
 	                       FileService fileService,

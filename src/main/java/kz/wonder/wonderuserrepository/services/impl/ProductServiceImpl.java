@@ -53,7 +53,11 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public List<ProductResponse> processExcelFile(MultipartFile excelFile, String keycloakUserId) {
+    public List<ProductResponse>
+
+
+
+    processExcelFile(MultipartFile excelFile, String keycloakUserId) {
         try (Workbook workbook = WorkbookFactory.create(excelFile.getInputStream())) {
             List<ProductResponse> productResponses = new ArrayList<>();
 
@@ -70,12 +74,16 @@ public class ProductServiceImpl implements ProductService {
             // todo: improve TL
             if (!rowIterator.hasNext())
                 throw new IllegalArgumentException("Send file by requirements!!");
+
+            int count = 0;
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
 
                 String vendorCode = getStringFromExcelCell(row.getCell(0));
                 if (vendorCode.isEmpty())
                     continue;
+
+                log.info("#{}, product code: {}", ++count, vendorCode);
 
                 Product product = processProduct(row, keycloakUserId, vendorCode);
 

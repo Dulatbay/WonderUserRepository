@@ -23,6 +23,4 @@ public class StoreCellProduct extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "employee_id", columnDefinition = "integer", nullable = false)
     private StoreEmployee storeEmployee;
-
-
 }

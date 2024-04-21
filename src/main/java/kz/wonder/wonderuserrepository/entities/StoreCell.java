@@ -4,6 +4,8 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class StoreCell extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private List<StoreCellProduct> storeCellProducts;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer", nullable = false)
     private KaspiStore kaspiStore;
 }

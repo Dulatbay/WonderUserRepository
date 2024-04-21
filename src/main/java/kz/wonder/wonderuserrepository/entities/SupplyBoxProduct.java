@@ -33,7 +33,7 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
             mappedBy = "supplyBoxProduct",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<SupplyBoxProduct> supplyBoxProducts;
+    private List<StoreCellProduct> storeCellProducts;
 
     @Override
     protected void onCreate() {

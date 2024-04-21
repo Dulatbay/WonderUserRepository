@@ -217,7 +217,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElse(null);
 
         if (product != null) {
-            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId(), ProductStateInStore.ACCEPTED);
+            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findFirstByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId(), ProductStateInStore.ACCEPTED);
 
             // если этого баркода у нас нет в складе, то останавливаемся
             if (optionalSupplyBoxProduct.isEmpty()) {
