@@ -177,7 +177,7 @@ public class ProductServiceImpl implements ProductService {
 
         final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product doesn't exist"));
-		log.warn("Product with id {} was deleted", productId);
+		log.info("Product with id {} was deleted", productId);
         productRepository.delete(product);
     }
 

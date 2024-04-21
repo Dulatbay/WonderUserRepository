@@ -167,7 +167,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 
 	@Override
 	public void deleteUserById(String userId) {
-		log.warn("Deleted user with id {}", userId);
+		log.info("Deleted user with id {}", userId);
 		getUserById(userId).remove();
 	}
 

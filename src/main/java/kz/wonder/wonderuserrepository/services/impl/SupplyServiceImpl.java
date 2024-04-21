@@ -296,7 +296,6 @@ public class SupplyServiceImpl implements SupplyService {
 
     private void validateStoreEmployeeAndSupply(StoreEmployee storeEmployee, Supply supply) {
         if (!Objects.equals(supply.getKaspiStore().getId(), storeEmployee.getKaspiStore().getId())) {
-            log.error("Supply doesn't exist!");
             throw new IllegalArgumentException("Supply doesn't exist");
         }
     }

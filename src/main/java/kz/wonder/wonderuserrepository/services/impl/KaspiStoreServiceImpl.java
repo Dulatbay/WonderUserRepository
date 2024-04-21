@@ -188,7 +188,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi store doesn't exist"));
 
 		kaspiStoreRepository.delete(kaspiStore);
-		log.warn("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
+		log.info("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
 	}
 
 	@Override
@@ -196,7 +196,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		final var kaspiStore = kaspiStoreRepository.findById(id)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
-		log.warn("Store with id {} was deleted", id);
+		log.info("Store with id {} was deleted", id);
 		kaspiStoreRepository.delete(kaspiStore);
 	}
 

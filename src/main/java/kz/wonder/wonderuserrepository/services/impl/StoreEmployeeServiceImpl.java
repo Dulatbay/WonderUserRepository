@@ -36,7 +36,6 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 		var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
 		if (isPhoneNumberUsed) {
-			log.error("Phone number in already use. Employee creation failed");
 			throw new IllegalArgumentException("Phone already used");
 		}
 
@@ -55,7 +54,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 		storeEmployee.setWonderUser(wonderUser);
 		userRepository.save(wonderUser);
 		storeEmployeeRepository.save(storeEmployee);
-		log.info("Employee successfully created. EmployeeID: {}", storeEmployee.getId());
+		log.info("Employee successfully created. EmployeeID: {} KaspiStoreID: {}", storeEmployee.getId(), storeEmployee.getKaspiStore().getId());
 	}
 
 	@Override
@@ -152,7 +151,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
 	@Override
 	public void deleteStoreEmployee(StoreEmployee storeEmployee) {
-		log.warn("Deleting Employee");
+		log.info("Deleting Employee");
 		storeEmployeeRepository.delete(storeEmployee);
 	}
 }
