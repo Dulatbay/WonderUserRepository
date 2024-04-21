@@ -322,6 +322,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		if (!isSuperAdmin && !store.getWonderUser().getKeycloakId().equals(keycloakId))
 			throw new IllegalArgumentException("Store doesn't exist");
 
+		log.info("Retrieving store with id: {}", store.getId());
+
 		return mapToDetailResponse(store);
 	}
 
