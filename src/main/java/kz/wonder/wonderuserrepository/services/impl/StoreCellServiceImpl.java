@@ -8,6 +8,8 @@ import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class StoreCellServiceImpl implements StoreCellService {
+    private static final Logger log = LoggerFactory.getLogger(StoreCellServiceImpl.class);
     private final StoreCellRepository storeCellRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
@@ -69,17 +72,17 @@ public class StoreCellServiceImpl implements StoreCellService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Cell doesn't exist"));
 
         if (!storeCell.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakId)) {
-            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist");
+            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Cell doesn't exist");
         }
         storeCellRepository.delete(storeCell);
     }
 
     @Override
-    public void addProductToCell(Long cellId, Long productId, String keycloakId) {
+    public void addProductToCell(Long cellId, String productArticle, String keycloakId) {
         final var storeCell = storeCellRepository.findById(cellId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Cell doesn't exist"));
         final var employee = validateEmployee(keycloakId, storeCell.getKaspiStore().getId());
-        final var supplyBoxProduct = validateProduct(productId, storeCell.getKaspiStore().getId());
+        final var supplyBoxProduct = validateProduct(productArticle, storeCell.getKaspiStore().getId());
 
         supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
         supplyBoxProductsRepository.save(supplyBoxProduct);
@@ -107,13 +110,16 @@ public class StoreCellServiceImpl implements StoreCellService {
 
         var employeeWorkStore = employee.getKaspiStore();
 
+        log.info("Employee work store: {}, requested store: {}", employeeWorkStore.getId(), kaspiStoreId);
+
+
         if (!employeeWorkStore.getId().equals(kaspiStoreId)) {
             throw new IllegalArgumentException("You have not permission to add product to cell of this store");
         }
         return employee;
     }
-    private SupplyBoxProduct validateProduct(Long productId, Long kaspiStoreId) {
-        final var supplyBoxProduct = supplyBoxProductsRepository.findByProductId(productId)
+    private SupplyBoxProduct validateProduct(String article, Long kaspiStoreId) {
+        final var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
         validateProductForStoreCell(supplyBoxProduct, kaspiStoreId);
