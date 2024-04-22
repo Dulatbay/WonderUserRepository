@@ -34,11 +34,11 @@ public class StoreCellController {
 
     @PostMapping("/add-product-to-cell")
     public ResponseEntity<Void> addProductToCell(@RequestParam("cell-id") Long cellId,
-                                                 @RequestParam("product-id") Long productId){
+                                                 @RequestParam("product-article") String productArticle){
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        storeCellService.addProductToCell(cellId, productId, keycloakId);
+        storeCellService.addProductToCell(cellId, productArticle, keycloakId);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

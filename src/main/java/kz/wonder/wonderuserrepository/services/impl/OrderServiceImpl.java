@@ -143,7 +143,7 @@ public class OrderServiceImpl implements OrderService {
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
-            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
+//            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
                 try {
                     getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
 
@@ -151,7 +151,7 @@ public class OrderServiceImpl implements OrderService {
                 } catch (Exception e) {
                     log.error("Error processing order: {}", e.getMessage(), e);
                 }
-            }
+//            }
         } else {
             try {
                 KaspiOrder kaspiOrder = new KaspiOrder();
@@ -213,20 +213,24 @@ public class OrderServiceImpl implements OrderService {
 
 
         // Null because this product doesn't exist in our db
-        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
+        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), token.getWonderUser().getKeycloakId())
                 .orElse(null);
 
+        log.info("orderEntry.getAttributes().getOffer().getCode(): {}", orderEntry.getAttributes().getOffer().getCode());
+
         if (product != null) {
-            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId(), ProductStateInStore.ACCEPTED);
+            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findFirstByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId(), ProductStateInStore.ACCEPTED);
 
             // если этого баркода у нас нет в складе, то останавливаемся
             if (optionalSupplyBoxProduct.isEmpty()) {
-                throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product with code " + product.getVendorCode() + " not found in kaspi store(maybe user didn't create supply with product)");
+                return;
+//                throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product with code " + product.getVendorCode() + " not found in kaspi store(maybe user didn't create supply with product)");
             }
 
             var supplyBoxProduct = optionalSupplyBoxProduct.get();
             supplyBoxProduct.setState(ProductStateInStore.SOLD); // продукт продан у нас
             supplyBoxProductsRepository.save(supplyBoxProduct);
+            log.info("SOLD MENTIONED, product id: {}", product.getId());
         }
 
         KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderId(product == null ? null : product.getId(), kaspiOrder.getId())
