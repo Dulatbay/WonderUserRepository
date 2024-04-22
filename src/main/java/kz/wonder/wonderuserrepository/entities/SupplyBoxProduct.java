@@ -5,7 +5,7 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.UUID;
+import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -13,7 +13,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Data
 @Entity
 @Table(name = "supply_box_products", schema = schemaName)
-public class SupplyBoxProducts extends AbstractEntity<Long> {
+public class SupplyBoxProduct extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_box_id", columnDefinition = "integer")
     private SupplyBox supplyBox;
@@ -28,6 +28,12 @@ public class SupplyBoxProducts extends AbstractEntity<Long> {
     @Column(name = "product_state", nullable = false)
     @Enumerated(value = EnumType.STRING)
     private ProductStateInStore state;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "supplyBoxProduct",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<SupplyBoxProduct> supplyBoxProducts;
 
     @Override
     protected void onCreate() {

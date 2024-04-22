@@ -32,6 +32,17 @@ public class StoreCellController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PostMapping("/add-product-to-cell")
+    public ResponseEntity<Void> addProductToCell(@RequestParam("cell-id") Long cellId,
+                                                 @RequestParam("product-id") Long productId){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        storeCellService.addProductToCell(cellId, productId, keycloakId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     @GetMapping
     public ResponseEntity<List<StoreCellResponse>> getAllStoreCells(@RequestParam(value = "store-id", required = false) Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
