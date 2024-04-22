@@ -144,13 +144,13 @@ public class OrderServiceImpl implements OrderService {
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
 //            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
-                try {
-                    getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+            try {
+                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
 
-                    updatedCount++;
-                } catch (Exception e) {
-                    log.error("Error processing order: {}", e.getMessage(), e);
-                }
+                updatedCount++;
+            } catch (Exception e) {
+                log.error("Error processing order: {}", e.getMessage(), e);
+            }
 //            }
         } else {
             try {
@@ -216,20 +216,43 @@ public class OrderServiceImpl implements OrderService {
         var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), token.getWonderUser().getKeycloakId())
                 .orElse(null);
 
-        log.info("orderEntry.getAttributes().getOffer().getCode(): {}", orderEntry.getAttributes().getOffer().getCode());
+        log.info("orderEntry.getAttributes().getOffer().getCode(): {}, productName: {}", orderEntry.getAttributes().getOffer().getCode(), orderEntry.getAttributes().getOffer().getName());
 
+
+        if (product != null && product.getVendorCode().equals("101678801_753561"))
+            log.info("orderEntry.getAttributes().getOffer().getCode(): {}, product.vendorCode(): {}", orderEntry.getAttributes().getOffer().getCode(), product != null ? product.getVendorCode() : null);
+        SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
-            var optionalSupplyBoxProduct = supplyBoxProductsRepository.findFirstByParams(product.getVendorCode(), token.getWonderUser().getKeycloakId(), kaspiStore.getId(), ProductStateInStore.ACCEPTED);
+            var supplyBoxProductList = supplyBoxProductsRepository.findAllByProductIdAndSupplyBoxSupplyId(product.getId(), kaspiStore.getId());
+
+            if (product.getVendorCode().equals("101678801_753561"))
+                log.info("productId: {}, , kaspiStoreId: {}, state: {}", product.getId(),
+                        kaspiStore.getId(),
+                        null);
+
 
             // если этого баркода у нас нет в складе, то останавливаемся
-            if (optionalSupplyBoxProduct.isEmpty()) {
+            if (supplyBoxProductList.isEmpty()) {
                 return;
 //                throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product with code " + product.getVendorCode() + " not found in kaspi store(maybe user didn't create supply with product)");
             }
 
-            var supplyBoxProduct = optionalSupplyBoxProduct.get();
-            supplyBoxProduct.setState(ProductStateInStore.SOLD); // продукт продан у нас
-            supplyBoxProductsRepository.save(supplyBoxProduct);
+
+            for (var supplyBoxProduct : supplyBoxProductList) {
+                if (ProductStateInStore.SOLD == supplyBoxProduct.getState())
+                    continue;
+                supplyBoxProductToSave = supplyBoxProduct;
+                break;
+            }
+
+            log.info("supplyBoxProductList size: {}, supplyBoxProductToSave id: {}", supplyBoxProductList.size(), supplyBoxProductToSave != null ? supplyBoxProductToSave.getId() : null);
+
+            if (supplyBoxProductToSave == null) {
+                return;
+            }
+
+            supplyBoxProductToSave.setState(ProductStateInStore.SOLD); // продукт продан у нас todo: проверить по времени что это именно у нас продано
+            supplyBoxProductsRepository.save(supplyBoxProductToSave);
             log.info("SOLD MENTIONED, product id: {}", product.getId());
         }
 
@@ -238,6 +261,7 @@ public class OrderServiceImpl implements OrderService {
         kaspiOrderProduct.setOrder(kaspiOrder);
         kaspiOrderProduct.setProduct(product);
         kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
+        kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
 
         kaspiOrderRepository.save(kaspiOrder);
         kaspiOrderProductRepository.save(kaspiOrderProduct);

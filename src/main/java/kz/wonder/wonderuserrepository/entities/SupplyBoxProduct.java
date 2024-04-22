@@ -35,6 +35,12 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private List<StoreCellProduct> storeCellProducts;
 
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "supplyBoxProduct",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private List<KaspiOrderProduct> kaspiOrderProducts;
+
     @Override
     protected void onCreate() {
         super.onCreate();

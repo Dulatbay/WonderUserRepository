@@ -6,7 +6,7 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: false
+  sync-users: true
   sync-cities: false
   init-users: false
   kaspi-token: 1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=
