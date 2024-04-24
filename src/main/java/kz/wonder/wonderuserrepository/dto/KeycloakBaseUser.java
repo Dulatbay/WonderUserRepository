@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.entities;
+package kz.wonder.wonderuserrepository.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
