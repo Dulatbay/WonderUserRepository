@@ -5,6 +5,7 @@ import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
+import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -21,9 +22,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,7 +66,6 @@ public class OrderServiceImpl implements OrderService {
     private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
 
         return OrderResponse.builder()
-                .id(kaspiOrder.getId())
                 .code(kaspiOrder.getCode())
                 .tradePrice(tradePrice)
                 .kaspiId(kaspiOrder.getKaspiId())
@@ -155,6 +152,56 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .map(OrderServiceImpl::getEmployeeOrderResponse)
                 .toList();
+    }
+
+    @Override
+    public List<OrderDetailResponse> getAdminOrderDetails(String keycloakId, String orderCode) {
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+
+        // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
+
+        var kaspiOrderProducts = order.getProducts();
+
+        return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
+            var product = kaspiOrderProduct.getProduct();
+            var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+
+            OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
+            orderDetailResponse.setProductName(product.getName());
+            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
+            orderDetailResponse.setCellCode("N\\A");
+            orderDetailResponse.setProductVendorCode(product.getVendorCode());
+            orderDetailResponse.setProductTradePrice(product.getTradePrice());
+            orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
+            orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
+            return orderDetailResponse;
+        }).toList();
+    }
+
+    @Override
+    public List<OrderDetailResponse> getSellerOrderDetails(String keycloakId, String orderCode) {
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+
+        // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
+
+        var kaspiOrderProducts = order.getProducts();
+
+        return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
+            var product = kaspiOrderProduct.getProduct();
+            var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+
+            OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
+            orderDetailResponse.setProductName(product.getName());
+            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
+            orderDetailResponse.setCellCode("N\\A");
+            orderDetailResponse.setProductVendorCode(product.getVendorCode());
+            orderDetailResponse.setProductTradePrice(product.getTradePrice());
+            orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
+            orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
+            return orderDetailResponse;
+        }).toList();
     }
 
     private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {

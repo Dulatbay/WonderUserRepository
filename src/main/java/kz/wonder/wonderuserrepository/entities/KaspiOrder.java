@@ -69,4 +69,8 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wonder_user_id", columnDefinition = "integer")
     private WonderUser wonderUser;
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<KaspiOrderProduct> products;
+
 }
