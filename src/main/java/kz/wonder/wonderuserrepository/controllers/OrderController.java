@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
+import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +75,16 @@ public class OrderController {
 
         List<OrderDetailResponse> orderResponse = orderService.getSellerOrderDetails(keycloakId, orderId);
         return ResponseEntity.ok().body(orderResponse);
+    }
+
+    @GetMapping("/employee/details/{orderId}")
+    private ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderId") String orderId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+
+
+         List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderId);
+        return ResponseEntity.ok().body(employeeOrderDetails);
     }
 
 }

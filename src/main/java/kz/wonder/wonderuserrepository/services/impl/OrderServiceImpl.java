@@ -6,6 +6,7 @@ import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
+import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -204,6 +205,36 @@ public class OrderServiceImpl implements OrderService {
         }).toList();
     }
 
+    @Override
+    public List<OrderEmployeeDetailResponse> getEmployeeOrderDetails(String keycloakId, String orderCode) {
+        var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "You are not employee user"));
+
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+
+        var isEmployeeWorkInThisStore = order.getKaspiStore().getId().equals(employee.getKaspiStore().getId());
+
+        if (!isEmployeeWorkInThisStore) {
+            throw new IllegalArgumentException("Order not found");
+        }
+
+        return order.getProducts()
+                .stream()
+                .map(kaspiOrderProduct -> {
+                    var product = kaspiOrderProduct.getProduct();
+                    var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+
+                    OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
+                    orderEmployeeDetailResponse.setOrderName(product.getName());
+                    orderEmployeeDetailResponse.setOrderArticle(supplyBoxProduct.getArticle());
+                    orderEmployeeDetailResponse.setOrderCell("N\\A"); // todo:
+                    orderEmployeeDetailResponse.setOrderVendorCode(product.getVendorCode());
+
+                    return orderEmployeeDetailResponse;
+                }).toList();
+    }
+
     private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
         EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
         orderResponse.setOrderCode(kaspiOrder.getCode());
@@ -366,7 +397,7 @@ public class OrderServiceImpl implements OrderService {
         var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(address.getId());
 
 
-        if(optionalKaspiStore.isEmpty()) {
+        if (optionalKaspiStore.isEmpty()) {
 
             String apartment = address.getAddress().getApartment() == null ? null : address.getAddress().getApartment().trim();
             String streetName = address.getAddress().getStreetName() == null ? null : address.getAddress().getStreetName().trim();
