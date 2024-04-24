@@ -102,10 +102,9 @@ public class SupplyServiceImpl implements SupplyService {
         var isAvailableToSupply = false;
 
 
-
-        for(var time : availableTimes){
-            if(time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()){
-                if(time.getCloseTime().isBefore(selectedTime.toLocalTime()) && time.getOpenTime().isAfter(selectedTime.toLocalTime())){
+        for (var time : availableTimes) {
+            if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
+                if (time.getCloseTime().isAfter(selectedTime.toLocalTime()) && time.getOpenTime().isBefore(selectedTime.toLocalTime())) {
                     isAvailableToSupply = true;
                     break;
                 }
@@ -113,8 +112,7 @@ public class SupplyServiceImpl implements SupplyService {
         }
 
 
-
-        if(!isAvailableToSupply) {
+        if (!isAvailableToSupply) {
             throw new IllegalArgumentException("Store don't work in this period");
         }
 
