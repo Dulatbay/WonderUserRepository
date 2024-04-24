@@ -5,7 +5,7 @@ import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
-import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
+import kz.wonder.wonderuserrepository.dto.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;

@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import kz.wonder.wonderuserrepository.dto.request.StoreCellChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.StoreCellCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreCellResponse;
 import kz.wonder.wonderuserrepository.entities.*;
@@ -97,6 +98,34 @@ public class StoreCellServiceImpl implements StoreCellService {
     @Override
     public void deleteProductFromCell(Long cellId, Long productId, String keycloakId) {
 
+    }
+
+    @Override
+    public void changeStoreCell(String keycloakId, Long cellId, StoreCellChangeRequest storeCellChangeRequest) {
+        final var storeCell = storeCellRepository.findById(cellId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Cell doesn't exist"));
+        final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Employee doesn't exist"));
+
+        var kaspiStoreOfCell = storeCell.getKaspiStore();
+        var kaspiStoreOfEmployee = employee.getKaspiStore();
+
+        var isEmployeeWorkHere = kaspiStoreOfCell.getId().equals(kaspiStoreOfEmployee.getId());
+
+        if(!isEmployeeWorkHere) {
+            // todo: Own illegal argument exception for getting not found page
+            throw new IllegalArgumentException("Employee doesn't exist");
+        }
+
+        storeCell.setRow(storeCellChangeRequest.getRow());
+        storeCell.setCol(storeCellChangeRequest.getCol());
+        storeCell.setCell(storeCellChangeRequest.getCell());
+        storeCell.setComment(storeCellChangeRequest.getComment());
+        storeCell.setWidth(storeCellChangeRequest.getWidth());
+        storeCell.setHeight(storeCellChangeRequest.getHeight());
+        storeCell.setDepth(storeCellChangeRequest.getDepth());
+
+        storeCellRepository.save(storeCell);
     }
 
     private StoreEmployee validateEmployee(String keycloakId, Long kaspiStoreId) {
