@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
@@ -44,4 +46,16 @@ public class OrderController {
 
         return ResponseEntity.ok().body(orderResponseList);
     }
+
+    @GetMapping("/employee")
+    public ResponseEntity<List<EmployeeOrderResponse>> getEmployeeOrders(@RequestParam("start-date") LocalDate startDate,
+                                                                         @RequestParam("end-date") LocalDate endDate){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+
+        List<EmployeeOrderResponse> orders = orderService.getEmployeeOrders(keycloakId, startDate, endDate);
+
+        return ResponseEntity.ok().body(orders);
+    }
+
 }

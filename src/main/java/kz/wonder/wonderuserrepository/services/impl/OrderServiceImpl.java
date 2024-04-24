@@ -4,6 +4,7 @@ import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -41,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
+    private final StoreEmployeeRepository storeEmployeeRepository;
 
 
     // todo: переделать этот говно код
@@ -137,6 +139,34 @@ public class OrderServiceImpl implements OrderService {
                 );
     }
 
+    @Override
+    public List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate) {
+        var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store employee user not found"));
+
+        var store = employee.getKaspiStore();
+
+        final LocalDate finalStartDate = startDate.minusDays(1);
+
+        return store.getOrders().stream()
+                .filter(kaspiOrder -> {
+                    LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
+                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate));
+                })
+                .map(OrderServiceImpl::getEmployeeOrderResponse)
+                .toList();
+    }
+
+    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
+        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
+        orderResponse.setOrderCode(kaspiOrder.getCode());
+        orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
+        orderResponse.setOrderStatus(kaspiOrder.getStatus());
+        orderResponse.setOrderToSendTime(Instant.ofEpochMilli(kaspiOrder.getCourierTransmissionPlanningDate()).atZone(ZONE_ID).toLocalDateTime());
+        orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
+
+        return orderResponse;
+    }
 
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
@@ -205,7 +235,6 @@ public class OrderServiceImpl implements OrderService {
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
         kaspiOrder.setWonderUser(token.getWonderUser());
 
-        // todo: может ли один и тот же артикул товара(каспи) быть у двух разных продавцов
         // todo: внедрить мапперы в проект
 
 //        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
