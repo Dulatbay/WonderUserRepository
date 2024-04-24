@@ -363,14 +363,27 @@ public class OrderServiceImpl implements OrderService {
     }
 
     public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
-        String apartment = address.getAddress().getApartment();
-        String streetName = address.getAddress().getStreetName();
-        String streetNumber = address.getAddress().getStreetNumber();
-        String town = address.getAddress().getTown();
-        String building = address.getAddress().getBuilding();
-        String district = address.getAddress().getDistrict();
+        var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(address.getId());
 
-        var optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(apartment, streetName, streetNumber, town, building, district);
+
+        if(optionalKaspiStore.isEmpty()) {
+
+            String apartment = address.getAddress().getApartment() == null ? null : address.getAddress().getApartment().trim();
+            String streetName = address.getAddress().getStreetName() == null ? null : address.getAddress().getStreetName().trim();
+            String streetNumber = address.getAddress().getStreetNumber() == null ? null : address.getAddress().getStreetNumber().trim();
+            String town = address.getAddress().getTown() == null ? null : address.getAddress().getTown().trim();
+            String building = address.getAddress().getBuilding() == null ? null : address.getAddress().getBuilding().trim();
+            String district = address.getAddress().getDistrict() == null ? null : address.getAddress().getDistrict().trim();
+
+            address.getAddress().setApartment(apartment);
+            address.getAddress().setStreetName(streetName);
+            address.getAddress().setStreetNumber(streetNumber);
+            address.getAddress().setTown(town);
+            address.getAddress().setBuilding(building);
+            address.getAddress().setDistrict(district);
+
+            optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(apartment, streetName, streetNumber, town, building, district);
+        }
 
         if (optionalKaspiStore.isPresent()) {
             return optionalKaspiStore.get();
@@ -396,7 +409,7 @@ public class OrderServiceImpl implements OrderService {
         kaspiStore.setLatitude(address.getAddress().getLatitude());
         kaspiStore.setLongitude(address.getAddress().getLongitude());
         kaspiStore.setKaspiCity(kaspiCity);
-
+        kaspiStore.setOriginAddressId(address.getId());
 
         if (admin == null)
             admin = userService.getUserByKeycloakId(adminKeycloakId);
