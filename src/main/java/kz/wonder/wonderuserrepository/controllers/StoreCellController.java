@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.request.StoreCellChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.StoreCellCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreCellResponse;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
@@ -60,6 +61,16 @@ public class StoreCellController {
 
 
         storeCellService.delete(cellId, keycloakId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("{cellId}")
+    public ResponseEntity<Void> changeStoreCell(@PathVariable Long cellId, @RequestBody StoreCellChangeRequest storeCellChangeRequest){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        storeCellService.changeStoreCell(keycloakId, cellId, storeCellChangeRequest);
+
         return ResponseEntity.noContent().build();
     }
 
