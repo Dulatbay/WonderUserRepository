@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.config;
 
-import kz.wonder.wonderuserrepository.repositories.*;
+import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ORDERS_INI
 @Slf4j
 public class Scheduler {
     private final KaspiTokenRepository kaspiTokenRepository;
-//    private final CityService cityService;
+    //    private final CityService cityService;
     private final OrderService orderService;
 
 
@@ -40,7 +40,7 @@ public class Scheduler {
             tokens.forEach(token -> {
                 try {
                     orderService.processTokenOrders(token, startDate, currentTime);
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     log.error("Error processing orders for token: {}", token, ex);
                 }
             });

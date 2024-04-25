@@ -3,7 +3,6 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.List;
 

@@ -9,7 +9,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @Table(schema = schemaName, name = "telegram_account")
-public class TelegramAccount  extends AbstractEntity<Long>{
+public class TelegramAccount extends AbstractEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

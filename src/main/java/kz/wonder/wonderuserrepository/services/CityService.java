@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface CityService {
     void syncWithKaspi();
+
     List<CityResponse> getAllCities();
+
     KaspiCity getKaspiCityByName(String name);
 }

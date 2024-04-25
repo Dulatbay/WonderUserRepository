@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
-import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

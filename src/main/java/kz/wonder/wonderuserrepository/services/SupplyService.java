@@ -8,24 +8,26 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface SupplyService {
-	List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId);
+    List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId);
 
-	long createSupply(SupplyCreateRequest createRequest, String userId);
+    long createSupply(SupplyCreateRequest createRequest, String userId);
 
-	List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username);
+    List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username);
 
-	List<SupplyProductResponse> getSuppliesDetail(Long id);
-	List<SupplyProductResponse> getSuppliesDetail(Long id, String keycloakId);
-	List<SupplyProductResponse> getSuppliesDetailOfSeller(Long id, String keycloakId);
+    List<SupplyProductResponse> getSuppliesDetail(Long id);
 
-	List<SupplySellerResponse> getSuppliesOfSeller(String id, LocalDate startDate, LocalDate endDate);
+    List<SupplyProductResponse> getSuppliesDetail(Long id, String keycloakId);
 
-	List<SupplyReportResponse> getSupplyReport(Long supplyId, String keycloakId);
+    List<SupplyProductResponse> getSuppliesDetailOfSeller(Long id, String keycloakId);
 
-	List<SupplyStorageResponse> getSuppliesOfStorage(Long employeeId, LocalDate startDate, LocalDate endDate);
+    List<SupplySellerResponse> getSuppliesOfSeller(String id, LocalDate startDate, LocalDate endDate);
 
-	List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate);
+    List<SupplyReportResponse> getSupplyReport(Long supplyId, String keycloakId);
 
-	ProductStorageResponse getSuppliesProducts(String keycloakId, Long supplyId);
+    List<SupplyStorageResponse> getSuppliesOfStorage(Long employeeId, LocalDate startDate, LocalDate endDate);
+
+    List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate);
+
+    ProductStorageResponse getSuppliesProducts(String keycloakId, Long supplyId);
 
 }

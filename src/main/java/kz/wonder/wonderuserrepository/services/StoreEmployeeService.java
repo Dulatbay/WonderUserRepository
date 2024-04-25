@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface StoreEmployeeService {
     void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest);
+
     EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource);
 
     StoreEmployee getStoreEmployeeById(Long id);

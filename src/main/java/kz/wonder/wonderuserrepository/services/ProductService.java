@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.services;
 
-import jakarta.xml.bind.JAXBException;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,5 +13,5 @@ public interface ProductService {
 
     String generateOfProductsXmlByKeycloakId(String userId) throws IOException, javax.xml.bind.JAXBException;
 
-	void deleteProductById(String keycloakId, Long productId);
+    void deleteProductById(String keycloakId, Long productId);
 }

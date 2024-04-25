@@ -8,6 +8,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class EmployeeUpdateRequest extends KeycloakBaseUser {
-	private String phoneNumber;
-	private Long storeId;
+    private String phoneNumber;
+    private Long storeId;
 }

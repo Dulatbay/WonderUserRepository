@@ -21,46 +21,45 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Slf4j
 @RequiredArgsConstructor
 public class WonderUserRepositoryApplication {
-	public static void main(String[] args) {
-		SpringApplication.run(WonderUserRepositoryApplication.class, args);
-	}
+    private final Initializer initializer;
+    @Value("${application.sync-users}")
+    private Boolean syncUsers;
 
-	@Value("${application.sync-users}")
-	private Boolean syncUsers;
+    @Value("${application.sync-cities}")
+    private Boolean syncCities;
 
-	@Value("${application.sync-cities}")
-	private Boolean syncCities;
+    @Value("${application.init-users}")
+    private Boolean initUsers;
 
-	@Value("${application.init-users}")
-	private Boolean initUsers;
+    public static void main(String[] args) {
+        SpringApplication.run(WonderUserRepositoryApplication.class, args);
+    }
 
-	private final Initializer initializer;
+    // Проследить циклы в объектах
+    // Не логировать большие массивы, вместо этого указать просто размер
+    // Не логировать контроллеры
+    // Не логировать в циклах
+    //
 
-	// Проследить циклы в объектах
-	// Не логировать большие массивы, вместо этого указать просто размер
-	// Не логировать контроллеры
-	// Не логировать в циклах
-	//
+    // todo: на некоторые сущности вместо keycloakId написать userId
 
-	// todo: на некоторые сущности вместо keycloakId написать userId
+    @Bean
+    CommandLineRunner init(UserService userService,
+                           FileService fileService,
+                           CityService cityService) {
+        return args -> {
+            if (syncUsers)
+                userService.syncUsersBetweenDBAndKeycloak();
 
-	@Bean
-	CommandLineRunner init(UserService userService,
-	                       FileService fileService,
-	                       CityService cityService) {
-		return args -> {
-			if (syncUsers)
-				userService.syncUsersBetweenDBAndKeycloak();
+            if (syncCities)
+                cityService.syncWithKaspi();
 
-			if (syncCities)
-				cityService.syncWithKaspi();
+            if (initUsers)
+                initializer.init();
 
-			if (initUsers)
-				initializer.init();
+            fileService.init();
 
-			fileService.init();
-
-			log.info("Application Successfully Started");
-		};
-	}
+            log.info("Application Successfully Started");
+        };
+    }
 }

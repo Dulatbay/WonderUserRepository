@@ -7,10 +7,12 @@ import java.time.LocalDateTime;
 
 @Data
 public class SupplyAdminResponse {
-	private Long id;
-	private Seller seller;
-	private LocalDateTime supplyCreatedTime;
-	private LocalDateTime supplyAcceptTime;
-	private SupplyState supplyState;
-	public record Seller(String keycloakId, String fullName) {}
+    private Long id;
+    private Seller seller;
+    private LocalDateTime supplyCreatedTime;
+    private LocalDateTime supplyAcceptTime;
+    private SupplyState supplyState;
+
+    public record Seller(String keycloakId, String fullName) {
+    }
 }

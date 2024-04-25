@@ -112,7 +112,7 @@ public class StoreCellServiceImpl implements StoreCellService {
 
         var isEmployeeWorkHere = kaspiStoreOfCell.getId().equals(kaspiStoreOfEmployee.getId());
 
-        if(!isEmployeeWorkHere) {
+        if (!isEmployeeWorkHere) {
             // todo: Own illegal argument exception for getting not found page
             throw new IllegalArgumentException("Employee doesn't exist");
         }
@@ -142,6 +142,7 @@ public class StoreCellServiceImpl implements StoreCellService {
         }
         return employee;
     }
+
     private SupplyBoxProduct validateProduct(String article, Long kaspiStoreId) {
         final var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
@@ -149,6 +150,7 @@ public class StoreCellServiceImpl implements StoreCellService {
         validateProductForStoreCell(supplyBoxProduct, kaspiStoreId);
         return supplyBoxProduct;
     }
+
     private void validateProductForStoreCell(SupplyBoxProduct supplyBoxProduct, Long kaspiStoreId) {
         if (!supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore().getId().equals(kaspiStoreId)) {
             throw new IllegalArgumentException("You have not permission to add this product to cell");

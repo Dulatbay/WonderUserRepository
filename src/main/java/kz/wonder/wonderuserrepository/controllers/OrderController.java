@@ -12,7 +12,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
@@ -83,7 +82,7 @@ public class OrderController {
         var keycloakId = extractIdFromToken(token);
 
 
-         List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderId);
+        List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderId);
         return ResponseEntity.ok().body(employeeOrderDetails);
     }
 

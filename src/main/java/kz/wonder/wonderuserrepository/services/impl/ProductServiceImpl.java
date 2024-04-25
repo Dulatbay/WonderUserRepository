@@ -42,19 +42,17 @@ import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelC
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
+    private static final String XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
+    private static final String JAXB_SCHEMA_LOCATION = "kaspiShopping http://kaspi.kz/kaspishopping.xsd";
     private final ProductRepository productRepository;
     private final ProductPriceRepository productPriceRepository;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
     private final FileService fileService;
-    private static final String XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
-    private static final String JAXB_SCHEMA_LOCATION = "kaspiShopping http://kaspi.kz/kaspishopping.xsd";
-
 
     @Override
     @Transactional
     public List<ProductResponse>
-
 
 
     processExcelFile(MultipartFile excelFile, String keycloakUserId) {

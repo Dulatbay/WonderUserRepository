@@ -3,11 +3,9 @@ package kz.wonder.wonderuserrepository.constants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ValueConstants {

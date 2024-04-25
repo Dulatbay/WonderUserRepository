@@ -9,21 +9,22 @@ import java.util.List;
 
 @Data
 public class SupplyCreateRequest {
-	private Long storeId;
+    private Long storeId;
 
-	@Convert(converter = LocalDateTimeAttributeConverter.class)
-	private LocalDateTime selectedTime;
+    @Convert(converter = LocalDateTimeAttributeConverter.class)
+    private LocalDateTime selectedTime;
 
-	private List<SelectedBox> selectedBoxes;
-	@Data
-	public static class SelectedBox {
-		private Long selectedBoxId;
-		private List<ProductQuantity> productQuantities;
-	}
+    private List<SelectedBox> selectedBoxes;
 
-	@Data
-	public static class ProductQuantity {
-		private Long productId;
-		private Integer quantity;
-	}
+    @Data
+    public static class SelectedBox {
+        private Long selectedBoxId;
+        private List<ProductQuantity> productQuantities;
+    }
+
+    @Data
+    public static class ProductQuantity {
+        private Long productId;
+        private Integer quantity;
+    }
 }

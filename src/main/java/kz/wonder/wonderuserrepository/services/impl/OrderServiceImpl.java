@@ -42,27 +42,11 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
-
-
+    int createdCount = 0, updatedCount = 0;
     // todo: переделать этот говно код
     @Value("${application.admin-keycloak-id}")
     private String adminKeycloakId;
-
     private WonderUser admin;
-
-    int createdCount = 0, updatedCount = 0;
-
-    @Override
-    public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
-        log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
-        startDate = startDate.minusDays(1);
-        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime());
-        log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
-        return kaspiOrderInDb
-                .stream()
-                .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0)) // todo: переделать оптовую цену
-                .toList();
-    }
 
     private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
 
@@ -87,6 +71,43 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
+        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
+        orderResponse.setOrderCode(kaspiOrder.getCode());
+        orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
+        orderResponse.setOrderStatus(kaspiOrder.getStatus());
+        orderResponse.setOrderToSendTime(Instant.ofEpochMilli(kaspiOrder.getCourierTransmissionPlanningDate()).atZone(ZONE_ID).toLocalDateTime());
+        orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
+
+        return orderResponse;
+    }
+
+    private static @NotNull KaspiDeliveryAddress getKaspiDeliveryAddress(OrdersDataResponse.OrderAttributes orderAttributes) {
+        KaspiDeliveryAddress kaspiDeliveryAddress = new KaspiDeliveryAddress();
+        kaspiDeliveryAddress.setStreetName(orderAttributes.getDeliveryAddress().getStreetName());
+        kaspiDeliveryAddress.setStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
+        kaspiDeliveryAddress.setTown(orderAttributes.getDeliveryAddress().getTown());
+        kaspiDeliveryAddress.setDistrict(orderAttributes.getDeliveryAddress().getDistrict());
+        kaspiDeliveryAddress.setBuilding(orderAttributes.getDeliveryAddress().getBuilding());
+        kaspiDeliveryAddress.setApartment(orderAttributes.getDeliveryAddress().getApartment());
+        kaspiDeliveryAddress.setFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
+        kaspiDeliveryAddress.setLatitude(orderAttributes.getDeliveryAddress().getLatitude());
+        kaspiDeliveryAddress.setLongitude(orderAttributes.getDeliveryAddress().getLongitude());
+        return kaspiDeliveryAddress;
+    }
+
+    @Override
+    public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
+        log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
+        startDate = startDate.minusDays(1);
+        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime());
+        log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
+        return kaspiOrderInDb
+                .stream()
+                .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0)) // todo: переделать оптовую цену
+                .toList();
+    }
+
     @Override
     public List<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
         log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
@@ -109,7 +130,6 @@ public class OrderServiceImpl implements OrderService {
         log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
         return result;
     }
-
 
     @Override
     public void processTokenOrders(KaspiToken token, long startDate, long currentTime) {
@@ -235,17 +255,6 @@ public class OrderServiceImpl implements OrderService {
                 }).toList();
     }
 
-    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
-        orderResponse.setOrderCode(kaspiOrder.getCode());
-        orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
-        orderResponse.setOrderStatus(kaspiOrder.getStatus());
-        orderResponse.setOrderToSendTime(Instant.ofEpochMilli(kaspiOrder.getCourierTransmissionPlanningDate()).atZone(ZONE_ID).toLocalDateTime());
-        orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
-
-        return orderResponse;
-    }
-
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
@@ -368,20 +377,6 @@ public class OrderServiceImpl implements OrderService {
     private @NotNull KaspiCity getKaspiCity(OrdersDataResponse.OrderAttributes orderAttributes) {
         return kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
-    }
-
-    private static @NotNull KaspiDeliveryAddress getKaspiDeliveryAddress(OrdersDataResponse.OrderAttributes orderAttributes) {
-        KaspiDeliveryAddress kaspiDeliveryAddress = new KaspiDeliveryAddress();
-        kaspiDeliveryAddress.setStreetName(orderAttributes.getDeliveryAddress().getStreetName());
-        kaspiDeliveryAddress.setStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
-        kaspiDeliveryAddress.setTown(orderAttributes.getDeliveryAddress().getTown());
-        kaspiDeliveryAddress.setDistrict(orderAttributes.getDeliveryAddress().getDistrict());
-        kaspiDeliveryAddress.setBuilding(orderAttributes.getDeliveryAddress().getBuilding());
-        kaspiDeliveryAddress.setApartment(orderAttributes.getDeliveryAddress().getApartment());
-        kaspiDeliveryAddress.setFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
-        kaspiDeliveryAddress.setLatitude(orderAttributes.getDeliveryAddress().getLatitude());
-        kaspiDeliveryAddress.setLongitude(orderAttributes.getDeliveryAddress().getLongitude());
-        return kaspiDeliveryAddress;
     }
 
     public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {

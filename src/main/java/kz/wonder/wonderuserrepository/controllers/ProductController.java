@@ -23,52 +23,53 @@ import java.util.List;
 @Slf4j
 @RequestMapping("/products")
 public class ProductController {
-	private final ProductService productService;
+    private final ProductService productService;
 
-	@PostMapping(name = "/by-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		var userId = Utils.extractIdFromToken(token);
-		List<ProductResponse> result = productService.processExcelFile(file, userId);
+    @PostMapping(name = "/by-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var userId = Utils.extractIdFromToken(token);
+        List<ProductResponse> result = productService.processExcelFile(file, userId);
 
-		return ResponseEntity
-				.status(HttpStatus.CREATED)
-				.body(result);
-	}
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(result);
+    }
 
-	@GetMapping()
-	public ResponseEntity<List<ProductResponse>> getProducts() {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+    @GetMapping()
+    public ResponseEntity<List<ProductResponse>> getProducts() {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-		return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
-	}
-	@DeleteMapping("/{productId}")
-	public ResponseEntity<Void> getProduct(@PathVariable Long productId) {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		// todo: make also for superAdmin
-		var keycloakId = Utils.extractIdFromToken(token);
+        return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
+    }
 
-		productService.deleteProductById(keycloakId, productId);
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<Void> getProduct(@PathVariable Long productId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        // todo: make also for superAdmin
+        var keycloakId = Utils.extractIdFromToken(token);
 
-		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-	}
+        productService.deleteProductById(keycloakId, productId);
 
-	@GetMapping("/xml")
-	public ResponseEntity<MessageResponse> getXmlOfProducts() {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		var userId = Utils.extractIdFromToken(token);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
-		String pathToXml;
-		try {
-			pathToXml = productService.generateOfProductsXmlByKeycloakId(userId);
-		} catch (IOException e) {
-			log.error("IOException: ", e);
-			throw new RuntimeException(e);
-		} catch (JAXBException e) {
-			throw new RuntimeException(e);
-		}
+    @GetMapping("/xml")
+    public ResponseEntity<MessageResponse> getXmlOfProducts() {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var userId = Utils.extractIdFromToken(token);
 
-		return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(pathToXml));
-	}
+        String pathToXml;
+        try {
+            pathToXml = productService.generateOfProductsXmlByKeycloakId(userId);
+        } catch (IOException e) {
+            log.error("IOException: ", e);
+            throw new RuntimeException(e);
+        } catch (JAXBException e) {
+            throw new RuntimeException(e);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(pathToXml));
+    }
 
 }
