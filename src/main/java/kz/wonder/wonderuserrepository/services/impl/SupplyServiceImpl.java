@@ -104,7 +104,7 @@ public class SupplyServiceImpl implements SupplyService {
 
         for (var time : availableTimes) {
             if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
-                if (time.getCloseTime().isAfter(selectedTime.toLocalTime()) && time.getOpenTime().isBefore(selectedTime.toLocalTime())) {
+                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
                     isAvailableToSupply = true;
                     break;
                 }

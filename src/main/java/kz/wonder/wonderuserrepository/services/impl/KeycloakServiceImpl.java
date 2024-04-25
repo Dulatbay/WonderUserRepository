@@ -2,7 +2,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
-import kz.wonder.wonderuserrepository.dto.KeycloakBaseUser;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;

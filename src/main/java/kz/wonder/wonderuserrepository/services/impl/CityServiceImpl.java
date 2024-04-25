@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,7 +28,8 @@ public class CityServiceImpl implements CityService {
             log.info("Cities Initializing started");
             final CitiesDataResponse response = kaspiApi.getDataCities().block();
             final List<CitiesDataResponse.City> cities = response.getData();
-            var count = 0;
+
+            final List<KaspiCity> kaspiCities = new ArrayList<>();
 
             for (var city : cities) {
                 if (!cityRepository.existsByName(city.getAttributes().getName()) && !cityRepository.existsByCode(city.getAttributes().getCode())) {
@@ -35,11 +37,12 @@ public class CityServiceImpl implements CityService {
                     newCity.setCode(city.getAttributes().getCode());
                     newCity.setName(city.getAttributes().getName());
                     newCity.setEnabled(city.getAttributes().isActive());
-                    cityRepository.save(newCity);
-                    count++;
+                    kaspiCities.add(newCity);
                 }
             }
-            log.info("Cities Initializing ended, added {} rows", count);
+
+            cityRepository.saveAll(kaspiCities);
+            log.info("Cities Initializing ended, added {} rows", kaspiCities.size());
         } catch (Exception e) {
             log.error("Initializing ended with error: ", e);
         }

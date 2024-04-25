@@ -21,10 +21,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -57,23 +54,7 @@ public class SecurityConfig {
 
                 .oauth2ResourceServer((oauth2) -> oauth2
                         .jwt(Customizer.withDefaults())
-                )
-                .authorizeHttpRequests((auth) -> {
-                    auth
-                            .requestMatchers(HttpMethod.POST, "/box-types")
-                            .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
-                    auth
-                            .requestMatchers(HttpMethod.DELETE, "/box-types")
-                            .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
-
-                    auth.requestMatchers(WHITE_LIST_URL)
-                            .permitAll();
-
-                    auth
-                            .anyRequest()
-                            .authenticated();
-                })
-        ;
+                );
 
         http
                 .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -85,8 +66,37 @@ public class SecurityConfig {
 
         http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);
 
+        authorizeEndpoint(http, HttpMethod.POST, new String[] {"/box-types"}, KeycloakRole.SUPER_ADMIN);
+        authorizeEndpoint(http, HttpMethod.DELETE, new String[] {"/box-types"}, KeycloakRole.SUPER_ADMIN);
+        authorizeEndpoint(http, HttpMethod.POST, new String[] {"/stores", "/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.DELETE, new String[] {"/stores", "/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.PUT, new String[] {"/stores"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.GET, new String[] {"/cities"}, KeycloakRole.SUPER_ADMIN);
+        authorizeEndpoint(http, HttpMethod.POST, new String[] {"/cities/**"}, KeycloakRole.SUPER_ADMIN);
+        authorizeEndpoint(http, HttpMethod.POST, new String[] {"/employees", "/employees/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.GET, new String[] {"/employees", "/employees/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.DELETE, new String[] {"/employees", "/employees/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.PUT, new String[] {"/employees", "/employees/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.PATCH, new String[] {"/employees", "/employees/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+
+        // Handle permit all for WHITE_LIST_URL
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(WHITE_LIST_URL)
+                .permitAll()
+                .anyRequest()
+                .authenticated()
+        );
+
         return http.build();
     }
+
+    private void authorizeEndpoint(HttpSecurity http, HttpMethod method, String[] paths, KeycloakRole... roles) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(method, paths)
+                .hasAnyAuthority(Arrays.stream(roles).map(KeycloakRole::name).toArray(String[]::new))
+        );
+    }
+
 
 
     @Bean

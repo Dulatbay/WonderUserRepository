@@ -20,6 +20,9 @@ public class Product extends AbstractEntity<Long> {
     @Column(name = "vendor_code", nullable = false)
     private String vendorCode;
 
+    @Column(name = "original_vendor_code")
+    private String originalVendorCode;
+
     @Column(name = "name", nullable = false)
     private String name;
 

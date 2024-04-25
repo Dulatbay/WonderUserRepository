@@ -315,33 +315,26 @@ public class OrderServiceImpl implements OrderService {
 
         // todo: внедрить мапперы в проект
 
-//        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), kaspiOrder.getKaspiId())
-//                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Product not found", ""));
+        var vendorCode = orderEntry.getAttributes().getOffer().getCode();
 
+        if (vendorCode != null && !vendorCode.isBlank()) {
+            vendorCode = vendorCode.split("_")[0];
+            //
+        }
 
-        // Null because this product doesn't exist in our db
-        var product = productRepository.findByVendorCodeAndKeycloakId(orderEntry.getAttributes().getOffer().getCode(), token.getWonderUser().getKeycloakId())
+        var product = productRepository
+                .findByOriginalVendorCodeAndKeycloakId(vendorCode,
+                        token.getWonderUser().getKeycloakId())
                 .orElse(null);
 
-        log.info("orderEntry.getAttributes().getOffer().getCode(): {}, productName: {}", orderEntry.getAttributes().getOffer().getCode(), orderEntry.getAttributes().getOffer().getName());
 
-
-        if (product != null && product.getVendorCode().equals("101678801_753561"))
-            log.info("orderEntry.getAttributes().getOffer().getCode(): {}, product.vendorCode(): {}", orderEntry.getAttributes().getOffer().getCode(), product != null ? product.getVendorCode() : null);
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
             var supplyBoxProductList = supplyBoxProductsRepository.findAllByProductIdAndSupplyBoxSupplyId(product.getId(), kaspiStore.getId());
 
-            if (product.getVendorCode().equals("101678801_753561"))
-                log.info("productId: {}, , kaspiStoreId: {}, state: {}", product.getId(),
-                        kaspiStore.getId(),
-                        null);
 
-
-            // если этого баркода у нас нет в складе, то останавливаемся
             if (supplyBoxProductList.isEmpty()) {
                 return;
-//                throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product with code " + product.getVendorCode() + " not found in kaspi store(maybe user didn't create supply with product)");
             }
 
 
@@ -351,8 +344,6 @@ public class OrderServiceImpl implements OrderService {
                 supplyBoxProductToSave = supplyBoxProduct;
                 break;
             }
-
-            log.info("supplyBoxProductList size: {}, supplyBoxProductToSave id: {}", supplyBoxProductList.size(), supplyBoxProductToSave != null ? supplyBoxProductToSave.getId() : null);
 
             if (supplyBoxProductToSave == null) {
                 return;

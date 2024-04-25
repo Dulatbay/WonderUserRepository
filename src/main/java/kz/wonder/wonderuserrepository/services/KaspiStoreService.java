@@ -39,4 +39,8 @@ public interface KaspiStoreService {
 	StoreResponse getById(Long id, boolean isSuperAdmin, String keycloakId);
 
     StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId);
+
+    List<StoreResponse> getAllForSeller();
+
+    List<StoreDetailResponse> getAllDetailForSeller();
 }

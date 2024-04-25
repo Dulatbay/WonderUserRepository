@@ -79,7 +79,7 @@ public class EmployeeController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PutMapping("/update-password/{userId}")
+	@PatchMapping("/update-password/{userId}")
 	public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody StoreEmployeeUpdatePassword updatePassword) {
 		var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
 		var keycloakUser = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId()).toRepresentation();
@@ -89,7 +89,7 @@ public class EmployeeController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PatchMapping("/{userId}")
+	@PutMapping("/{userId}")
 	public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, EmployeeUpdateRequest employeeUpdateRequest) {
 
 		var userResource = keycloakService.updateUser(employeeUpdateRequest).toRepresentation();
