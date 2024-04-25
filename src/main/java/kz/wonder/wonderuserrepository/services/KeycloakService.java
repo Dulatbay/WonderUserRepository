@@ -11,6 +11,7 @@ import java.util.List;
 
 public interface KeycloakService {
     UserRepresentation createUserByRole(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole);
+
     AuthResponse getAuthResponse(String email, String password);
 
     void deleteUserById(String userId);
@@ -20,6 +21,7 @@ public interface KeycloakService {
     List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole);
 
     UserResource getUserById(String id);
+
     UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
 
     void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
