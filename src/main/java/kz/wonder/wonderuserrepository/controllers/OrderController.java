@@ -57,17 +57,15 @@ public class OrderController {
     }
 
     @GetMapping("/admin/details/{orderId}")
-    private ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderId") String orderId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
-
-
         List<OrderDetailResponse> orderResponse = orderService.getAdminOrderDetails(keycloakId, orderId);
         return ResponseEntity.ok().body(orderResponse);
     }
 
     @GetMapping("/seller/details/{orderId}")
-    private ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderId") String orderId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
@@ -77,7 +75,7 @@ public class OrderController {
     }
 
     @GetMapping("/employee/details/{orderId}")
-    private ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderId") String orderId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 

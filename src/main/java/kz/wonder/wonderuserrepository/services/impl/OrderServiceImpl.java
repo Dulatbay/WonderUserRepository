@@ -189,11 +189,11 @@ public class OrderServiceImpl implements OrderService {
             var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
 
             OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
-            orderDetailResponse.setProductName(product.getName());
-            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
+            orderDetailResponse.setProductName(product == null ? "N\\A" : product.getName());
+            orderDetailResponse.setProductArticle(supplyBoxProduct == null ? "N\\A" : supplyBoxProduct.getArticle());
             orderDetailResponse.setCellCode("N\\A");
-            orderDetailResponse.setProductVendorCode(product.getVendorCode());
-            orderDetailResponse.setProductTradePrice(product.getTradePrice());
+            orderDetailResponse.setProductVendorCode(product == null ? "N\\A" : product.getVendorCode());
+            orderDetailResponse.setProductTradePrice(product == null ? 0 : product.getTradePrice());
             orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
             orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
             return orderDetailResponse;

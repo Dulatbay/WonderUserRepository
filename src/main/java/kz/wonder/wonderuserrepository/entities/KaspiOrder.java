@@ -17,6 +17,8 @@ public class KaspiOrder extends AbstractEntity<Long> {
 
 
     private String kaspiId;
+
+    @Column(nullable = false)
     private String code;
     private Double totalPrice;
 

@@ -27,6 +27,8 @@ public class Supply extends AbstractEntity<Long> {
     @Enumerated(value = EnumType.STRING)
     private SupplyState supplyState;
 
+    @Column(name = "comment")
+    private String comment;
 
     @Column(name = "accepted_time")
     private LocalDateTime acceptedTime;

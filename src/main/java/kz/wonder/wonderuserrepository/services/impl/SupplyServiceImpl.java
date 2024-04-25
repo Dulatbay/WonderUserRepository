@@ -83,6 +83,7 @@ public class SupplyServiceImpl implements SupplyService {
         //  1) время(работает ли в этот день склад)
         //  2) Есть ли там доступные места(хотя это врядли)
         //  3) Генерация номера ячейки
+        //  4) Есть ли в поставке товары
 
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
@@ -149,9 +150,17 @@ public class SupplyServiceImpl implements SupplyService {
                             supplyBox.getSupplyBoxProducts().add(boxProducts);
                         }
 
+                        if (supplyBox.getSupplyBoxProducts().isEmpty()) {
+                            throw new IllegalArgumentException("Supply boxes are empty");
+                        }
+
                         supply.getSupplyBoxes().add(supplyBox);
                     });
                 });
+
+        if (supply.getSupplyBoxes().isEmpty()) {
+            throw new IllegalArgumentException("Supply boxes are empty");
+        }
 
         var created = supplyRepository.save(supply);
 
