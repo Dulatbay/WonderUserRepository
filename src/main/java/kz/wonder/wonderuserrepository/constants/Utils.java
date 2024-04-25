@@ -25,6 +25,9 @@ public class Utils {
     }
 
     public static String getStringFromExcelCell(Cell vendorCodeCell) {
+        if (vendorCodeCell == null) {
+            return "";
+        }
         return vendorCodeCell.getCellType() == CellType.NUMERIC ?
                 String.valueOf((long) vendorCodeCell.getNumericCellValue()) :
                 vendorCodeCell.getStringCellValue();

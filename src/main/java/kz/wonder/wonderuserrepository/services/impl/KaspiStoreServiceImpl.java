@@ -327,6 +327,18 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		return mapToDetailResponse(store);
 	}
 
+
+	@Override
+	public List<StoreResponse> getAllForSeller() {
+		// todo: в дальнейшем будем возвращать склады на основе его локации и тд
+		return mapToResponses(kaspiStoreRepository.findAllByEnabledIsTrue());
+	}
+
+	@Override
+	public List<StoreDetailResponse> getAllDetailForSeller() {
+		return mapToDetailResponse(kaspiStoreRepository.findAllByEnabledIsTrue());
+	}
+
 	private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
 		kaspiStore.setApartment(changeRequest.getApartment());
 		kaspiStore.setKaspiId(changeRequest.getKaspiId());

@@ -11,7 +11,7 @@ import java.util.List;
 public class SupplyCreateRequest {
 	private Long storeId;
 
-//	@Convert(converter = LocalDateTimeAttributeConverter.class)
+	@Convert(converter = LocalDateTimeAttributeConverter.class)
 	private LocalDateTime selectedTime;
 
 	private List<SelectedBox> selectedBoxes;

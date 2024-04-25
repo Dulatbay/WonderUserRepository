@@ -103,10 +103,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product processProduct(Row row, String keycloakUserId, String vendorCode) {
+        var originVendorCode = vendorCode.split("_")[0];
         Product product = productRepository
-                .findByVendorCodeAndKeycloakId(vendorCode, keycloakUserId)
+                .findByOriginalVendorCodeAndKeycloakId(originVendorCode, keycloakUserId)
                 .orElse(new Product());
         product.setVendorCode(vendorCode);
+        product.setOriginalVendorCode(originVendorCode);
         product.setName(row.getCell(1).getStringCellValue());
         product.setLink(row.getCell(2) == null ? null : row.getCell(2).getStringCellValue());
 

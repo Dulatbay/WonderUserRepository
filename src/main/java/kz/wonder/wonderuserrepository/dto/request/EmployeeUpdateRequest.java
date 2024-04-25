@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
 
-import kz.wonder.wonderuserrepository.entities.KeycloakBaseUser;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

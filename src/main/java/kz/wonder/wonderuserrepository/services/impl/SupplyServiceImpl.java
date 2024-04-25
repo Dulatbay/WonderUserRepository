@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,6 +95,30 @@ public class SupplyServiceImpl implements SupplyService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
         log.info("Found store id: {}", store.getId());
+
+
+        var availableTimes = store.getAvailableTimes();
+        var selectedTime = createRequest.getSelectedTime();
+        var dayOfWeekOfSelectedTime = selectedTime.getDayOfWeek();
+
+
+        var isAvailableToSupply = false;
+
+
+        for (var time : availableTimes) {
+            if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
+                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
+                    isAvailableToSupply = true;
+                    break;
+                }
+            }
+        }
+
+
+        if (!isAvailableToSupply) {
+            throw new IllegalArgumentException("Store don't work in this period");
+        }
+
 
         Supply supply = new Supply();
         supply.setAuthor(user);

@@ -114,16 +114,26 @@ public class StoreController {
 	@GetMapping()
 	public ResponseEntity<List<StoreResponse>> getAllOwnStores() {
 		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		if (getAuthorities(token.getAuthorities())
-				.contains(KeycloakRole.SUPER_ADMIN.name())) {
+		var authorities = getAuthorities(token.getAuthorities());
+
+		if (authorities.contains(KeycloakRole.SUPER_ADMIN.name())) {
 			return ResponseEntity.ok(kaspiStoreService.getAll());
 		}
 
-		var userId = Utils.extractIdFromToken(token);
-		log.info("userId: {}", userId);
+		if(authorities.contains(KeycloakRole.ADMIN.name())) {
+			var userId = Utils.extractIdFromToken(token);
+			log.info("userId: {}", userId);
 
-		var stores = kaspiStoreService.getAllByUser(userId);
-		return ResponseEntity.ok(stores);
+			var stores = kaspiStoreService.getAllByUser(userId);
+			return ResponseEntity.ok(stores);
+		}
+
+		if(authorities.contains(KeycloakRole.SELLER.name())) {
+			List<StoreResponse> stores = kaspiStoreService.getAllForSeller();
+			return ResponseEntity.ok(stores);
+		}
+
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	}
 
 	@GetMapping("{id}")
@@ -140,13 +150,22 @@ public class StoreController {
 	@GetMapping("/details")
 	public ResponseEntity<List<StoreDetailResponse>> getAllDetailOwnStores() {
 		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-		if (getAuthorities(token.getAuthorities())
-				.contains(KeycloakRole.SUPER_ADMIN.name())) {
+		var authorities = getAuthorities(token.getAuthorities());
+
+		if(authorities.contains(KeycloakRole.SELLER.name())){
+			List<StoreDetailResponse> response = kaspiStoreService.getAllDetailForSeller();
+			return ResponseEntity.ok(response);
+		}
+
+		if(authorities.contains(KeycloakRole.ADMIN.name())){
+			return ResponseEntity.ok(kaspiStoreService.getAllDetailByUser(Utils.extractIdFromToken(token)));
+		}
+
+		if (authorities.contains(KeycloakRole.SUPER_ADMIN.name())) {
 			return ResponseEntity.ok(kaspiStoreService.getAllDetail());
 		}
 
-		var stores = kaspiStoreService.getAllDetailByUser(Utils.extractIdFromToken(token));
-		return ResponseEntity.ok(stores);
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	}
 
 	@GetMapping("/details/{id}")
