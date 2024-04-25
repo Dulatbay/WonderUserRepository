@@ -66,6 +66,22 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.DELETE, "/box-types")
                             .hasAuthority(KeycloakRole.SUPER_ADMIN.name());
 
+
+                    auth
+                            .requestMatchers(HttpMethod.POST, "/stores", "/stores/*")
+                            .hasAnyAuthority(KeycloakRole.SUPER_ADMIN.name(), KeycloakRole.ADMIN.name());
+
+                    auth
+                            .requestMatchers(HttpMethod.DELETE, "/stores", "/stores/*")
+                            .hasAnyAuthority(KeycloakRole.SUPER_ADMIN.name(), KeycloakRole.ADMIN.name());
+
+                    auth
+                            .requestMatchers(HttpMethod.PUT, "/stores")
+                            .hasAnyAuthority(KeycloakRole.SUPER_ADMIN.name(), KeycloakRole.ADMIN.name());
+
+
+
+
                     auth.requestMatchers(WHITE_LIST_URL)
                             .permitAll();
 
