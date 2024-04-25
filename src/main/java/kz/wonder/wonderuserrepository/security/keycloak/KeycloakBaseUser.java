@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.dto;
+package kz.wonder.wonderuserrepository.security.keycloak;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
