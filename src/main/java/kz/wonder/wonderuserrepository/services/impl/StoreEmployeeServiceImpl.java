@@ -29,7 +29,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
     @Override
     @Transactional
-    public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest) {
+    public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest, String keycloakIdOfCreator, boolean isSuperAdmin) {
         var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
         if (isPhoneNumberUsed)
@@ -41,9 +41,16 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
         final var store = kaspiStoreRepository.findById(employeeCreateRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please write correct ID of store"));
+        var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
 
-        // todo: проверка на то, что склад его
+        if (!isSuperAdmin) {
+            if (!isHisStore)
+                throw new IllegalArgumentException("Store doesn't exist");
+            if (!store.isEnabled())
+                throw new IllegalArgumentException("Store is disabled");
+        }
+
 
         StoreEmployee storeEmployee = new StoreEmployee();
         storeEmployee.setKaspiStore(store);
@@ -53,9 +60,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     }
 
     @Override
-    public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource) {
+    public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource, String keycloakIdOfCreator) {
         final var keycloakUser = userResource.toRepresentation();
-        // todo: проверка на то, что склад его
 
         return this.buildEmployeeResponse(keycloakUser, storeEmployee);
     }
@@ -100,8 +106,15 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     }
 
     @Override
-    public List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations) {
-        // todo: check that it's his own store
+    public List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations, boolean isSuperAdmin, String keycloakIdOfCreator) {
+        var kaspiStore = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store doesn't exist"));
+
+        var isHisStore = kaspiStore.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
+
+        if (!isHisStore && !isSuperAdmin)
+            throw new IllegalArgumentException("Store doesn't exist");
+
 
         final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
 

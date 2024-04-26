@@ -9,15 +9,15 @@ import org.keycloak.representations.idm.UserRepresentation;
 import java.util.List;
 
 public interface StoreEmployeeService {
-    void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest);
+    void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest, String keycloakIdOfCreator, boolean isSuperAdmin);
 
-    EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource);
+    EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource, String keycloakIdOfCreator);
 
     StoreEmployee getStoreEmployeeById(Long id);
 
     List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak);
 
-    List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations);
+    List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations, boolean isSuperAdmin,String keycloakIdOfCreator);
 
     StoreEmployee updateStoreEmployee(Long employeeId, Long storeId);
 

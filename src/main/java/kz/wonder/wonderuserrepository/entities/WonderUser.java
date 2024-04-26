@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.mail.Store;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
@@ -27,6 +28,12 @@ public class WonderUser extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.MERGE)
     private KaspiToken kaspiToken;
+
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "wonderUser",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private StoreEmployee storeEmployee;
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
