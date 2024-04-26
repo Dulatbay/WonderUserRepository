@@ -167,6 +167,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 
 	@Override
 	public void deleteUserById(String userId) {
+		log.info("Deleted user with id {}", userId);
 		getUserById(userId).remove();
 	}
 
@@ -205,6 +206,8 @@ public class KeycloakServiceImpl implements KeycloakService {
 
 		UserResource userResource = usersResource.get(userToUpdate.getId());
 		userResource.update(userToUpdate);
+
+		log.info("Update user: {}", userResource);
 
 		return userResource;
 	}

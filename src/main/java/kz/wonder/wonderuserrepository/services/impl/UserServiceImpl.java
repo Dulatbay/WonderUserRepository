@@ -57,6 +57,9 @@ public class UserServiceImpl implements UserService {
 		kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
 		kaspiToken.setWonderUser(wonderUser);
 		userRepository.save(wonderUser);
+
+		log.info("Created User with id {}\nCreated Kaspi token with id {}", wonderUser.getId(), kaspiToken.getId());
+
 		// todo: возвращает 401 если token is null
 		kaspiTokenRepository.save(kaspiToken);
 	}
@@ -64,6 +67,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public WonderUser getUserByKeycloakId(String keycloakId) {
+		log.info("Retrieving user with keycloakId: {}", keycloakId);
 		return userRepository.findByKeycloakId(keycloakId)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 

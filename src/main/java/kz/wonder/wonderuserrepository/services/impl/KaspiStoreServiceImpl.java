@@ -63,6 +63,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
 		final List<KaspiStoreAvailableTimes> availableTimes = mapToEntity(kaspiStoreCreateRequest.getDayOfWeekWorks(), kaspiStore);
 
+		log.info("Available times with size: {}", availableTimes.size());
 
 		kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
 		kaspiStore.setKaspiCity(selectedCity);
@@ -83,6 +84,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setFormattedAddress(formattedAddress);
 		kaspiStore.setEnabled(true);
 
+		log.info("Created Kaspi store with id: {}", kaspiStore.getId());
 
 		kaspiStoreRepository.save(kaspiStore);
 		kaspiStoreAvailableTimesRepository.saveAll(availableTimes);
@@ -91,6 +93,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	@Override
 	public List<StoreResponse> getAllByUser(String keycloakUserId) {
 		final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakUserId);
+
+		log.info("Retrieving kaspi stores with size: {}", kaspiStores.size());
 
 		return mapToResponses(kaspiStores);
 	}
@@ -184,6 +188,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi store doesn't exist"));
 
 		kaspiStoreRepository.delete(kaspiStore);
+		log.info("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
 	}
 
 	@Override
@@ -191,6 +196,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		final var kaspiStore = kaspiStoreRepository.findById(id)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
+		log.info("Store with id {} was deleted", id);
 		kaspiStoreRepository.delete(kaspiStore);
 	}
 
@@ -199,6 +205,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		final var kaspiStore = kaspiStoreRepository.findById(id)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
+		log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
 
 		kaspiStoreRepository.save(mapToEntity(changeRequest, kaspiStore));
 	}
@@ -236,6 +243,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		availableBoxType.setBoxType(boxType);
 		availableBoxType.setKaspiStore(kaspiStore);
 		availableBoxType.setEnabled(true);
+
+		log.info("Available box type with id: {}", availableBoxType.getId());
 
 		kaspiStore.getAvailableBoxTypes().add(availableBoxType);
 
@@ -312,6 +321,8 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
 		if (!isSuperAdmin && !store.getWonderUser().getKeycloakId().equals(keycloakId))
 			throw new IllegalArgumentException("Store doesn't exist");
+
+		log.info("Retrieving store with id: {}", store.getId());
 
 		return mapToDetailResponse(store);
 	}

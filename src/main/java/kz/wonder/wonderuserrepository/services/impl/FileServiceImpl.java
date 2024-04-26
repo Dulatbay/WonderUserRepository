@@ -142,7 +142,7 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public void deleteAll() {
 		FileSystemUtils.deleteRecursively(rootLocation.toFile());
-		log.warn("All files were deleted");
+		log.info("All files were deleted");
 	}
 
 

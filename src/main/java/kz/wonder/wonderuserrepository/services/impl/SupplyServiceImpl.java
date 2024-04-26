@@ -68,9 +68,12 @@ public class SupplyServiceImpl implements SupplyService {
                 );
 
             }
+
+            log.info("Response size: {}", response.size());
+
             return response;
         } catch (IllegalStateException e) {
-            log.info("IllegalStateException :", e);
+            log.error("IllegalStateException :", e);
             throw new IllegalArgumentException("File process failed");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -182,6 +185,7 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public List<SupplyProductResponse> getSuppliesDetail(Long id) {
         var supply = findSupplyById(id);
+        log.info("Retrieving supply detail. Id: {}", id);
         return mapSupplyDetailsToResponse(supply);
     }
 
@@ -193,6 +197,8 @@ public class SupplyServiceImpl implements SupplyService {
         if (!isIdentityMatched(keycloakId, keycloakIdOfStoreOwner))
             throw new IllegalArgumentException("Supply doesn't exist");
 
+        log.info("Retrieving supply detail. Id: {}", id);
+
         return mapSupplyDetailsToResponse(supply);
     }
 
@@ -203,6 +209,8 @@ public class SupplyServiceImpl implements SupplyService {
         String keycloakIdOfSupplyOwner = supply.getAuthor().getKeycloakId();
         if (!isIdentityMatched(keycloakId, keycloakIdOfSupplyOwner))
             throw new IllegalArgumentException("Supply doesn't exist");
+
+        log.info("Retrieving supply detail. Id: {}", id);
 
         return mapSupplyDetailsToResponse(supply);
     }
@@ -242,6 +250,9 @@ public class SupplyServiceImpl implements SupplyService {
                 startDate.atStartOfDay(),
                 endDate.atStartOfDay(),
                 keycloakId);
+
+        log.info("Supplies of seller with size: {}", supplies.size());
+
         return supplies
                 .stream()
                 .map(supply ->
