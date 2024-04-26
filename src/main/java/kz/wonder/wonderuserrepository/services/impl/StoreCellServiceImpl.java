@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreCellServiceImpl implements StoreCellService {
     private static final Logger log = LoggerFactory.getLogger(StoreCellServiceImpl.class);
     private final StoreCellRepository storeCellRepository;
@@ -38,6 +40,9 @@ public class StoreCellServiceImpl implements StoreCellService {
         storeCell.setWidth(storeCellCreateRequest.getWidth());
         storeCell.setHeight(storeCellCreateRequest.getHeight());
         storeCell.setKaspiStore(kaspiStore);
+
+        log.info("Created store cell with id: {}", storeCell.getId());
+
         storeCellRepository.save(storeCell);
     }
 

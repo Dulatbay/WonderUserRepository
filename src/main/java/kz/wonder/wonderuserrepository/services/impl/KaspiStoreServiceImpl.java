@@ -37,244 +37,252 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMA
 @Service
 @RequiredArgsConstructor
 public class KaspiStoreServiceImpl implements KaspiStoreService {
-
-    private final KaspiStoreRepository kaspiStoreRepository;
-    private final KaspiCityRepository kaspiCityRepository;
-    private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
-    private final BoxTypeRepository boxTypeRepository;
-
-
-    @Override
-    @Transactional(rollbackOn = Exception.class)
-    public void createStore(final KaspiStoreCreateRequest kaspiStoreCreateRequest) {
-        final KaspiStore kaspiStore = new KaspiStore();
-
-        log.info("kaspiStoreCreateRequest.getWonderUser().getKeycloakId(): {}", kaspiStoreCreateRequest.getWonderUser().getKeycloakId());
+	private final KaspiStoreRepository kaspiStoreRepository;
+	private final KaspiCityRepository kaspiCityRepository;
+	private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
+	private final BoxTypeRepository boxTypeRepository;
 
 
-        var oo = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId());
+	@Override
+	@Transactional(rollbackOn = Exception.class)
+	public void createStore(final KaspiStoreCreateRequest kaspiStoreCreateRequest) {
+		final KaspiStore kaspiStore = new KaspiStore();
 
-        oo.ifPresent(kaspiCity -> System.out.println(kaspiCity.getName()));
-
-        final var selectedCity = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId())
-                .orElseThrow(
-                        () -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist")
-                );
-
-        final List<KaspiStoreAvailableTimes> availableTimes = mapToEntity(kaspiStoreCreateRequest.getDayOfWeekWorks(), kaspiStore);
+		log.info("kaspiStoreCreateRequest.getWonderUser().getKeycloakId(): {}", kaspiStoreCreateRequest.getWonderUser().getKeycloakId());
 
 
-        kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
-        kaspiStore.setKaspiCity(selectedCity);
-        kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
-        kaspiStore.setStreetName(kaspiStoreCreateRequest.getStreetName());
-        kaspiStore.setStreetNumber(kaspiStoreCreateRequest.getStreetNumber());
-        kaspiStore.setTown(kaspiStoreCreateRequest.getTown());
-        kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
-        kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
-        kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
-        String formattedAddress = String.format("%s, %s, %s, %s, %s, %s",
-                selectedCity.getName(),
-                kaspiStoreCreateRequest.getStreetName(),
-                kaspiStoreCreateRequest.getStreetNumber(),
-                kaspiStoreCreateRequest.getTown(),
-                kaspiStoreCreateRequest.getDistrict(),
-                kaspiStoreCreateRequest.getBuilding());
-        kaspiStore.setFormattedAddress(formattedAddress);
-        kaspiStore.setEnabled(true);
+		var oo = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId());
+
+		oo.ifPresent(kaspiCity -> System.out.println(kaspiCity.getName()));
+
+		final var selectedCity = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId())
+				.orElseThrow(
+						() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist")
+				);
+
+		final List<KaspiStoreAvailableTimes> availableTimes = mapToEntity(kaspiStoreCreateRequest.getDayOfWeekWorks(), kaspiStore);
+
+		log.info("Available times with size: {}", availableTimes.size());
+
+		kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
+		kaspiStore.setKaspiCity(selectedCity);
+		kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
+		kaspiStore.setStreetName(kaspiStoreCreateRequest.getStreetName());
+		kaspiStore.setStreetNumber(kaspiStoreCreateRequest.getStreetNumber());
+		kaspiStore.setTown(kaspiStoreCreateRequest.getTown());
+		kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
+		kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
+		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
+		String formattedAddress = String.format("%s, %s, %s, %s, %s, %s",
+				selectedCity.getName(),
+				kaspiStoreCreateRequest.getStreetName(),
+				kaspiStoreCreateRequest.getStreetNumber(),
+				kaspiStoreCreateRequest.getTown(),
+				kaspiStoreCreateRequest.getDistrict(),
+				kaspiStoreCreateRequest.getBuilding());
+		kaspiStore.setFormattedAddress(formattedAddress);
+		kaspiStore.setEnabled(true);
+
+		log.info("Created Kaspi store with id: {}", kaspiStore.getId());
+
+		kaspiStoreRepository.save(kaspiStore);
+		kaspiStoreAvailableTimesRepository.saveAll(availableTimes);
+	}
+
+	@Override
+	public List<StoreResponse> getAllByUser(String keycloakUserId) {
+		final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakUserId);
+
+		log.info("Retrieving kaspi stores with size: {}", kaspiStores.size());
+
+		return mapToResponses(kaspiStores);
+	}
+
+	@Override
+	public List<StoreResponse> getAll() {
+		final var kaspiStores = kaspiStoreRepository.findAll();
+		return mapToResponses(kaspiStores);
+	}
+
+	private List<KaspiStoreAvailableTimes> mapToEntity(List<DayOfWeekWork> dayOfWeekWorks, KaspiStore kaspiStore) {
+		final List<KaspiStoreAvailableTimes> availableTimes = new ArrayList<>();
+
+		dayOfWeekWorks.forEach(i -> {
+			try {
+				final var dayOfWeek = DayOfWeek.of(i.numericDayOfWeek());
+
+				final var closeTime = LocalTime.parse(i.closeTime(), TIME_FORMATTER);
+				final var openTime = LocalTime.parse(i.openTime(), TIME_FORMATTER);
+
+				final var workTime = new KaspiStoreAvailableTimes();
+
+				workTime.setDayOfWeek(dayOfWeek);
+				workTime.setOpenTime(openTime);
+				workTime.setCloseTime(closeTime);
+				workTime.setKaspiStore(kaspiStore);
+
+				availableTimes.add(workTime);
+
+			} catch (DateTimeParseException e) {
+				log.error("DateTimeParseException: ", e);
+				throw new IllegalArgumentException("Incorrect work time format");
+			}
+		});
+		return availableTimes;
+	}
+
+	private List<StoreResponse> mapToResponses(List<KaspiStore> kaspiStores) {
+		return kaspiStores.stream().map(this::mapToResponse).collect(Collectors.toList());
+	}
+
+	private StoreResponse mapToResponse(KaspiStore kaspiStore) {
+		var city = kaspiStore.getKaspiCity();
+
+		return StoreResponse.builder()
+				.id(kaspiStore.getId())
+				.kaspiId(kaspiStore.getKaspiId())
+				.city(StoreResponse.City.builder()
+						.id(city.getId())
+						.name(city.getName())
+						.build())
+				.address(kaspiStore.getFormattedAddress())
+				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
+				.enabled(kaspiStore.isEnabled())
+				.userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
+				.build();
+	}
+
+	private List<StoreDetailResponse> mapToDetailResponse(List<KaspiStore> kaspiStores) {
+		return kaspiStores.stream().map(this::mapToDetailResponse)
+				.collect(Collectors.toList());
+	}
+
+	private StoreDetailResponse mapToDetailResponse(KaspiStore kaspiStore) {
+		var city = kaspiStore.getKaspiCity();
+		return StoreDetailResponse.builder()
+				.id(kaspiStore.getId())
+				.kaspiId(kaspiStore.getKaspiId())
+				.city(StoreDetailResponse.City.builder()
+						.id(city.getId())
+						.name(city.getName())
+						.build())
+				.address(kaspiStore.getFormattedAddress())
+				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
+				.availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
+						j -> StoreDetailResponse.AvailableBoxType.builder()
+								.id(j.getBoxType().getId())
+								.name(j.getBoxType().getName())
+								.description(j.getBoxType().getDescription())
+								.imageUrls(j.getBoxType().getImages().stream().map(k -> k.imageUrl).collect(Collectors.toList()))
+								.build()
+				).collect(Collectors.toList()))
+				.enabled(kaspiStore.isEnabled())
+				.userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
+				.build();
+	}
+
+	@Override
+	public void deleteById(Long id, String keycloakUserId) {
+		final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi store doesn't exist"));
+
+		kaspiStoreRepository.delete(kaspiStore);
+		log.info("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
+	}
+
+	@Override
+	public void deleteById(Long id) {
+		final var kaspiStore = kaspiStoreRepository.findById(id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
+
+		log.info("Store with id {} was deleted", id);
+		kaspiStoreRepository.delete(kaspiStore);
+	}
+
+	@Override
+	public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
+		final var kaspiStore = kaspiStoreRepository.findById(id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
+
+		log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
+
+		kaspiStoreRepository.save(mapToEntity(changeRequest, kaspiStore));
+	}
+
+	@Override
+	public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
+		final var storeToDelete = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
+
+		kaspiStoreRepository.save(mapToEntity(changeRequest, storeToDelete));
+	}
+
+	@Override
+	public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
+		var kaspiStore = kaspiStoreRepository.findById(storeId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi store doesn't exist"));
+
+		addBoxTypeToStore(boxTypeId, kaspiStore);
+	}
+
+	@Override
+	public void addBoxTypeToStore(Long boxTypeId, Long storeId, String keycloakUserId) {
+		var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, storeId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi store doesn't exist"));
+
+		addBoxTypeToStore(boxTypeId, kaspiStore);
+	}
+
+	private void addBoxTypeToStore(Long boxTypeId, KaspiStore kaspiStore) {
+		var boxType = boxTypeRepository.findById(boxTypeId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box type doesn't exist"));
+
+		var availableBoxType = new KaspiStoreAvailableBoxTypes();
+
+		availableBoxType.setBoxType(boxType);
+		availableBoxType.setKaspiStore(kaspiStore);
+		availableBoxType.setEnabled(true);
+
+		log.info("Available box type with id: {}", availableBoxType.getId());
+
+		kaspiStore.getAvailableBoxTypes().add(availableBoxType);
+
+		kaspiStoreRepository.save(kaspiStore);
+	}
+
+	@Override
+	public List<StoreDetailResponse> getAllDetail() {
+		return mapToDetailResponse(kaspiStoreRepository.findAll());
+	}
+
+	@Override
+	public List<StoreDetailResponse> getAllDetailByUser(String keycloakId) {
+		return mapToDetailResponse(kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakId));
+	}
+
+	@Override
+	public void removeBoxType(Long boxTypeId, Long storeId) {
+		var store = kaspiStoreRepository.findById(storeId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+
+		var itemsToDelete = store.getAvailableBoxTypes()
+				.stream()
+				.filter(i -> i.getBoxType().getId().equals(boxTypeId))
+				.toList();
+
+		log.info("Items to delete size: {}", itemsToDelete.size());
 
 
-        kaspiStoreRepository.save(kaspiStore);
-        kaspiStoreAvailableTimesRepository.saveAll(availableTimes);
-    }
-
-    @Override
-    public List<StoreResponse> getAllByUser(String keycloakUserId) {
-        final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakUserId);
-
-        return mapToResponses(kaspiStores);
-    }
-
-    @Override
-    public List<StoreResponse> getAll() {
-        final var kaspiStores = kaspiStoreRepository.findAll();
-        return mapToResponses(kaspiStores);
-    }
-
-    private List<KaspiStoreAvailableTimes> mapToEntity(List<DayOfWeekWork> dayOfWeekWorks, KaspiStore kaspiStore) {
-        final List<KaspiStoreAvailableTimes> availableTimes = new ArrayList<>();
-
-        dayOfWeekWorks.forEach(i -> {
-            try {
-                final var dayOfWeek = DayOfWeek.of(i.numericDayOfWeek());
-
-                final var closeTime = LocalTime.parse(i.closeTime(), TIME_FORMATTER);
-                final var openTime = LocalTime.parse(i.openTime(), TIME_FORMATTER);
-
-                final var workTime = new KaspiStoreAvailableTimes();
-
-                workTime.setDayOfWeek(dayOfWeek);
-                workTime.setOpenTime(openTime);
-                workTime.setCloseTime(closeTime);
-                workTime.setKaspiStore(kaspiStore);
-
-                availableTimes.add(workTime);
-
-            } catch (DateTimeParseException e) {
-                log.error("DateTimeParseException: ", e);
-                throw new IllegalArgumentException("Incorrect work time format");
-            }
-        });
-        return availableTimes;
-    }
-
-    private List<StoreResponse> mapToResponses(List<KaspiStore> kaspiStores) {
-        return kaspiStores.stream().map(this::mapToResponse).collect(Collectors.toList());
-    }
-
-    private StoreResponse mapToResponse(KaspiStore kaspiStore) {
-        var city = kaspiStore.getKaspiCity();
-
-        return StoreResponse.builder()
-                .id(kaspiStore.getId())
-                .kaspiId(kaspiStore.getKaspiId())
-                .city(StoreResponse.City.builder()
-                        .id(city.getId())
-                        .name(city.getName())
-                        .build())
-                .address(kaspiStore.getFormattedAddress())
-                .availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
-                .enabled(kaspiStore.isEnabled())
-                .userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
-                .build();
-    }
-
-    private List<StoreDetailResponse> mapToDetailResponse(List<KaspiStore> kaspiStores) {
-        return kaspiStores.stream().map(this::mapToDetailResponse)
-                .collect(Collectors.toList());
-    }
-
-    private StoreDetailResponse mapToDetailResponse(KaspiStore kaspiStore) {
-        var city = kaspiStore.getKaspiCity();
-        return StoreDetailResponse.builder()
-                .id(kaspiStore.getId())
-                .kaspiId(kaspiStore.getKaspiId())
-                .city(StoreDetailResponse.City.builder()
-                        .id(city.getId())
-                        .name(city.getName())
-                        .build())
-                .address(kaspiStore.getFormattedAddress())
-                .availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
-                .availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
-                        j -> StoreDetailResponse.AvailableBoxType.builder()
-                                .id(j.getBoxType().getId())
-                                .name(j.getBoxType().getName())
-                                .description(j.getBoxType().getDescription())
-                                .imageUrls(j.getBoxType().getImages().stream().map(k -> k.imageUrl).collect(Collectors.toList()))
-                                .build()
-                ).collect(Collectors.toList()))
-                .enabled(kaspiStore.isEnabled())
-                .userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
-                .build();
-    }
-
-    @Override
-    public void deleteById(Long id, String keycloakUserId) {
-        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi store doesn't exist"));
-
-        kaspiStoreRepository.delete(kaspiStore);
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        final var kaspiStore = kaspiStoreRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
-
-        kaspiStoreRepository.delete(kaspiStore);
-    }
-
-    @Override
-    public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
-        final var kaspiStore = kaspiStoreRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
+		if (itemsToDelete.isEmpty()) {
+			throw new IllegalArgumentException("Store doesn't contain box type with ID: " + boxTypeId);
+		}
 
 
-        kaspiStoreRepository.save(mapToEntity(changeRequest, kaspiStore));
-    }
+		store.getAvailableBoxTypes()
+				.removeAll(itemsToDelete);
 
-    @Override
-    public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
-        final var storeToDelete = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
-
-        kaspiStoreRepository.save(mapToEntity(changeRequest, storeToDelete));
-    }
-
-    @Override
-    public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
-        var kaspiStore = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi store doesn't exist"));
-
-        addBoxTypeToStore(boxTypeId, kaspiStore);
-    }
-
-    @Override
-    public void addBoxTypeToStore(Long boxTypeId, Long storeId, String keycloakUserId) {
-        var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi store doesn't exist"));
-
-        addBoxTypeToStore(boxTypeId, kaspiStore);
-    }
-
-    private void addBoxTypeToStore(Long boxTypeId, KaspiStore kaspiStore) {
-        var boxType = boxTypeRepository.findById(boxTypeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box type doesn't exist"));
-
-        var availableBoxType = new KaspiStoreAvailableBoxTypes();
-
-        availableBoxType.setBoxType(boxType);
-        availableBoxType.setKaspiStore(kaspiStore);
-        availableBoxType.setEnabled(true);
-
-        kaspiStore.getAvailableBoxTypes().add(availableBoxType);
-
-        kaspiStoreRepository.save(kaspiStore);
-    }
-
-    @Override
-    public List<StoreDetailResponse> getAllDetail() {
-        return mapToDetailResponse(kaspiStoreRepository.findAll());
-    }
-
-    @Override
-    public List<StoreDetailResponse> getAllDetailByUser(String keycloakId) {
-        return mapToDetailResponse(kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakId));
-    }
-
-    @Override
-    public void removeBoxType(Long boxTypeId, Long storeId) {
-        var store = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
-
-        var itemsToDelete = store.getAvailableBoxTypes()
-                .stream()
-                .filter(i -> i.getBoxType().getId().equals(boxTypeId))
-                .toList();
-
-        log.info("Items to delete size: {}", itemsToDelete.size());
-
-
-        if (itemsToDelete.isEmpty()) {
-            throw new IllegalArgumentException("Store doesn't contain box type with ID: " + boxTypeId);
-        }
-
-
-        store.getAvailableBoxTypes()
-                .removeAll(itemsToDelete);
-
-        kaspiStoreRepository.save(store);
-    }
+		kaspiStoreRepository.save(store);
+	}
 
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
@@ -303,18 +311,21 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         return mapToResponse(store);
     }
 
-    @Override
-    public StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId) {
-        var store = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-                        HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                        "Store doesn't exist"));
 
-        if (!isSuperAdmin && !store.getWonderUser().getKeycloakId().equals(keycloakId))
-            throw new IllegalArgumentException("Store doesn't exist");
+	@Override
+	public StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId) {
+		var store = kaspiStoreRepository.findById(storeId)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
+						HttpStatus.BAD_REQUEST.getReasonPhrase(),
+						"Store doesn't exist"));
 
-        return mapToDetailResponse(store);
-    }
+		if (!isSuperAdmin && !store.getWonderUser().getKeycloakId().equals(keycloakId))
+			throw new IllegalArgumentException("Store doesn't exist");
+
+		log.info("Retrieving store with id: {}", store.getId());
+
+		return mapToDetailResponse(store);
+	}
 
 
     @Override

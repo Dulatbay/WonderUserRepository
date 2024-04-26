@@ -129,100 +129,103 @@ public class KeycloakServiceImpl implements KeycloakService {
 
     private void sendEmail(String userId) {
 //        getUsersResource().get(userId).sendVerifyEmail();
-    }
+	}
 
-    private Keycloak getKeycloak(String username, String password) {
-        return KeycloakBuilder.builder()
-                .serverUrl(keycloakUrl)
-                .realm(realm)
-                .clientId(clintId)
-                .grantType(OAuth2Constants.PASSWORD)
-                .username(username)
-                .password(password)
-                .resteasyClient(new ResteasyClientBuilderImpl()
-                        .connectionPoolSize(10).build())
-                .build();
-    }
+	private Keycloak getKeycloak(String username, String password) {
+		return KeycloakBuilder.builder()
+				.serverUrl(keycloakUrl)
+				.realm(realm)
+				.clientId(clintId)
+				.grantType(OAuth2Constants.PASSWORD)
+				.username(username)
+				.password(password)
+				.resteasyClient(new ResteasyClientBuilderImpl()
+						.connectionPoolSize(10).build())
+				.build();
+	}
 
-    @Override
-    public AuthResponse getAuthResponse(String username, String password) {
-        try (var userKeycloak = getKeycloak(username, password)) {
-            String accessToken = userKeycloak.tokenManager().getAccessTokenString();
-            String refreshToken = userKeycloak.tokenManager().refreshToken().getRefreshToken();
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .build();
-        } catch (NotAuthorizedException notAuthorizedException) {
-            throw new IllegalArgumentException("Bad credentials");
-        } catch (Exception e) {
-            log.error("Error occurred in getting tokens: ", e);
-            throw e;
-        }
-    }
+	@Override
+	public AuthResponse getAuthResponse(String username, String password) {
+		try (var userKeycloak = getKeycloak(username, password)) {
+			String accessToken = userKeycloak.tokenManager().getAccessTokenString();
+			String refreshToken = userKeycloak.tokenManager().refreshToken().getRefreshToken();
+			return AuthResponse.builder()
+					.accessToken(accessToken)
+					.refreshToken(refreshToken)
+					.build();
+		} catch (NotAuthorizedException notAuthorizedException) {
+			throw new IllegalArgumentException("Bad credentials");
+		} catch (Exception e) {
+			log.error("Error occurred in getting tokens: ", e);
+			throw e;
+		}
+	}
 
-    @Override
-    public void deleteUserById(String userId) {
-        getUserById(userId).remove();
-    }
+	@Override
+	public void deleteUserById(String userId) {
+		log.info("Deleted user with id {}", userId);
+		getUserById(userId).remove();
+	}
 
-    @Override
-    public List<UserRepresentation> getAllUsers() {
-        return getUsersResource().list();
-    }
+	@Override
+	public List<UserRepresentation> getAllUsers() {
+		return getUsersResource().list();
+	}
 
-    @Override
-    public List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole) {
-        return getRealmResource()
-                .clients()
-                .get(getClient().getId())
-                .roles().get(keycloakRole.name())
-                .getUserMembers();
-    }
-
-
-    @Override
-    public UserResource getUserById(String id) {
-        return getUsersResource().get(id);
-    }
-
-    @Override
-    public UserResource updateUser(KeycloakBaseUser keycloakBaseUser) {
-        var usersResource = getUsersResource();
-        List<UserRepresentation> users = usersResource.search(keycloakBaseUser.getEmail(), 0, 1);
-
-        if (users.isEmpty()) {
-            throw new IllegalArgumentException("User by email not found");
-        }
-        UserRepresentation userToUpdate = users.get(0);
-        userToUpdate.setFirstName(keycloakBaseUser.getFirstName());
-        userToUpdate.setLastName(keycloakBaseUser.getLastName());
-        userToUpdate.setEmail(keycloakBaseUser.getEmail());
-
-        UserResource userResource = usersResource.get(userToUpdate.getId());
-        userResource.update(userToUpdate);
-
-        return userResource;
-    }
-
-    @Override
-    public void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword) {
-        try {
-            var keycloak = getKeycloak(updatePassword.getEmail(), updatePassword.getOldPassword());
-            keycloak.tokenManager().getAccessTokenString();
-
-            UserResource userResource = getUsersResource().get(keycloakId);
-
-            CredentialRepresentation newPassword = new CredentialRepresentation();
-            newPassword.setType(CredentialRepresentation.PASSWORD);
-            newPassword.setValue(updatePassword.getNewPassword());
-            newPassword.setTemporary(false);
+	@Override
+	public List<UserRepresentation> getAllUsersByRole(KeycloakRole keycloakRole) {
+		return getRealmResource()
+				.clients()
+				.get(getClient().getId())
+				.roles().get(keycloakRole.name())
+				.getUserMembers();
+	}
 
 
-            userResource.resetPassword(newPassword);
-        } catch (NotAuthorizedException e) {
-            log.error("Old password is incorrect for user with ID: {}", keycloakId);
-            throw new IllegalArgumentException("Old password is incorrect");
-        }
-    }
+	@Override
+	public UserResource getUserById(String id) {
+		return getUsersResource().get(id);
+	}
+
+	@Override
+	public UserResource updateUser(KeycloakBaseUser keycloakBaseUser) {
+		var usersResource = getUsersResource();
+		List<UserRepresentation> users = usersResource.search(keycloakBaseUser.getEmail(), 0, 1);
+
+		if (users.isEmpty()) {
+			throw new IllegalArgumentException("User by email not found");
+		}
+		UserRepresentation userToUpdate = users.get(0);
+		userToUpdate.setFirstName(keycloakBaseUser.getFirstName());
+		userToUpdate.setLastName(keycloakBaseUser.getLastName());
+		userToUpdate.setEmail(keycloakBaseUser.getEmail());
+
+		UserResource userResource = usersResource.get(userToUpdate.getId());
+		userResource.update(userToUpdate);
+
+		log.info("Update user: {}", userResource);
+
+		return userResource;
+	}
+
+	@Override
+	public void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword) {
+		try {
+			var keycloak = getKeycloak(updatePassword.getEmail(), updatePassword.getOldPassword());
+			keycloak.tokenManager().getAccessTokenString();
+
+			UserResource userResource = getUsersResource().get(keycloakId);
+
+			CredentialRepresentation newPassword = new CredentialRepresentation();
+			newPassword.setType(CredentialRepresentation.PASSWORD);
+			newPassword.setValue(updatePassword.getNewPassword());
+			newPassword.setTemporary(false);
+
+
+			userResource.resetPassword(newPassword);
+		} catch (NotAuthorizedException e) {
+			log.error("Old password is incorrect for user with ID: {}", keycloakId);
+			throw new IllegalArgumentException("Old password is incorrect");
+		}
+	}
 }
