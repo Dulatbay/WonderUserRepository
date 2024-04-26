@@ -10,20 +10,20 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SupplyRepository extends JpaRepository<Supply, Long> {
-	List<Supply> findAllByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    List<Supply> findAllByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
-	List<Supply> findAllByCreatedAtBetweenAndAuthorKeycloakId(LocalDateTime start, LocalDateTime end, String keycloakId);
+    List<Supply> findAllByCreatedAtBetweenAndAuthorKeycloakId(LocalDateTime start, LocalDateTime end, String keycloakId);
 
-	Optional<Supply> findByIdAndAuthorKeycloakId(Long id, String keycloakId);
+    Optional<Supply> findByIdAndAuthorKeycloakId(Long id, String keycloakId);
 
-	@Query(nativeQuery = true, value = "SELECT s.* FROM schema_wonder.supply s " +
-			"JOIN schema_wonder.kaspi_store ks ON s.store_id = ks.id " +
-			"JOIN schema_wonder.store_employee se ON ks.id = se.kaspi_store_id " +
-			"WHERE se.id = :employeeId AND (s.selected_time BETWEEN :start AND :end)")
-	List<Supply> findAllSuppliesOfStorage(@Param("employeeId")
-	                                      Long id,
-	                                      @Param("start")
-	                                      long start,
-	                                      @Param("end")
-	                                      long end);
+    @Query(nativeQuery = true, value = "SELECT s.* FROM schema_wonder.supply s " +
+            "JOIN schema_wonder.kaspi_store ks ON s.store_id = ks.id " +
+            "JOIN schema_wonder.store_employee se ON ks.id = se.kaspi_store_id " +
+            "WHERE se.id = :employeeId AND (s.selected_time BETWEEN :start AND :end)")
+    List<Supply> findAllSuppliesOfStorage(@Param("employeeId")
+                                          Long id,
+                                          @Param("start")
+                                          long start,
+                                          @Param("end")
+                                          long end);
 }

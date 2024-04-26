@@ -17,6 +17,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,133 +26,149 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class StoreEmployeeServiceImpl implements StoreEmployeeService {
-	private final StoreEmployeeRepository storeEmployeeRepository;
-	private final KaspiStoreRepository kaspiStoreRepository;
-	private final UserRepository userRepository;
+    private final StoreEmployeeRepository storeEmployeeRepository;
+    private final KaspiStoreRepository kaspiStoreRepository;
+    private final UserRepository userRepository;
 
-	@Override
-	@Transactional
-	public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest) {
-		log.info("Employee Initialize started");
-		var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
+    @Override
+    @Transactional
+    public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest, String keycloakIdOfCreator, boolean isSuperAdmin) {
+        var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
-		if (isPhoneNumberUsed) {
-			throw new IllegalArgumentException("Phone already used");
-		}
+        if (isPhoneNumberUsed)
+            throw new IllegalArgumentException("Phone already used");
 
-		WonderUser wonderUser = new WonderUser();
-		wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
-		wonderUser.setKeycloakId(employeeCreateRequest.getKeycloakId());
+        WonderUser wonderUser = new WonderUser();
+        wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
+        wonderUser.setKeycloakId(employeeCreateRequest.getKeycloakId());
 
-		final var store = kaspiStoreRepository.findById(employeeCreateRequest.getStoreId())
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please write correct ID of store"));
+        final var store = kaspiStoreRepository.findById(employeeCreateRequest.getStoreId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please write correct ID of store"));
+        var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
 
-		// todo: проверка на то, что склад его
+        if (!isSuperAdmin) {
+            if (!isHisStore)
+                throw new IllegalArgumentException("Store doesn't exist");
+            if (!store.isEnabled())
+                throw new IllegalArgumentException("Store is disabled");
+        }
 
-		StoreEmployee storeEmployee = new StoreEmployee();
-		storeEmployee.setKaspiStore(store);
-		storeEmployee.setWonderUser(wonderUser);
-		userRepository.save(wonderUser);
-		storeEmployeeRepository.save(storeEmployee);
-		log.info("Employee successfully created. EmployeeID: {} KaspiStoreID: {}", storeEmployee.getId(), storeEmployee.getKaspiStore().getId());
-	}
 
-	@Override
-	public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource) {
-		final var keycloakUser = userResource.toRepresentation();
+        StoreEmployee storeEmployee = new StoreEmployee();
+        storeEmployee.setKaspiStore(store);
+        storeEmployee.setWonderUser(wonderUser);
+        userRepository.save(wonderUser);
+        storeEmployeeRepository.save(storeEmployee);
+		    log.info("Employee successfully created. EmployeeID: {} KaspiStoreID: {}", storeEmployee.getId(), storeEmployee.getKaspiStore().getId());
+      
+    }
 
-		// todo: проверка на то, что склад его
+    @Override
+    public EmployeeResponse getStoreEmployeeById(StoreEmployee storeEmployee, UserResource userResource, String keycloakIdOfCreator) {
+        try {
+            final var keycloakUser = userResource.toRepresentation();
+            return this.buildEmployeeResponse(keycloakUser, storeEmployee);
+        } catch (NotFoundException e) {
+            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Store Employee doesn't exist", "Please write correct ID");
+        }
+    }
 
-		return this.buildEmployeeResponse(keycloakUser, storeEmployee);
-	}
+    @Override
+    public StoreEmployee getStoreEmployeeById(Long id) {
+        return storeEmployeeRepository.findById(id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Employee doesn't exist", "Please try one more time with another params"));
+    }
 
-	@Override
-	public StoreEmployee getStoreEmployeeById(Long id) {
-		return storeEmployeeRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Employee doesn't exist", "Please try one more time with another params"));
-	}
+    @Override
+    public List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak) {
+        final var storeEmployees = storeEmployeeRepository.findAll();
+		    log.info("Getting all store employees. StoreEmployees size: {}, Employees In Keycloak size: {}", storeEmployees.size(), employeesInKeycloak.size());
+      
+        return storeEmployees.stream()
+                .map(storeEmployee -> toEmployeeResponse(storeEmployee, employeesInKeycloak))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
-	@Override
-	public List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak) {
-		final var storeEmployees = storeEmployeeRepository.findAll();
-		log.info("Getting all store employees. Size: {}", employeesInKeycloak.size());
-		return storeEmployees.stream()
-				.map(storeEmployee -> toEmployeeResponse(storeEmployee, employeesInKeycloak))
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
-	}
+    private EmployeeResponse toEmployeeResponse(StoreEmployee storeEmployee, List<UserRepresentation> employeesInKeycloak) {
+        UserRepresentation keycloakUser = findKeycloakUser(employeesInKeycloak, storeEmployee.getWonderUser().getKeycloakId());
+        return (keycloakUser != null) ? buildEmployeeResponse(keycloakUser, storeEmployee) : null;
+    }
 
-	private EmployeeResponse toEmployeeResponse(StoreEmployee storeEmployee, List<UserRepresentation> employeesInKeycloak) {
-		UserRepresentation keycloakUser = findKeycloakUser(employeesInKeycloak, storeEmployee.getWonderUser().getKeycloakId());
-		return (keycloakUser != null) ? buildEmployeeResponse(keycloakUser, storeEmployee) : null;
-	}
+    private UserRepresentation findKeycloakUser(List<UserRepresentation> employeesInKeycloak, String keyCloakId) {
+        return employeesInKeycloak.stream()
+                .filter(user -> user.getId().equals(keyCloakId))
+                .findFirst()
+                .orElse(null);
+    }
 
-	private UserRepresentation findKeycloakUser(List<UserRepresentation> employeesInKeycloak, String keyCloakId) {
-		return employeesInKeycloak.stream()
-				.filter(user -> user.getId().equals(keyCloakId))
-				.findFirst()
-				.orElse(null);
-	}
+    private EmployeeResponse buildEmployeeResponse(UserRepresentation keycloakUser, StoreEmployee storeEmployee) {
+        WonderUser wonderUser = storeEmployee.getWonderUser();
+        return EmployeeResponse.builder()
+                .id(storeEmployee.getId())
+                .email(keycloakUser.getEmail())
+                .firstName(keycloakUser.getFirstName())
+                .lastName(keycloakUser.getLastName())
+                .storeId(storeEmployee.getKaspiStore().getId())
+                .phoneNumber(wonderUser.getPhoneNumber())
+                .build();
+    }
 
-	private EmployeeResponse buildEmployeeResponse(UserRepresentation keycloakUser, StoreEmployee storeEmployee) {
-		WonderUser wonderUser = storeEmployee.getWonderUser();
-		return EmployeeResponse.builder()
-				.id(storeEmployee.getId())
-				.email(keycloakUser.getEmail())
-				.firstName(keycloakUser.getFirstName())
-				.lastName(keycloakUser.getLastName())
-				.storeId(storeEmployee.getKaspiStore().getId())
-				.phoneNumber(wonderUser.getPhoneNumber())
-				.build();
-	}
+    @Override
+    public List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations, boolean isSuperAdmin, String keycloakIdOfCreator) {
+        var kaspiStore = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store doesn't exist"));
 
-	@Override
-	public List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations) {
-		// todo: check that it's his own store
+        var isHisStore = kaspiStore.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
-		final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
+        if (!isHisStore && !isSuperAdmin)
+            throw new IllegalArgumentException("Store doesn't exist");
 
-		log.info("Getting all store employees with size: {}", storeEmployees.size());
 
-		return storeEmployees.stream()
-				.map(storeEmployee -> toEmployeeResponse(storeEmployee, userRepresentations))
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
-	}
+        final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
 
-	@Override
-	public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId) {
-		final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
+		    log.info("Getting all store employees with size: {}", storeEmployees.size());
 
-		return storeEmployeeRepository.save(storeEmployee);
-	}
+        return storeEmployees.stream()
+                .map(storeEmployee -> toEmployeeResponse(storeEmployee, userRepresentations))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
-	@Override
-	public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber) {
-		final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
+    @Override
+    public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId) {
+        final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
+		    
+        log.info("Store employee update with id: {}", storeEmployee.getId());
 
-		storeEmployee.getWonderUser().setPhoneNumber(phoneNumber);
+        return storeEmployeeRepository.save(storeEmployee);
+    }
 
-		log.info("Store employee update with id: {}", storeEmployee.getId());
+    @Override
+    public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber) {
+        final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
 
-		return storeEmployeeRepository.save(storeEmployee);
-	}
+        storeEmployee.getWonderUser().setPhoneNumber(phoneNumber);
 
-	private StoreEmployee getStoreEmployeeWithStoreId(Long employeeId, Long storeId) {
-		final var storeEmployee = storeEmployeeRepository.findById(employeeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Employee doesn't exist", "Please try one more time with another params"));
-		final var kaspiStore = kaspiStoreRepository.findById(storeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please try one more time with another params"));
+        return storeEmployeeRepository.save(storeEmployee);
+    }
 
-		storeEmployee.setKaspiStore(kaspiStore);
-		log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
-		return storeEmployee;
-	}
+    private StoreEmployee getStoreEmployeeWithStoreId(Long employeeId, Long storeId) {
+        final var storeEmployee = storeEmployeeRepository.findById(employeeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Employee doesn't exist", "Please try one more time with another params"));
+        final var kaspiStore = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please try one more time with another params"));
 
-	@Override
-	public void deleteStoreEmployee(StoreEmployee storeEmployee) {
-		log.info("Deleting Employee");
-		storeEmployeeRepository.delete(storeEmployee);
-	}
+		    log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
+      
+        storeEmployee.setKaspiStore(kaspiStore);
+        return storeEmployee;
+    }
+
+    @Override
+    public void deleteStoreEmployee(StoreEmployee storeEmployee) {
+		    log.info("Deleting Employee");
+        storeEmployeeRepository.delete(storeEmployee);
+    }
 }

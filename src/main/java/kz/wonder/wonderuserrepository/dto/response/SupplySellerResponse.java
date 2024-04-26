@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class SupplySellerResponse {
-	private Long id;
-	private LocalDateTime supplyCreatedTime;
-	private LocalDateTime supplyAcceptTime;
-	private SupplyState supplyState;
+    private Long id;
+    private LocalDateTime supplyCreatedTime;
+    private LocalDateTime supplyAcceptTime;
+    private SupplyState supplyState;
 }

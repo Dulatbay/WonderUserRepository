@@ -12,7 +12,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
@@ -58,17 +57,15 @@ public class OrderController {
     }
 
     @GetMapping("/admin/details/{orderId}")
-    private ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderId") String orderId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
-
-
         List<OrderDetailResponse> orderResponse = orderService.getAdminOrderDetails(keycloakId, orderId);
         return ResponseEntity.ok().body(orderResponse);
     }
 
     @GetMapping("/seller/details/{orderId}")
-    private ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderId") String orderId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
@@ -78,12 +75,12 @@ public class OrderController {
     }
 
     @GetMapping("/employee/details/{orderId}")
-    private ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderId") String orderId) {
+    public ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderId") String orderId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
 
-         List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderId);
+        List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderId);
         return ResponseEntity.ok().body(employeeOrderDetails);
     }
 

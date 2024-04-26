@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<WonderUser, Long> {
     Optional<WonderUser> findByKeycloakId(String id);
+
     boolean existsByPhoneNumber(String phoneNumber);
 }

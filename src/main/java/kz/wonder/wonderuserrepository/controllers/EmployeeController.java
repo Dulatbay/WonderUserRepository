@@ -16,94 +16,137 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/employees")
 public class EmployeeController {
-	private final StoreEmployeeService storeEmployeeService;
-	private final KeycloakService keycloakService;
+    private final StoreEmployeeService storeEmployeeService;
+    private final KeycloakService keycloakService;
 
-	@PostMapping
-	public ResponseEntity<EmployeeCreateResponse> createEmployee(@RequestBody EmployeeCreateRequest employeeCreateRequest) {
-		var userRepresentation = keycloakService.createUserByRole(employeeCreateRequest, KeycloakRole.STORE_EMPLOYEE);
-		employeeCreateRequest.setKeycloakId(userRepresentation.getId());
+    @PostMapping
+    public ResponseEntity<EmployeeCreateResponse> createEmployee(@RequestBody EmployeeCreateRequest employeeCreateRequest) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakIdOfCreator = Utils.extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
 
-		try {
-			storeEmployeeService.createStoreEmployee(employeeCreateRequest);
-		} catch (Exception e) {
-			keycloakService.deleteUserById(userRepresentation.getId());
-			throw e;
-		}
-		return ResponseEntity
-				.status(HttpStatus.CREATED)
-				.body(new EmployeeCreateResponse(employeeCreateRequest.getEmail(), employeeCreateRequest.getPassword()));
-	}
+        var userRepresentation = keycloakService.createUserByRole(employeeCreateRequest, KeycloakRole.STORE_EMPLOYEE);
+        employeeCreateRequest.setKeycloakId(userRepresentation.getId());
 
-	@GetMapping
-	public ResponseEntity<List<EmployeeResponse>> getEmployees(@RequestParam(value = "store-id", required = false)
-	                                                           Long storeId) {
-		var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        try {
+            storeEmployeeService.createStoreEmployee(employeeCreateRequest, keycloakIdOfCreator, isSuperAdmin);
+        } catch (Exception e) {
+            keycloakService.deleteUserById(userRepresentation.getId());
+            throw e;
+        }
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new EmployeeCreateResponse(employeeCreateRequest.getEmail(), employeeCreateRequest.getPassword()));
+    }
 
-		var authorities = Utils.getAuthorities(token.getAuthorities());
+    @GetMapping
+    public ResponseEntity<List<EmployeeResponse>> getEmployees(@RequestParam(value = "store-id", required = false)
+                                                               Long storeId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakIdOfCreator = Utils.extractIdFromToken(token);
+        var authorities = Utils.getAuthorities(token.getAuthorities());
+        var isSuperAdmin = authorities.contains(KeycloakRole.SUPER_ADMIN.name());
 
-		List<EmployeeResponse> result = new ArrayList<>();
-		var usersInKeycloak = keycloakService.getAllUsersByRole(KeycloakRole.STORE_EMPLOYEE);
-		if (storeId != null)
-			result = storeEmployeeService.getAllStoreEmployees(storeId, usersInKeycloak);
-		else if (authorities.contains(KeycloakRole.SUPER_ADMIN.name()))
-			result = storeEmployeeService.getAllStoreEmployees(usersInKeycloak);
-		return ResponseEntity.ok(result);
-	}
-
-
-	@GetMapping("/{userId}")
-	public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable Long userId) {
-		var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
-
-		var userResource = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId());
-
-		EmployeeResponse employeeResponse = storeEmployeeService.getStoreEmployeeById(storeEmployee, userResource);
-
-		return ResponseEntity.ok(employeeResponse);
-	}
+        List<EmployeeResponse> result;
+        var usersInKeycloak = keycloakService.getAllUsersByRole(KeycloakRole.STORE_EMPLOYEE);
+        if (storeId != null)
+            result = storeEmployeeService.getAllStoreEmployees(storeId, usersInKeycloak, isSuperAdmin, keycloakIdOfCreator);
+        else if (isSuperAdmin)
+            result = storeEmployeeService.getAllStoreEmployees(usersInKeycloak);
+        else
+            throw new IllegalArgumentException("Invalid store-id");
+        return ResponseEntity.ok(result);
+    }
 
 
-	@DeleteMapping("/{userId}")
-	public ResponseEntity<Void> deleteEmployeeId(@PathVariable Long userId) {
-		var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
-		keycloakService.deleteUserById(storeEmployee.getWonderUser().getKeycloakId());
-		storeEmployeeService.deleteStoreEmployee(storeEmployee);
-		return ResponseEntity.noContent().build();
-	}
+    @GetMapping("/{userId}")
+    public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable Long userId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakIdOfCreator = Utils.extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
 
-	@PatchMapping("/update-password/{userId}")
-	public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody StoreEmployeeUpdatePassword updatePassword) {
-		var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
-		var keycloakUser = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId()).toRepresentation();
+        var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
+        var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
-		updatePassword.setEmail(keycloakUser.getEmail());
-		keycloakService.updatePassword(keycloakUser.getId(), updatePassword);
-		return ResponseEntity.ok().build();
-	}
+        if (!isHisEmployee && !isSuperAdmin)
+            throw new IllegalArgumentException("Employee doesn't exist");
 
-	@PutMapping("/{userId}")
-	public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, EmployeeUpdateRequest employeeUpdateRequest) {
+        var userResource = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId());
 
-		var userResource = keycloakService.updateUser(employeeUpdateRequest).toRepresentation();
-		var employee = storeEmployeeService.updateStoreEmployee(userId, employeeUpdateRequest.getStoreId(), employeeUpdateRequest.getPhoneNumber());
+        EmployeeResponse employeeResponse = storeEmployeeService.getStoreEmployeeById(storeEmployee, userResource, keycloakIdOfCreator);
 
-		var updatedEmployee = EmployeeResponse.builder()
-				.id(employee.getId())
-				.email(userResource.getEmail())
-				.firstName(userResource.getFirstName())
-				.lastName(userResource.getLastName())
-				.phoneNumber(employee.getWonderUser().getPhoneNumber())
-				.storeId(employee.getKaspiStore().getId())
-				.build();
+        return ResponseEntity.ok(employeeResponse);
+    }
 
-		return ResponseEntity.ok(updatedEmployee);
-	}
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteEmployeeId(@PathVariable Long userId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakIdOfCreator = Utils.extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
+
+        var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
+        var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
+
+        if (!isHisEmployee && !isSuperAdmin)
+            throw new IllegalArgumentException("Employee doesn't exist");
+
+        keycloakService.deleteUserById(storeEmployee.getWonderUser().getKeycloakId());
+        storeEmployeeService.deleteStoreEmployee(storeEmployee);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/update-password/{userId}")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody StoreEmployeeUpdatePassword updatePassword) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakIdOfCreator = Utils.extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
+
+
+        var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
+        var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
+
+        if (!isHisEmployee && !isSuperAdmin)
+            throw new IllegalArgumentException("Employee doesn't exist");
+
+
+        var keycloakUser = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId()).toRepresentation();
+
+        updatePassword.setEmail(keycloakUser.getEmail());
+        keycloakService.updatePassword(keycloakUser.getId(), updatePassword);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{userId}")
+    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, EmployeeUpdateRequest employeeUpdateRequest) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakIdOfCreator = Utils.extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
+
+        var storeEmployee = storeEmployeeService.getStoreEmployeeById(userId);
+        var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
+
+        if (!isHisEmployee && !isSuperAdmin)
+            throw new IllegalArgumentException("Employee doesn't exist");
+
+        var userResource = keycloakService.updateUser(employeeUpdateRequest).toRepresentation();
+        var employee = storeEmployeeService.updateStoreEmployee(userId, employeeUpdateRequest.getStoreId(), employeeUpdateRequest.getPhoneNumber());
+
+        var updatedEmployee = EmployeeResponse.builder()
+                .id(employee.getId())
+                .email(userResource.getEmail())
+                .firstName(userResource.getFirstName())
+                .lastName(userResource.getLastName())
+                .phoneNumber(employee.getWonderUser().getPhoneNumber())
+                .storeId(employee.getKaspiStore().getId())
+                .build();
+
+        return ResponseEntity.ok(updatedEmployee);
+    }
 }

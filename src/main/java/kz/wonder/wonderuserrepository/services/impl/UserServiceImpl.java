@@ -5,11 +5,11 @@ import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
-import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
 	private final KaspiTokenRepository kaspiTokenRepository;
 	private final UserRepository userRepository;
 	private final KeycloakService keycloakService;
@@ -163,12 +162,10 @@ public class UserServiceImpl implements UserService {
 			kaspiTokenRepository.save(kaspiToken);
 			log.info("New tester created");
 		}
+    }
 
 
-	}
-
-
-	private boolean isTokenValid(String token) {
+    private boolean isTokenValid(String token) {
 //        try {
 //            kaspiApi.getDataCitiesWithToken(token);
 //            return true;
@@ -176,6 +173,6 @@ public class UserServiceImpl implements UserService {
 //            log.info("Exception: ", e);
 //            return false;
 //        }
-		return true;
-	}
+        return true;
+    }
 }

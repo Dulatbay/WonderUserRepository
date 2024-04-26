@@ -21,7 +21,7 @@ public class StoreDetailResponse {
 
     @Data
     @Builder
-    public static class City{
+    public static class City {
         private Long id;
         private String name;
     }

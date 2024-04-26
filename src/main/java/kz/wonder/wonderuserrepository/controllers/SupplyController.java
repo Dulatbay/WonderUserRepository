@@ -71,15 +71,13 @@ public class SupplyController {
         var keycloakId = extractIdFromToken(token);
         List<SupplyProductResponse> result = new ArrayList<>();
 
-        if (authorities.contains(KeycloakRole.SUPER_ADMIN.name())){
+        if (authorities.contains(KeycloakRole.SUPER_ADMIN.name())) {
             log.info("Getting supply product details for super-admin");
             result = supplyService.getSuppliesDetail(id);
-        }
-        else if (authorities.contains(KeycloakRole.ADMIN.name())){
+        } else if (authorities.contains(KeycloakRole.ADMIN.name())) {
             log.info("Getting supply product details for admin");
             result = supplyService.getSuppliesDetail(id, keycloakId);
-        }
-        else if (authorities.contains(KeycloakRole.SELLER.name())){
+        } else if (authorities.contains(KeycloakRole.SELLER.name())) {
             log.info("Getting supply product details for seller");
             result = supplyService.getSuppliesDetailOfSeller(id, keycloakId);
         }

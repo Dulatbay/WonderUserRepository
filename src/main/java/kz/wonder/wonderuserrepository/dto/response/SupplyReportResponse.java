@@ -6,9 +6,9 @@ import lombok.Data;
 @Data
 @Builder
 public class SupplyReportResponse {
-	private String productBarcode;
-	private String productName;
-	private Long countOfProductAccepted;
-	private Long countOfProductDeclined;
-	private Long countOfProductPending;
+    private String productBarcode;
+    private String productName;
+    private Long countOfProductAccepted;
+    private Long countOfProductDeclined;
+    private Long countOfProductPending;
 }

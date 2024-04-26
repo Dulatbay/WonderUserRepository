@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface KaspiTokenRepository extends JpaRepository<KaspiToken, Long> {
     boolean existsBySellerId(String sellerId);
+
     Optional<KaspiToken> findByWonderUserKeycloakId(String keycloakId);
 }

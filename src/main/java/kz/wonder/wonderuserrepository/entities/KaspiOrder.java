@@ -1,9 +1,7 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
-import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.kaspi.client.model.PaymentMode;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,6 +17,8 @@ public class KaspiOrder extends AbstractEntity<Long> {
 
 
     private String kaspiId;
+
+    @Column(nullable = false)
     private String code;
     private Double totalPrice;
 

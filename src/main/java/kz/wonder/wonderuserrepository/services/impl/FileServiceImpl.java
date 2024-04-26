@@ -36,7 +36,6 @@ public class FileServiceImpl implements FileService {
 		this.rootLocation = Paths.get(UPLOADED_FOLDER);
 	}
 
-	// New Constants
 	public static final String BAD_REQUEST_REASON_PHRASE = HttpStatus.BAD_REQUEST.getReasonPhrase();
 	public static final String ERROR_MESSAGE = "Failed to store file.";
 

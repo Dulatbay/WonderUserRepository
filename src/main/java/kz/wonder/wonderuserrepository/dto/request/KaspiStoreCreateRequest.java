@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import kz.wonder.wonderuserrepository.entities.WonderUser;

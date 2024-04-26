@@ -35,103 +35,99 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KeycloakServiceImpl implements KeycloakService {
 
-	@Value("${application.realm}")
-	private String realm;
+    private final Keycloak keycloak;
+    @Value("${application.realm}")
+    private String realm;
+    @Value("${application.client-id}")
+    private String clintId;
+    @Value("${application.keycloak-url}")
+    private String keycloakUrl;
 
-	@Value("${application.client-id}")
-	private String clintId;
+    @Override
+    public UserRepresentation createUserByRole(KeycloakBaseUser sellerRegistrationRequest, KeycloakRole keycloakRole) {
+        UserRepresentation userRepresentation = setupUserRepresentation(sellerRegistrationRequest);
+        String userId = null;
+        try (Response response = getUsersResource().create(userRepresentation)) {
+            handleUnsuccessfulResponse(response);
+            userId = CreatedResponseUtil.getCreatedId(response);
+            UserResource userResource = setupUserResource(sellerRegistrationRequest, keycloakRole, userId);
 
-	@Value("${application.keycloak-url}")
-	private String keycloakUrl;
+            try {
+                sendEmail(userId);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Email is incorrect");
+            }
 
-	private final Keycloak keycloak;
+            return userResource.toRepresentation();
+        } catch (Exception e) {
+            handleExceptionAfterUserIdCreated(userId);
+            throw e;
+        }
+    }
 
+    private UserRepresentation setupUserRepresentation(KeycloakBaseUser request) {
+        UserRepresentation userRepresentation = new UserRepresentation();
+        userRepresentation.setEnabled(true);
+        userRepresentation.setFirstName(request.getFirstName());
+        userRepresentation.setLastName(request.getLastName());
+        userRepresentation.setEmail(request.getEmail());
+        userRepresentation.setUsername(request.getEmail());
+        return userRepresentation;
+    }
 
-	@Override
-	public UserRepresentation createUserByRole(KeycloakBaseUser sellerRegistrationRequest, KeycloakRole keycloakRole) {
-		UserRepresentation userRepresentation = setupUserRepresentation(sellerRegistrationRequest);
-		String userId = null;
-		try (Response response = getUsersResource().create(userRepresentation)) {
-			handleUnsuccessfulResponse(response);
-			userId = CreatedResponseUtil.getCreatedId(response);
-			UserResource userResource = setupUserResource(sellerRegistrationRequest, keycloakRole, userId);
+    private void handleUnsuccessfulResponse(Response response) {
+        if (response.getStatus() != 201) {
+            log.info("response status: {}", response.getStatus());
+            log.info("response entity: {}", response.getEntity());
+            if (response.getStatus() == HttpStatus.SC_CONFLICT) {
+                var object = response.readEntity(KeycloakError.class);
+                throw new IllegalArgumentException(object.getErrorMessage());
+            } else {
+                throw new InternalServerErrorException("Unknown error");
+            }
+        }
+    }
 
-			try {
-				sendEmail(userId);
-			} catch (Exception e) {
-				throw new IllegalArgumentException("Email is incorrect");
-			}
+    private UserResource setupUserResource(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole, String userId) {
+        UserResource userResource = getUsersResource().get(userId);
+        userResource.resetPassword(getPasswordCredential(keycloakBaseUser.getPassword(), false));
+        userResource.roles() //
+                .clientLevel(getClient().getId())
+                .add(Collections.singletonList(getClientRole(getClient(), keycloakRole)));
+        return userResource;
+    }
 
-			return userResource.toRepresentation();
-		} catch (Exception e) {
-			handleExceptionAfterUserIdCreated(userId);
-			throw e;
-		}
-	}
+    private void handleExceptionAfterUserIdCreated(String userId) {
+        if (userId != null) getUsersResource().delete(userId);
+    }
 
-	private UserRepresentation setupUserRepresentation(KeycloakBaseUser request) {
-		UserRepresentation userRepresentation = new UserRepresentation();
-		userRepresentation.setEnabled(true);
-		userRepresentation.setFirstName(request.getFirstName());
-		userRepresentation.setLastName(request.getLastName());
-		userRepresentation.setEmail(request.getEmail());
-		userRepresentation.setUsername(request.getEmail());
-		return userRepresentation;
-	}
+    private CredentialRepresentation getPasswordCredential(String password, boolean temporary) {
+        CredentialRepresentation passwordCred = new CredentialRepresentation();
+        passwordCred.setTemporary(temporary);
+        passwordCred.setType(CredentialRepresentation.PASSWORD);
+        passwordCred.setValue(password);
+        return passwordCred;
+    }
 
-	private void handleUnsuccessfulResponse(Response response) {
-		if (response.getStatus() != 201) {
-			log.info("response status: {}", response.getStatus());
-			log.info("response entity: {}", response.getEntity());
-			if (response.getStatus() == HttpStatus.SC_CONFLICT) {
-				var object = response.readEntity(KeycloakError.class);
-				throw new IllegalArgumentException(object.getErrorMessage());
-			} else {
-				throw new InternalServerErrorException("Unknown error");
-			}
-		}
-	}
+    private RoleRepresentation getClientRole(ClientRepresentation client, KeycloakRole keycloakRole) {
+        return getRealmResource().clients().get(client.getId())
+                .roles().get(keycloakRole.name()).toRepresentation();
+    }
 
-	private UserResource setupUserResource(KeycloakBaseUser keycloakBaseUser, KeycloakRole keycloakRole, String userId) {
-		UserResource userResource = getUsersResource().get(userId);
-		userResource.resetPassword(getPasswordCredential(keycloakBaseUser.getPassword(), false));
-		userResource.roles() //
-				.clientLevel(getClient().getId())
-				.add(Collections.singletonList(getClientRole(getClient(), keycloakRole)));
-		return userResource;
-	}
+    private RealmResource getRealmResource() {
+        return keycloak.realm(realm);
+    }
 
-	private void handleExceptionAfterUserIdCreated(String userId) {
-		if (userId != null) getUsersResource().delete(userId);
-	}
+    private UsersResource getUsersResource() {
+        return getRealmResource().users();
+    }
 
-	private CredentialRepresentation getPasswordCredential(String password, boolean temporary) {
-		CredentialRepresentation passwordCred = new CredentialRepresentation();
-		passwordCred.setTemporary(temporary);
-		passwordCred.setType(CredentialRepresentation.PASSWORD);
-		passwordCred.setValue(password);
-		return passwordCred;
-	}
+    private ClientRepresentation getClient() {
+        return getRealmResource().clients()
+                .findByClientId(clintId).getFirst();
+    }
 
-	private RoleRepresentation getClientRole(ClientRepresentation client, KeycloakRole keycloakRole) {
-		return getRealmResource().clients().get(client.getId())
-				.roles().get(keycloakRole.name()).toRepresentation();
-	}
-
-	private RealmResource getRealmResource() {
-		return keycloak.realm(realm);
-	}
-
-	private UsersResource getUsersResource() {
-		return getRealmResource().users();
-	}
-
-	private ClientRepresentation getClient() {
-		return getRealmResource().clients()
-				.findByClientId(clintId).getFirst();
-	}
-
-	private void sendEmail(String userId) {
+    private void sendEmail(String userId) {
 //        getUsersResource().get(userId).sendVerifyEmail();
 	}
 

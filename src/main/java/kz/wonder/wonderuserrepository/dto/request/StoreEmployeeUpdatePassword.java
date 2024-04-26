@@ -6,8 +6,8 @@ import lombok.Data;
 
 @Data
 public class StoreEmployeeUpdatePassword {
-	@JsonIgnore
-	private String email;
-	private String oldPassword;
-	private String newPassword;
+    @JsonIgnore
+    private String email;
+    private String oldPassword;
+    private String newPassword;
 }

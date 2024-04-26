@@ -5,7 +5,6 @@ import kz.wonder.wonderuserrepository.dto.request.StoreCellChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.StoreCellCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreCellResponse;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
-import kz.wonder.wonderuserrepository.services.impl.StoreCellServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,7 +34,7 @@ public class StoreCellController {
 
     @PostMapping("/add-product-to-cell")
     public ResponseEntity<Void> addProductToCell(@RequestParam("cell-id") Long cellId,
-                                                 @RequestParam("product-article") String productArticle){
+                                                 @RequestParam("product-article") String productArticle) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
@@ -65,7 +64,7 @@ public class StoreCellController {
     }
 
     @PutMapping("{cellId}")
-    public ResponseEntity<Void> changeStoreCell(@PathVariable Long cellId, @RequestBody StoreCellChangeRequest storeCellChangeRequest){
+    public ResponseEntity<Void> changeStoreCell(@PathVariable Long cellId, @RequestBody StoreCellChangeRequest storeCellChangeRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 

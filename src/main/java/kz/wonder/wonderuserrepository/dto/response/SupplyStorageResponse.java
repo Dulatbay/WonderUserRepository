@@ -10,14 +10,15 @@ import java.util.List;
 @Data
 @Builder
 public class SupplyStorageResponse {
-	private LocalDate date;
-	private List<Supply> supplies;
-	@Data
-	@Builder
-	public static class Supply {
-		private Long supplyId;
-		private String sellerName;
-		private Long sellerId;
-		private SupplyState supplyState;
-	}
+    private LocalDate date;
+    private List<Supply> supplies;
+
+    @Data
+    @Builder
+    public static class Supply {
+        private Long supplyId;
+        private String sellerName;
+        private Long sellerId;
+        private SupplyState supplyState;
+    }
 }

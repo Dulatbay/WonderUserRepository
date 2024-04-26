@@ -19,32 +19,32 @@ import java.util.Arrays;
 @Component
 public class ControllerLoggingAspect {
 
-	@Before("execution(* kz.wonder.wonderuserrepository.controllers..*(..))")
-	public void logControllerMethodCall(JoinPoint joinPoint) {
-		String url = getCurrentRequestUrl();
-		String token = getCurrentRequestToken();
+    @Before("execution(* kz.wonder.wonderuserrepository.controllers..*(..))")
+    public void logControllerMethodCall(JoinPoint joinPoint) {
+        String url = getCurrentRequestUrl();
+        String token = getCurrentRequestToken();
 
 
-		log.info("url: {} by user: {}", url, token);
-		log.info("method in controller: {}", joinPoint.getSignature().toShortString());
-		log.info("requestBody: {}", Arrays.toString(joinPoint.getArgs()));
-	}
+        log.info("url: {} by user: {}", url, token);
+        log.info("method in controller: {}", joinPoint.getSignature().toShortString());
+        log.info("requestBody: {}", Arrays.toString(joinPoint.getArgs()));
+    }
 
-	private String getCurrentRequestUrl() {
-		ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-		if (requestAttributes == null)
-			return "start from method";
-		HttpServletRequest request = requestAttributes.getRequest();
-		return request.getRequestURI();
-	}
+    private String getCurrentRequestUrl() {
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (requestAttributes == null)
+            return "start from method";
+        HttpServletRequest request = requestAttributes.getRequest();
+        return request.getRequestURI();
+    }
 
-	private String getCurrentRequestToken() {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    private String getCurrentRequestToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-		if (authentication instanceof JwtAuthenticationToken jwtToken) {
-			return jwtToken.getName();
-		}
+        if (authentication instanceof JwtAuthenticationToken jwtToken) {
+            return jwtToken.getName();
+        }
 
-		return "Anonymous";
-	}
+        return "Anonymous";
+    }
 }

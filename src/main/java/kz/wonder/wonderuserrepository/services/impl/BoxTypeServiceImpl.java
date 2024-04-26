@@ -25,72 +25,72 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BoxTypeServiceImpl implements BoxTypeService {
 
-	private final BoxTypeRepository boxTypeRepository;
-	private final KaspiStoreRepository storeRepository;
-	private final FileService fileService;
+    private final BoxTypeRepository boxTypeRepository;
+    private final KaspiStoreRepository storeRepository;
+    private final FileService fileService;
 
-	@Override
-	public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
-		var boxType = new BoxType();
-		var images = new ArrayList<BoxTypeImages>();
-		boxType.setName(boxTypeCreateRequest.getName());
-		boxType.setDescription(boxTypeCreateRequest.getDescription());
+    private static BoxTypeResponse getBoxTypeResponse(BoxType boxType) {
+        return BoxTypeResponse.builder()
+                .id(boxType.getId())
+                .name(boxType.getName())
+                .description(boxType.getDescription())
+                .imageUrls(boxType.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
+                .build();
+    }
 
+    // test
 
-		if (boxTypeCreateRequest.getImages() != null)
-			boxTypeCreateRequest.getImages()
-					.forEach(i -> {
-						var boxTypeImages = new BoxTypeImages();
-						boxTypeImages.setBoxType(boxType);
-						boxTypeImages.setImageUrl(fileService.save(i));
-						images.add(boxTypeImages);
-					});
-
-		boxType.setImages(images);
-
-		boxTypeRepository.save(boxType);
-	}
-
-	// test
-
-	@Override
-	public List<BoxTypeResponse> getAll(Long storeId) {
-		if (storeId != null) {
-			final var store = storeRepository.findById(storeId)
-					.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), ""));
-
-			return store
-					.getAvailableBoxTypes()
-					.stream()
-					.map(KaspiStoreAvailableBoxTypes::getBoxType)
-					.map(BoxTypeServiceImpl::getBoxTypeResponse)
-					.toList();
-		}
+    @Override
+    public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
+        var boxType = new BoxType();
+        var images = new ArrayList<BoxTypeImages>();
+        boxType.setName(boxTypeCreateRequest.getName());
+        boxType.setDescription(boxTypeCreateRequest.getDescription());
 
 
-		return boxTypeRepository.findAll()
-				.stream()
-				.map(BoxTypeServiceImpl::getBoxTypeResponse).toList();
-	}
+        if (boxTypeCreateRequest.getImages() != null)
+            boxTypeCreateRequest.getImages()
+                    .forEach(i -> {
+                        var boxTypeImages = new BoxTypeImages();
+                        boxTypeImages.setBoxType(boxType);
+                        boxTypeImages.setImageUrl(fileService.save(i));
+                        images.add(boxTypeImages);
+                    });
 
-	private static BoxTypeResponse getBoxTypeResponse(BoxType boxType) {
-		return BoxTypeResponse.builder()
-				.id(boxType.getId())
-				.name(boxType.getName())
-				.description(boxType.getDescription())
-				.imageUrls(boxType.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
-				.build();
-	}
+        boxType.setImages(images);
 
-	@Override
-	public void deleteById(Long id) {
-		var boxTypeToDelete = boxTypeRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
+        boxTypeRepository.save(boxType);
+    }
 
-		boxTypeToDelete.getImages()
-				.forEach(i -> fileService.deleteByName(i.imageUrl));
+    @Override
+    public List<BoxTypeResponse> getAll(Long storeId) {
+        if (storeId != null) {
+            final var store = storeRepository.findById(storeId)
+                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), ""));
 
-		boxTypeRepository.delete(boxTypeToDelete);
-		log.info("Box Type with ID {} was deleted", id);
-	}
+            return store
+                    .getAvailableBoxTypes()
+                    .stream()
+                    .map(KaspiStoreAvailableBoxTypes::getBoxType)
+                    .map(BoxTypeServiceImpl::getBoxTypeResponse)
+                    .toList();
+        }
+
+
+        return boxTypeRepository.findAll()
+                .stream()
+                .map(BoxTypeServiceImpl::getBoxTypeResponse).toList();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        var boxTypeToDelete = boxTypeRepository.findById(id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
+
+        boxTypeToDelete.getImages()
+                .forEach(i -> fileService.deleteByName(i.imageUrl));
+
+        boxTypeRepository.delete(boxTypeToDelete);
+        log.info("Box Type with ID {} was deleted", id);
+    }
 }

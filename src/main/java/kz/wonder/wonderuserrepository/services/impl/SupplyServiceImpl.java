@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -87,9 +86,13 @@ public class SupplyServiceImpl implements SupplyService {
         //  1) время(работает ли в этот день склад)
         //  2) Есть ли там доступные места(хотя это врядли)
         //  3) Генерация номера ячейки
+        //  4) Есть ли в поставке товары
 
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+
+        if (!store.isEnabled())
+            throw new IllegalArgumentException("Store is not enabled");
 
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
@@ -153,9 +156,17 @@ public class SupplyServiceImpl implements SupplyService {
                             supplyBox.getSupplyBoxProducts().add(boxProducts);
                         }
 
+                        if (supplyBox.getSupplyBoxProducts().isEmpty()) {
+                            throw new IllegalArgumentException("Supply boxes are empty");
+                        }
+
                         supply.getSupplyBoxes().add(supplyBox);
                     });
                 });
+
+        if (supply.getSupplyBoxes().isEmpty()) {
+            throw new IllegalArgumentException("Supply boxes are empty");
+        }
 
         var created = supplyRepository.save(supply);
 

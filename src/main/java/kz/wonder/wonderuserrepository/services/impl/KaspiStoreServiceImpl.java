@@ -37,7 +37,6 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMA
 @Service
 @RequiredArgsConstructor
 public class KaspiStoreServiceImpl implements KaspiStoreService {
-
 	private final KaspiStoreRepository kaspiStoreRepository;
 	private final KaspiCityRepository kaspiCityRepository;
 	private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
@@ -285,32 +284,33 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStoreRepository.save(store);
 	}
 
-	@Override
-	public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
-		var store = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakId, storeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+    @Override
+    public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
+        var store = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakId, storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
 
-		store.getAvailableBoxTypes()
-				.removeIf(i -> Objects.equals(i.getId(), storeId));
+        store.getAvailableBoxTypes()
+                .removeIf(i -> Objects.equals(i.getId(), storeId));
 
-		kaspiStoreRepository.save(store);
-	}
+        kaspiStoreRepository.save(store);
+    }
 
-	@Override
-	public StoreResponse getById(Long id, boolean isSuperAdmin, String keycloakId) {
-		var store = kaspiStoreRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
-						HttpStatus.NOT_FOUND.getReasonPhrase(),
-						"Store doesn't exist"));
+    @Override
+    public StoreResponse getById(Long id, boolean isSuperAdmin, String keycloakId) {
+        var store = kaspiStoreRepository.findById(id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
+                        HttpStatus.NOT_FOUND.getReasonPhrase(),
+                        "Store doesn't exist"));
 
-		if (!isSuperAdmin && !store
-				.getWonderUser()
-				.getKeycloakId()
-				.equals(keycloakId))
-			throw new IllegalStateException("Store doesn't exist");
+        if (!isSuperAdmin && !store
+                .getWonderUser()
+                .getKeycloakId()
+                .equals(keycloakId))
+            throw new IllegalStateException("Store doesn't exist");
 
-		return mapToResponse(store);
-	}
+        return mapToResponse(store);
+    }
+
 
 	@Override
 	public StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId) {
@@ -328,52 +328,52 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	}
 
 
-	@Override
-	public List<StoreResponse> getAllForSeller() {
-		// todo: в дальнейшем будем возвращать склады на основе его локации и тд
-		return mapToResponses(kaspiStoreRepository.findAllByEnabledIsTrue());
-	}
+    @Override
+    public List<StoreResponse> getAllForSeller() {
+        // todo: в дальнейшем будем возвращать склады на основе его локации и тд
+        return mapToResponses(kaspiStoreRepository.findAllByEnabledIsTrue());
+    }
 
-	@Override
-	public List<StoreDetailResponse> getAllDetailForSeller() {
-		return mapToDetailResponse(kaspiStoreRepository.findAllByEnabledIsTrue());
-	}
+    @Override
+    public List<StoreDetailResponse> getAllDetailForSeller() {
+        return mapToDetailResponse(kaspiStoreRepository.findAllByEnabledIsTrue());
+    }
 
-	private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
-		kaspiStore.setApartment(changeRequest.getApartment());
-		kaspiStore.setKaspiId(changeRequest.getKaspiId());
-		kaspiStore.setEnabled(changeRequest.isEnabled());
-		kaspiStore.setStreetName(changeRequest.getStreetName());
-		kaspiStore.setStreetNumber(changeRequest.getStreetNumber());
-		kaspiStore.setTown(changeRequest.getTown());
-		kaspiStore.setDistrict(changeRequest.getDistrict());
-		kaspiStore.setBuilding(changeRequest.getBuilding());
-		kaspiStore.setApartment(changeRequest.getApartment());
+    private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
+        kaspiStore.setApartment(changeRequest.getApartment());
+        kaspiStore.setKaspiId(changeRequest.getKaspiId());
+        kaspiStore.setEnabled(changeRequest.isEnabled());
+        kaspiStore.setStreetName(changeRequest.getStreetName());
+        kaspiStore.setStreetNumber(changeRequest.getStreetNumber());
+        kaspiStore.setTown(changeRequest.getTown());
+        kaspiStore.setDistrict(changeRequest.getDistrict());
+        kaspiStore.setBuilding(changeRequest.getBuilding());
+        kaspiStore.setApartment(changeRequest.getApartment());
 
-		kaspiStore.setKaspiCity(
-				kaspiCityRepository.findById(changeRequest.getCityId())
-						.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"))
-		);
-		kaspiStore.getAvailableTimes().clear();
-		kaspiStore.getAvailableTimes().addAll(mapToEntity(changeRequest.getDayOfWeekWorks(), kaspiStore));
-		return kaspiStore;
-	}
+        kaspiStore.setKaspiCity(
+                kaspiCityRepository.findById(changeRequest.getCityId())
+                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"))
+        );
+        kaspiStore.getAvailableTimes().clear();
+        kaspiStore.getAvailableTimes().addAll(mapToEntity(changeRequest.getDayOfWeekWorks(), kaspiStore));
+        return kaspiStore;
+    }
 
-	public List<AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
+    public List<AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
 
-		final var awts = new ArrayList<AvailableWorkTime>();
+        final var awts = new ArrayList<AvailableWorkTime>();
 
-		availableTimes.forEach(i -> {
-			final var awt = AvailableWorkTime.builder()
-					.id(i.getId())
-					.openTime(i.getOpenTime().format(TIME_FORMATTER).toLowerCase())
-					.closeTime(i.getCloseTime().format(TIME_FORMATTER).toLowerCase())
-					.dayOfWeek(i.getDayOfWeek().getValue())
-					.build();
+        availableTimes.forEach(i -> {
+            final var awt = AvailableWorkTime.builder()
+                    .id(i.getId())
+                    .openTime(i.getOpenTime().format(TIME_FORMATTER).toLowerCase())
+                    .closeTime(i.getCloseTime().format(TIME_FORMATTER).toLowerCase())
+                    .dayOfWeek(i.getDayOfWeek().getValue())
+                    .build();
 
-			awts.add(awt);
-		});
+            awts.add(awt);
+        });
 
-		return awts;
-	}
+        return awts;
+    }
 }

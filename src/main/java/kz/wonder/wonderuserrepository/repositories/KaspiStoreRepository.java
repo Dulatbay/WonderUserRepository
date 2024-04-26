@@ -10,9 +10,13 @@ import java.util.Optional;
 
 public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     List<KaspiStore> findAllByWonderUserKeycloakId(String id);
+
     Optional<KaspiStore> findByWonderUserKeycloakIdAndId(String keycloakId, Long id);
+
     Optional<KaspiStore> findByWonderUserIdAndKaspiId(Long userId, String kaspiId);
+
     Optional<KaspiStore> findByOriginAddressId(String originAddressId);
+
     List<KaspiStore> findAllByEnabledIsTrue();
 
     @Query("SELECT ks FROM KaspiStore ks " +
