@@ -9,6 +9,8 @@ import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -49,15 +51,15 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
-    public List<CityResponse> getAllCities() {
-        return cityRepository.findAll().stream().map(kaspiCity -> {
+    public Page<CityResponse> getAllCities(Pageable pageable) {
+        return cityRepository.findAll(pageable).map(kaspiCity -> {
             CityResponse cityResponse = new CityResponse();
             cityResponse.setId(kaspiCity.getId());
             cityResponse.setName(kaspiCity.getName());
             cityResponse.setEnabled(kaspiCity.isEnabled());
             cityResponse.setCode(kaspiCity.getCode());
             return cityResponse;
-        }).toList();
+        });
     }
 
     @Override

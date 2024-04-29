@@ -1,14 +1,14 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,8 +19,12 @@ public class CityController {
     private final CityService cityService;
 
     @GetMapping()
-    public ResponseEntity<List<CityResponse>> getCities() {
-        return ResponseEntity.ok(cityService.getAllCities());
+    public ResponseEntity<PaginatedResponse<CityResponse>> getCities(@RequestParam(defaultValue = "0") int page,
+                                                                     @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        PaginatedResponse<CityResponse> paginatedResponse = new PaginatedResponse<>(cityService.getAllCities(pageable));
+        return ResponseEntity.ok(paginatedResponse);
     }
 
     @PostMapping("/sync")
