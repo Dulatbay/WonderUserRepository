@@ -10,11 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
+import java.time.DateTimeException;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 
 
@@ -37,11 +40,31 @@ public class GlobalExceptionHandler {
         ex.setStackTrace(stackTraces);
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorDto> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        if (e.getRootCause() instanceof DateTimeException) {
+            log.error("Date format error: ", e.getRootCause());
+            var errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.toString(), e.getRootCause().getLocalizedMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+        log.error("Type mismatch exception: ", e);
+        var errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.toString(), "Type mismatch: " + e.getMessage(), getStackTrace(e));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+
     @ExceptionHandler(DbObjectNotFoundException.class)
     public ResponseEntity<ErrorDto> handlePositionNotFoundException(DbObjectNotFoundException ex) {
         log.error("DbObjectNotFoundException exception: ", ex);
         ErrorDto errorResponse = new ErrorDto(ex.getError(), ex.getMessage(), getStackTrace(ex));
         return ResponseEntity.status(ex.getHttpStatus()).body(errorResponse);
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<ErrorDto> argumentExceptionHandler(DateTimeParseException e) {
+        log.error("DateTimeParseException exception: ", e);
+        var errorResponse = new ErrorDto(HttpStatus.BAD_REQUEST.toString(), e.getMessage(), getStackTrace(e));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -93,4 +116,5 @@ public class GlobalExceptionHandler {
         ErrorDto errorResponse = new ErrorDto(ex.getLocalizedMessage(), ex.getMessage(), getStackTrace(ex));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
+
 }
