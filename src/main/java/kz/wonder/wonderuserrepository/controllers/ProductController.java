@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
@@ -8,6 +9,9 @@ import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,19 +43,27 @@ public class ProductController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<ProductResponse>> getProducts() {
+    public ResponseEntity<PaginatedResponse<ProductResponse>> getProducts(@RequestParam(defaultValue = "0") int page,
+                                                                          @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-
-        return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
+        Page<ProductResponse> productPage = productService.findAllByKeycloakId(Utils.extractIdFromToken(token), pageable);
+        PaginatedResponse<ProductResponse> response = new PaginatedResponse<>(productPage);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/prices")
-    public ResponseEntity<ProductPriceResponse> getProductPrices() {
+    public ResponseEntity<PaginatedResponse<ProductPriceResponse>> getProductPrices(@RequestParam(defaultValue = "0") int page,
+                                                                                    @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
 
-        var response = productService.getProductsPrices(keycloakId, isSuperAdmin);
+        Pageable pageable = PageRequest.of(page, size);
+
+
+        var productsPrices = productService.getProductsPrices(keycloakId, isSuperAdmin, pageable);
+        var response = new PaginatedResponse<>(productsPrices);
 
         return ResponseEntity.ok(response);
     }

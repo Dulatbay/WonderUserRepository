@@ -20,6 +20,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -152,10 +155,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponse> getProductsByKeycloakId(String keycloakUserId) {
+    public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable) {
         log.info("Retrieving products with keycloak id: {}", keycloakUserId);
-        return productRepository.findAllByKeycloakId(keycloakUserId)
-                .stream().map(this::mapToResponse).collect(Collectors.toList());
+        return productRepository.findAllByKeycloakId(keycloakUserId, pageable)
+                .map(this::mapToResponse);
     }
 
 
@@ -185,15 +188,15 @@ public class ProductServiceImpl implements ProductService {
 
     // todo: refactoring
     @Override
-    public ProductPriceResponse getProductsPrices(String keycloakId, boolean isSuperAdmin) {
-        List<Product> products = new ArrayList<>();
+    public Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable) {
+        Page<Product> products;
         Map<Long, CityResponse> cityResponseMap = new HashMap<>();
 
 
         if (isSuperAdmin) {
-            products.addAll(productRepository.findAll());
+            products = productRepository.findAllBy(pageable);
         } else {
-            products.addAll(productRepository.findAllByKeycloakId(keycloakId));
+            products = productRepository.findAllByKeycloakId(keycloakId, pageable);
         }
 
         List<ProductPriceResponse.ProductInfo> response = new ArrayList<>();
@@ -236,7 +239,7 @@ public class ProductServiceImpl implements ProductService {
         productPriceResponse.setProducts(response);
         productPriceResponse.setCities(cityResponseMap.values().stream().toList());
 
-        return productPriceResponse;
+        return new PageImpl<>(new ArrayList<>(Collections.singleton(productPriceResponse)), pageable, products.getTotalElements());
     }
 
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {

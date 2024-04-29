@@ -1,6 +1,9 @@
 package kz.wonder.wonderuserrepository.repositories;
 
+import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.entities.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,5 +16,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndKeycloakId(Long id, String keycloakId);
 
-    List<Product> findAllByKeycloakId(String keycloakId);
+    Page<Product> findAllBy(Pageable pageable);
+
+    Page<Product> findAllByKeycloakId(String keycloakUserId, Pageable pageable);
+    List<Product> findAllByKeycloakId(String keycloakUserId);
 }
