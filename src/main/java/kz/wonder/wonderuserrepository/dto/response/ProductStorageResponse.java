@@ -9,6 +9,7 @@ import java.util.List;
 @Data
 @Builder
 public class ProductStorageResponse {
+    // детальный просмотр продуктов внутри заказа для складмэна
     List<Product> products;
     private Long supplyId;
     private Long storeId;

@@ -2,7 +2,9 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,17 @@ public class ProductController {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
         return ResponseEntity.ok(productService.getProductsByKeycloakId(Utils.extractIdFromToken(token)));
+    }
+
+    @GetMapping("/prices")
+    public ResponseEntity<ProductPriceResponse> getProductPrices() {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
+
+        var response = productService.getProductsPrices(keycloakId, isSuperAdmin);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{productId}")

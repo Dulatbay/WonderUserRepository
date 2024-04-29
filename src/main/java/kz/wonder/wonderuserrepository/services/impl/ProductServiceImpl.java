@@ -2,12 +2,11 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
+import kz.wonder.wonderuserrepository.dto.response.CityResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
-import kz.wonder.wonderuserrepository.entities.KaspiCity;
-import kz.wonder.wonderuserrepository.entities.KaspiToken;
-import kz.wonder.wonderuserrepository.entities.Product;
-import kz.wonder.wonderuserrepository.entities.ProductPrice;
+import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
@@ -31,9 +30,7 @@ import javax.xml.bind.Marshaller;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
@@ -185,8 +182,64 @@ public class ProductServiceImpl implements ProductService {
 
         final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product doesn't exist"));
-		log.info("Product with id {} was deleted", productId);
+        log.info("Product with id {} was deleted", productId);
         productRepository.delete(product);
+    }
+
+    // todo: refactoring
+    @Override
+    public ProductPriceResponse getProductsPrices(String keycloakId, boolean isSuperAdmin) {
+        List<Product> products = new ArrayList<>();
+        Map<Long, CityResponse> cityResponseMap = new HashMap<>();
+
+
+        if (isSuperAdmin) {
+            products.addAll(productRepository.findAll());
+        } else {
+            products.addAll(productRepository.findAllByKeycloakId(keycloakId));
+        }
+
+        List<ProductPriceResponse.ProductInfo> response = new ArrayList<>();
+
+        products
+                .forEach(product -> {
+                    var count = product.getSupplyBoxes().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
+
+                    var productInfo = ProductPriceResponse.ProductInfo.builder()
+                            .id(product.getId())
+                            .name(product.getName())
+                            .vendorCode(product.getVendorCode())
+                            .count(count)
+                            .prices(product.getPrices().stream().map(price -> {
+                                var productPrice = new ProductPriceResponse.ProductPrice();
+                                productPrice.setCityId(price.getId());
+                                productPrice.setCityName(price.getKaspiCity().getName());
+                                productPrice.setPrice(price.getPrice());
+                                return productPrice;
+                            }).toList())
+                            .build();
+
+                    product.getPrices()
+                            .forEach(price -> {
+                                var city = price.getKaspiCity();
+                                cityResponseMap.computeIfAbsent(city.getId(), k -> {
+                                    CityResponse cityResponse = new CityResponse();
+                                    cityResponse.setId(city.getId());
+                                    cityResponse.setName(city.getName());
+                                    cityResponse.setCode(city.getCode());
+                                    cityResponse.setEnabled(city.isEnabled());
+                                    return cityResponse;
+                                });
+                            });
+
+                    response.add(productInfo);
+                });
+
+        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
+        productPriceResponse.setProducts(response);
+        productPriceResponse.setCities(cityResponseMap.values().stream().toList());
+
+        return productPriceResponse;
     }
 
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
@@ -276,5 +329,4 @@ public class ProductServiceImpl implements ProductService {
 
                 .build();
     }
-
 }
