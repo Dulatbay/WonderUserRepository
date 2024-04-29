@@ -35,6 +35,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final UserRepository userRepository;
     private final SupplyRepository supplyRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
+    private final SupplyBoxRepository supplyBoxRepository;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -331,6 +332,25 @@ public class SupplyServiceImpl implements SupplyService {
         return ProductStorageResponse.builder()
                 .storeId(supply.getKaspiStore().getId())
                 .supplyId(supplyId)
+                .products(buildProducts(supply))
+                .storeAddress(supply.getKaspiStore().getFormattedAddress())
+                .build();
+    }
+
+    @Override
+    public ProductStorageResponse getSuppliesProducts(String keycloakId, String boxVendorCode, boolean isSuperAdmin) {
+        final var supplyBox = supplyBoxRepository.findByVendorCode(boxVendorCode)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Supply box doesn't exist"));
+        final var supply = supplyBox.getSupply();
+
+        if(!isSuperAdmin) {
+            final StoreEmployee storeEmployee = findStoreEmployeeByKeycloakId(keycloakId);
+            validateStoreEmployeeAndSupply(storeEmployee, supply);
+        }
+
+        return ProductStorageResponse.builder()
+                .storeId(supply.getKaspiStore().getId())
+                .supplyId(supply.getId())
                 .products(buildProducts(supply))
                 .storeAddress(supply.getKaspiStore().getFormattedAddress())
                 .build();

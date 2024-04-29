@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
@@ -99,6 +100,16 @@ public class SupplyController {
         var keycloakId = extractIdFromToken(token);
         List<SupplyReportResponse> response = supplyService.getSupplyReport(supplyId, keycloakId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/get-by-box/{boxVendorCode}")
+    public ResponseEntity<ProductStorageResponse> getSupplyByBox(@PathVariable String boxVendorCode) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+        var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
+
+        var result = supplyService.getSuppliesProducts(keycloakId, boxVendorCode, isSuperAdmin);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/employee")

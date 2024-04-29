@@ -30,4 +30,5 @@ public interface SupplyService {
 
     ProductStorageResponse getSuppliesProducts(String keycloakId, Long supplyId);
 
+    ProductStorageResponse getSuppliesProducts(String keycloakId, String boxVendorCode, boolean isSuperAdmin);
 }
