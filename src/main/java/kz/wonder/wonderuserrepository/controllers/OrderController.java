@@ -1,11 +1,14 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -24,25 +27,33 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/seller")
-    public ResponseEntity<List<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
-                                                               @RequestParam("end-date") LocalDate endDate) {
+    public ResponseEntity<PaginatedResponse<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
+                                                                            @RequestParam("end-date") LocalDate endDate,
+                                                                            @RequestParam(defaultValue = "0") int page,
+                                                                            @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        List<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate);
+        PageRequest pageRequest = PageRequest.of(page, size);
 
-        return ResponseEntity.ok().body(sellerOrderResponseList);
+        Page<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate, pageRequest);
+
+        return ResponseEntity.ok().body(new PaginatedResponse<>(sellerOrderResponseList));
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<List<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
-                                                              @RequestParam("end-date") LocalDate endDate) {
+    public ResponseEntity<PaginatedResponse<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
+                                                              @RequestParam("end-date") LocalDate endDate,
+                                                              @RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        List<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate);
+        PageRequest pageRequest = PageRequest.of(page, size);
 
-        return ResponseEntity.ok().body(orderResponseList);
+        Page<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate, pageRequest);
+
+        return ResponseEntity.ok().body(new PaginatedResponse<>(orderResponseList));
     }
 
     @GetMapping("/employee")
