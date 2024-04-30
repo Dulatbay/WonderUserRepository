@@ -16,11 +16,11 @@ public class SellerRegistrationRequest extends KeycloakBaseUser {
     private String phoneNumber;
 
     // in kaspi
-    @NotNull
+    @NotNull(message = "Seller name cannot be null")
     private String sellerName;
-    @NotNull
+    @NotNull(message = "Seller id cannot be null")
     private String sellerId;
-    @NotNull
+    @NotNull(message = "Kaspi token cannot be null")
     private String tokenKaspi;
 
     @JsonIgnore
