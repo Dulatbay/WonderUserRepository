@@ -1,6 +1,8 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,8 +14,6 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     List<KaspiStore> findAllByWonderUserKeycloakId(String id);
 
     Optional<KaspiStore> findByWonderUserKeycloakIdAndId(String keycloakId, Long id);
-
-    Optional<KaspiStore> findByWonderUserIdAndKaspiId(Long userId, String kaspiId);
 
     Optional<KaspiStore> findByOriginAddressId(String originAddressId);
 

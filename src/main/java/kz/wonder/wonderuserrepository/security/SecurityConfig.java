@@ -42,6 +42,7 @@ public class SecurityConfig {
             "/webjars/**",
             "/swagger-ui.html",
             "/auth/**",
+            "/actuator/**",
     };
     @Value("${application.client-id}")
     private String clientId;

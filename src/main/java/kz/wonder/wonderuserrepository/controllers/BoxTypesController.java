@@ -25,6 +25,8 @@ public class BoxTypesController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+
+    // todo: Are we need pagination here??!
     @GetMapping()
     public ResponseEntity<List<BoxTypeResponse>> getAll(@RequestParam(value = "store-id", required = false) Long storeId) {
         return ResponseEntity.ok(boxTypeService.getAll(storeId));
