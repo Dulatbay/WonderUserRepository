@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
@@ -14,7 +15,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "supply_box_products", schema = schemaName)
 public class SupplyBoxProduct extends AbstractEntity<Long> {
-    @ManyToOne(fetch = FetchType.EAGER) // todo: remove eager type and replace with repository query
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_box_id", columnDefinition = "integer")
     private SupplyBox supplyBox;
 
@@ -28,6 +29,9 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @Column(name = "product_state", nullable = false)
     @Enumerated(value = EnumType.STRING)
     private ProductStateInStore state;
+
+    @Column(name = "accepted_time")
+    private LocalDateTime acceptedTime;
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",

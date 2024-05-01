@@ -350,14 +350,11 @@ public class OrderServiceImpl implements OrderService {
                 return;
             }
 
-            Supply supply = null;
-
             var sellAt = Instant.ofEpochMilli(orderAttributes.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
-                    supply = supplyBoxProduct.getSupplyBox().getSupply();
-                    log.info("accepted time: {}, now: {}", supply.getAcceptedTime(), sellAt);
-                    if (supply.getAcceptedTime() != null && supply.getAcceptedTime().isBefore(sellAt)) {
+                    log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
+                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
                         supplyBoxProductToSave = supplyBoxProduct;
                         break;
                     }
@@ -371,9 +368,7 @@ public class OrderServiceImpl implements OrderService {
 
             supplyBoxProductToSave.setState(ProductStateInStore.SOLD); // продукт продан у нас todo: проверить по времени что это именно у нас продано
             supplyBoxProductsRepository.save(supplyBoxProductToSave);
-            log.info("supplyId: {}", supply.getId());
-            log.info("order code: {}, orderAttr.getCode(): {}", kaspiOrder.getCode(), orderAttributes.getCode());
-            log.info("SOLD MENTIONED, product id: {}", product.getId());
+            log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
         }
 
         KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderId(product == null ? null : product.getId(), kaspiOrder.getId())
