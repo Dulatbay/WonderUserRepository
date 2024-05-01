@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -261,17 +262,17 @@ public class OrderServiceImpl implements OrderService {
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
+        var now = LocalDateTime.now().atZone(ZONE_ID).minusMinutes(15).toLocalDateTime();
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
-//            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
-            try {
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
-
-                updatedCount++;
-            } catch (Exception e) {
-                log.error("Error processing order: {}", e.getMessage(), e);
+            if (kaspiOrder.getUpdatedAt().isBefore(now)) {
+                try {
+                    getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+                    updatedCount++;
+                } catch (Exception e) {
+                    log.error("Error processing order: {}", e.getMessage(), e);
+                }
             }
-//            }
         } else {
             try {
                 KaspiOrder kaspiOrder = new KaspiOrder();
