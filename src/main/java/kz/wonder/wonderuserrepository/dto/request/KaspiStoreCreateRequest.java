@@ -2,10 +2,7 @@ package kz.wonder.wonderuserrepository.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import lombok.Data;
 
@@ -22,6 +19,7 @@ public class KaspiStoreCreateRequest {
     private String kaspiId;
 
     @NotNull(message = "Please provide city id")
+    @Positive(message = "City id must be positive")
     private Long cityId;
 
     @Size(min = 2, max = 50, message = "Street name must be in range 2-50 characters")
