@@ -18,7 +18,7 @@ public class SupplyBox extends AbstractEntity<Long> {
     @JoinColumn(name = "box_type_id", columnDefinition = "integer")
     private BoxType boxType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "supply_id", columnDefinition = "integer", nullable = false)
     private Supply supply;
 

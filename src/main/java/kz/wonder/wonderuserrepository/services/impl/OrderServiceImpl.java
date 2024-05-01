@@ -40,7 +40,6 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiApi kaspiApi;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
-    private final UserRepository userRepository;
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
@@ -146,10 +145,11 @@ public class OrderServiceImpl implements OrderService {
                             var orders = ordersDataResponse.getData();
                             var products = ordersDataResponse.getIncluded();
 
-                            int i = 0;
+                            log.info("orders count: {}, products count: {}", orders.size(), products.size());
+
                             for (var order : orders) {
-                                processOrder(order, token, products.get(i));
-                                i++;
+                                var optionalOrderEntry = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).findFirst();
+                                optionalOrderEntry.ifPresent(orderEntry -> processOrder(order, token, orderEntry));
                             }
 
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
@@ -329,9 +329,9 @@ public class OrderServiceImpl implements OrderService {
 
         var vendorCode = orderEntry.getAttributes().getOffer().getCode();
 
+
         if (vendorCode != null && !vendorCode.isBlank()) {
             vendorCode = vendorCode.split("_")[0];
-            //
         }
 
         var product = productRepository
@@ -342,20 +342,27 @@ public class OrderServiceImpl implements OrderService {
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
-            var supplyBoxProductList = supplyBoxProductsRepository.findAllByProductIdAndSupplyBoxSupplyId(product.getId(), kaspiStore.getId());
+            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiStore.getId(), product.getId());
 
 
             if (supplyBoxProductList.isEmpty()) {
                 return;
             }
 
+            Supply supply = null;
 
+            var sellAt = Instant.ofEpochMilli(orderAttributes.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
             for (var supplyBoxProduct : supplyBoxProductList) {
-                if (ProductStateInStore.SOLD == supplyBoxProduct.getState())
-                    continue;
-                supplyBoxProductToSave = supplyBoxProduct;
-                break;
+                if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
+                    supply = supplyBoxProduct.getSupplyBox().getSupply();
+                    log.info("accepted time: {}, now: {}", supply.getAcceptedTime(), sellAt);
+                    if (supply.getAcceptedTime() != null && supply.getAcceptedTime().isBefore(sellAt)) {
+                        supplyBoxProductToSave = supplyBoxProduct;
+                        break;
+                    }
+                }
             }
+
 
             if (supplyBoxProductToSave == null) {
                 return;
@@ -363,6 +370,8 @@ public class OrderServiceImpl implements OrderService {
 
             supplyBoxProductToSave.setState(ProductStateInStore.SOLD); // продукт продан у нас todo: проверить по времени что это именно у нас продано
             supplyBoxProductsRepository.save(supplyBoxProductToSave);
+            log.info("supplyId: {}", supply.getId());
+            log.info("order code: {}, orderAttr.getCode(): {}", kaspiOrder.getCode(), orderAttributes.getCode());
             log.info("SOLD MENTIONED, product id: {}", product.getId());
         }
 

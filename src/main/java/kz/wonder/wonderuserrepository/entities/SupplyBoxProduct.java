@@ -14,7 +14,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "supply_box_products", schema = schemaName)
 public class SupplyBoxProduct extends AbstractEntity<Long> {
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER) // todo: remove eager type and replace with repository query
     @JoinColumn(name = "supply_box_id", columnDefinition = "integer")
     private SupplyBox supplyBox;
 
