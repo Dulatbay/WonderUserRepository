@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
+import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -36,6 +37,9 @@ public class SupplyServiceImpl implements SupplyService {
     private final SupplyRepository supplyRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final SupplyBoxRepository supplyBoxRepository;
+    private final StoreCellRepository storeCellRepository;
+    private final SupplyBoxProductsRepository supplyBoxProductsRepository;
+    private final StoreCellProductRepository storeCellProductRepository;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -343,7 +347,7 @@ public class SupplyServiceImpl implements SupplyService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Supply box doesn't exist"));
         final var supply = supplyBox.getSupply();
 
-        if(!isSuperAdmin) {
+        if (!isSuperAdmin) {
             final StoreEmployee storeEmployee = findStoreEmployeeByKeycloakId(keycloakId);
             validateStoreEmployeeAndSupply(storeEmployee, supply);
         }
@@ -354,6 +358,45 @@ public class SupplyServiceImpl implements SupplyService {
                 .products(buildProducts(supply))
                 .storeAddress(supply.getKaspiStore().getFormattedAddress())
                 .build();
+    }
+
+    @Override
+    public void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest) {
+        final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store employee doesn't exist"));
+        final var supply = supplyRepository.findById(supplyScanRequest.getSupplyId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Supply doesn't exist"));
+        final var kaspiStore = employee.getKaspiStore();
+
+
+        boolean employeeWorkHere = supply.getKaspiStore().getId().equals(kaspiStore.getId());
+
+        if (!employeeWorkHere) throw new IllegalArgumentException("Supply doesn't exist");
+
+        supplyScanRequest.getProductCells()
+                .forEach(productCell -> {
+                    var cellCode = productCell.getCellCode();
+                    var productArticles = productCell.getProductArticles();
+                    var storeCell = storeCellRepository.findByKaspiStoreIdAndCode(kaspiStore.getId(), cellCode)
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store cell doesn't exist"));
+
+                    List<StoreCellProduct> storeCellProducts = productArticles
+                            .stream()
+                            .map(article -> {
+                                var sbp = supplyBoxProductsRepository.findByArticle(article)
+                                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+                                StoreCellProduct storeCellProduct = new StoreCellProduct();
+
+                                storeCellProduct.setStoreEmployee(employee);
+                                storeCellProduct.setStoreCell(storeCell);
+                                storeCellProduct.setSupplyBoxProduct(sbp);
+
+                                return storeCellProduct;
+                            }).toList();
+
+                    storeCellProductRepository.saveAll(storeCellProducts);
+                });
     }
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {

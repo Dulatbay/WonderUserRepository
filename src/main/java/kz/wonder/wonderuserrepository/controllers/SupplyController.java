@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
+import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
@@ -132,5 +133,13 @@ public class SupplyController {
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/employee/scan")
+    public ResponseEntity<Void> processSupply(@RequestBody SupplyScanRequest supplyScanRequest) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
 
+        supplyService.processSupplyByEmployee(keycloakId, supplyScanRequest);
+
+        return ResponseEntity.ok().build();
+    }
 }

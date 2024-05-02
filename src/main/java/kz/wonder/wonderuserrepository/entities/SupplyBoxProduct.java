@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
@@ -28,6 +29,9 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @Column(name = "product_state", nullable = false)
     @Enumerated(value = EnumType.STRING)
     private ProductStateInStore state;
+
+    @Column(name = "accepted_time")
+    private LocalDateTime acceptedTime;
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",
