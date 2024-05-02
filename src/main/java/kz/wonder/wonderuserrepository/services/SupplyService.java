@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.services;
 
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
+import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,4 +32,6 @@ public interface SupplyService {
     ProductStorageResponse getSuppliesProducts(String keycloakId, Long supplyId);
 
     ProductStorageResponse getSuppliesProducts(String keycloakId, String boxVendorCode, boolean isSuperAdmin);
+
+    void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest);
 }

@@ -17,12 +17,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +41,6 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiApi kaspiApi;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
-    private final UserRepository userRepository;
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
@@ -97,19 +100,18 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
+    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
         log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
         startDate = startDate.minusDays(1);
-        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime());
+        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime(), pageRequest);
         log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
+        // todo: переделать оптовую цену
         return kaspiOrderInDb
-                .stream()
-                .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0)) // todo: переделать оптовую цену
-                .toList();
+                .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0));
     }
 
     @Override
-    public List<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate) {
+    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
         log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
         var stores = wonderUser.getStores();
@@ -128,7 +130,8 @@ public class OrderServiceImpl implements OrderService {
 
 
         log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
-        return result;
+
+        return new PageImpl<>(result, pageRequest, result.size());
     }
 
     @Override
@@ -143,10 +146,11 @@ public class OrderServiceImpl implements OrderService {
                             var orders = ordersDataResponse.getData();
                             var products = ordersDataResponse.getIncluded();
 
-                            int i = 0;
+                            log.info("orders count: {}, products count: {}", orders.size(), products.size());
+
                             for (var order : orders) {
-                                processOrder(order, token, products.get(i));
-                                i++;
+                                var optionalOrderEntry = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).findFirst();
+                                optionalOrderEntry.ifPresent(orderEntry -> processOrder(order, token, orderEntry));
                             }
 
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
@@ -258,17 +262,17 @@ public class OrderServiceImpl implements OrderService {
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
+        var now = LocalDateTime.now().atZone(ZONE_ID).minusMinutes(15).toLocalDateTime();
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
-//            if (kaspiOrder.getUpdatedAt().isBefore(LocalDateTime.now().minusMinutes(15))) {
-            try {
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
-
-                updatedCount++;
-            } catch (Exception e) {
-                log.error("Error processing order: {}", e.getMessage(), e);
+            if (kaspiOrder.getUpdatedAt().isBefore(now)) {
+                try {
+                    getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+                    updatedCount++;
+                } catch (Exception e) {
+                    log.error("Error processing order: {}", e.getMessage(), e);
+                }
             }
-//            }
         } else {
             try {
                 KaspiOrder kaspiOrder = new KaspiOrder();
@@ -326,9 +330,9 @@ public class OrderServiceImpl implements OrderService {
 
         var vendorCode = orderEntry.getAttributes().getOffer().getCode();
 
+
         if (vendorCode != null && !vendorCode.isBlank()) {
             vendorCode = vendorCode.split("_")[0];
-            //
         }
 
         var product = productRepository
@@ -339,20 +343,24 @@ public class OrderServiceImpl implements OrderService {
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
-            var supplyBoxProductList = supplyBoxProductsRepository.findAllByProductIdAndSupplyBoxSupplyId(product.getId(), kaspiStore.getId());
+            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiStore.getId(), product.getId());
 
 
             if (supplyBoxProductList.isEmpty()) {
                 return;
             }
 
-
+            var sellAt = Instant.ofEpochMilli(orderAttributes.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
             for (var supplyBoxProduct : supplyBoxProductList) {
-                if (ProductStateInStore.SOLD == supplyBoxProduct.getState())
-                    continue;
-                supplyBoxProductToSave = supplyBoxProduct;
-                break;
+                if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
+                    log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
+                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+                        supplyBoxProductToSave = supplyBoxProduct;
+                        break;
+                    }
+                }
             }
+
 
             if (supplyBoxProductToSave == null) {
                 return;
@@ -360,7 +368,7 @@ public class OrderServiceImpl implements OrderService {
 
             supplyBoxProductToSave.setState(ProductStateInStore.SOLD); // продукт продан у нас todo: проверить по времени что это именно у нас продано
             supplyBoxProductsRepository.save(supplyBoxProductToSave);
-            log.info("SOLD MENTIONED, product id: {}", product.getId());
+            log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
         }
 
         KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderId(product == null ? null : product.getId(), kaspiOrder.getId())
