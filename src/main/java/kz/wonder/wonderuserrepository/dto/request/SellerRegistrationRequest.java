@@ -25,7 +25,6 @@ public class SellerRegistrationRequest extends KeycloakBaseUser {
     @NotNull(message = "Please provide kaspi token ")
     private String tokenKaspi;
 
-    @NotNull(message = "Please provide keycloak id")
     @JsonIgnore
     private String keycloakId;
 }

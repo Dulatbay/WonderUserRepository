@@ -17,6 +17,5 @@ public class BoxTypeCreateRequest {
     @NotNull(message = "Please provide a description")
     private String description;
 
-    @NotEmpty(message = "Please provide images")
     private List<MultipartFile> images;
 }

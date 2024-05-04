@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 public class StoreEmployeeUpdatePassword {
     @JsonIgnore
-    @NotNull(message = "Please provide email address")
     private String email;
 
     @NotNull(message = "Please provide old password")

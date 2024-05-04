@@ -28,7 +28,6 @@ public class EmployeeCreateRequest extends KeycloakBaseUser {
     @NotNull(message = "Please provide a store id")
     private Long storeId;
 
-    @NotNull(message = "Please provide keycloak id")
     @JsonIgnore
     private String keycloakId;
 }

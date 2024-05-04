@@ -11,7 +11,6 @@ import java.util.List;
 
 @Data
 public class KaspiStoreCreateRequest {
-    @Valid
     @JsonIgnore
     private WonderUser wonderUser;
 
