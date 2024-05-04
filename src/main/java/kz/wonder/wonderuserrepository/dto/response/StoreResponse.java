@@ -10,9 +10,14 @@ import java.util.List;
 public class StoreResponse {
     private Long id;
     private String kaspiId;
-    private String address;
-    private String street;
     private City city;
+    private String streetName;
+    private String streetNumber;
+    private String town;
+    private String district;
+    private String building;
+    private String apartment;
+    private String formattedAddress;
     private List<AvailableWorkTime> availableWorkTimes;
     private boolean enabled;
     private Long userId;
