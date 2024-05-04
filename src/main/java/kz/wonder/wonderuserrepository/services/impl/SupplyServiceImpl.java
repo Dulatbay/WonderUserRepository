@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -360,6 +362,7 @@ public class SupplyServiceImpl implements SupplyService {
                 .build();
     }
 
+    @Transactional
     @Override
     public void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest) {
         final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
@@ -373,6 +376,8 @@ public class SupplyServiceImpl implements SupplyService {
 
         if (!employeeWorkHere) throw new IllegalArgumentException("Supply doesn't exist");
 
+        var now = LocalDateTime.now(ZONE_ID);
+
         supplyScanRequest.getProductCells()
                 .forEach(productCell -> {
                     var cellCode = productCell.getCellCode();
@@ -385,6 +390,10 @@ public class SupplyServiceImpl implements SupplyService {
                             .map(article -> {
                                 var sbp = supplyBoxProductsRepository.findByArticle(article)
                                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+                                sbp.setState(ProductStateInStore.ACCEPTED);
+                                sbp.setAcceptedTime(now);
+                                supplyBoxProductsRepository.save(sbp);
 
                                 StoreCellProduct storeCellProduct = new StoreCellProduct();
 

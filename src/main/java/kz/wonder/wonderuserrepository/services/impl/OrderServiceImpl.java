@@ -45,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
+    private final StoreCellProductRepository storeCellProductRepository;
     int createdCount = 0, updatedCount = 0;
     // todo: переделать этот говно код
     @Value("${application.admin-keycloak-id}")
@@ -191,11 +192,13 @@ public class OrderServiceImpl implements OrderService {
         return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
             var product = kaspiOrderProduct.getProduct();
             var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+            var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
+
 
             OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
             orderDetailResponse.setProductName(product == null ? "N\\A" : product.getName());
-            orderDetailResponse.setProductArticle(supplyBoxProduct == null ? "N\\A" : supplyBoxProduct.getArticle());
-            orderDetailResponse.setCellCode("N\\A");
+            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
+            orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
             orderDetailResponse.setProductVendorCode(product == null ? "N\\A" : product.getVendorCode());
             orderDetailResponse.setProductTradePrice(product == null ? 0 : product.getTradePrice());
             orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)

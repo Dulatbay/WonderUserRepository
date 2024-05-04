@@ -140,6 +140,6 @@ public class SupplyController {
 
         supplyService.processSupplyByEmployee(keycloakId, supplyScanRequest);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED.value()).build();
     }
 }
