@@ -16,7 +16,7 @@ public interface OrderService {
 
     Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest);
 
-    void processTokenOrders(KaspiToken token, long startDate, long currentTime);
+    void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber);
 
     List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate);
 

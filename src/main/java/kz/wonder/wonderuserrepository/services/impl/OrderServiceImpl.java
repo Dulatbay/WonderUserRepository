@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
@@ -46,7 +47,6 @@ public class OrderServiceImpl implements OrderService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final StoreCellProductRepository storeCellProductRepository;
-    int createdCount = 0, updatedCount = 0;
     // todo: переделать этот говно код
     @Value("${application.admin-keycloak-id}")
     private String adminKeycloakId;
@@ -135,9 +135,11 @@ public class OrderServiceImpl implements OrderService {
         return new PageImpl<>(result, pageRequest, result.size());
     }
 
+    int createdCount = 0, updatedCount = 0;
+
     @Override
-    public void processTokenOrders(KaspiToken token, long startDate, long currentTime) {
-        kaspiApi.getOrders(token.getToken(), startDate, currentTime, OrderState.KASPI_DELIVERY, 0, 100)
+    public void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber) {
+        kaspiApi.getOrders(token.getToken(), startDate, currentTime, OrderState.KASPI_DELIVERY, pageNumber, 100)
                 .subscribe(
                         ordersDataResponse -> {
                             log.info("Found orders data, startDate: {}, endDate: {}, ordersDataResponse.data size: {}",
@@ -157,6 +159,10 @@ public class OrderServiceImpl implements OrderService {
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
                             createdCount = 0;
                             updatedCount = 0;
+
+                            if (ordersDataResponse.getMeta().getPageCount() > pageNumber + 1) {
+                                processTokenOrders(token, startDate, currentTime, pageNumber + 1);
+                            }
                         },
                         error -> log.error("Error updating orders: {}", error.getMessage(), error)
                 );
@@ -219,11 +225,12 @@ public class OrderServiceImpl implements OrderService {
         return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
             var product = kaspiOrderProduct.getProduct();
             var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+            var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
 
             OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
             orderDetailResponse.setProductName(product.getName());
             orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
-            orderDetailResponse.setCellCode("N\\A");
+            orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
             orderDetailResponse.setProductVendorCode(product.getVendorCode());
             orderDetailResponse.setProductTradePrice(product.getTradePrice());
             orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
@@ -251,15 +258,19 @@ public class OrderServiceImpl implements OrderService {
                 .map(kaspiOrderProduct -> {
                     var product = kaspiOrderProduct.getProduct();
                     var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
 
-                    OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
-                    orderEmployeeDetailResponse.setOrderName(product.getName());
-                    orderEmployeeDetailResponse.setOrderArticle(supplyBoxProduct.getArticle());
-                    orderEmployeeDetailResponse.setOrderCell("N\\A"); // todo:
-                    orderEmployeeDetailResponse.setOrderVendorCode(product.getVendorCode());
-
-                    return orderEmployeeDetailResponse;
+                    return getOrderEmployeeDetailResponse(product, supplyBoxProduct, storeCellProductOptional);
                 }).toList();
+    }
+
+    private static @NotNull OrderEmployeeDetailResponse getOrderEmployeeDetailResponse(Product product, SupplyBoxProduct supplyBoxProduct, Optional<StoreCellProduct> storeCellProductOptional) {
+        OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
+        orderEmployeeDetailResponse.setOrderName(product.getName());
+        orderEmployeeDetailResponse.setOrderArticle(supplyBoxProduct.getArticle());
+        orderEmployeeDetailResponse.setOrderCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
+        orderEmployeeDetailResponse.setOrderVendorCode(product.getVendorCode());
+        return orderEmployeeDetailResponse;
     }
 
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
@@ -349,10 +360,6 @@ public class OrderServiceImpl implements OrderService {
             var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiStore.getId(), product.getId());
 
 
-            if (supplyBoxProductList.isEmpty()) {
-                return;
-            }
-
             var sellAt = Instant.ofEpochMilli(orderAttributes.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
@@ -365,13 +372,12 @@ public class OrderServiceImpl implements OrderService {
             }
 
 
-            if (supplyBoxProductToSave == null) {
-                return;
-            }
+            if (supplyBoxProductToSave != null) {
+                supplyBoxProductToSave.setState(ProductStateInStore.SOLD);
+                supplyBoxProductsRepository.save(supplyBoxProductToSave);
+                log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
 
-            supplyBoxProductToSave.setState(ProductStateInStore.SOLD); // продукт продан у нас todo: проверить по времени что это именно у нас продано
-            supplyBoxProductsRepository.save(supplyBoxProductToSave);
-            log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
+            }
         }
 
         KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderId(product == null ? null : product.getId(), kaspiOrder.getId())
