@@ -30,8 +30,8 @@ public class Scheduler {
         try {
             log.info("Updating orders started");
             long currentTime = System.currentTimeMillis();
-            long oneDay = Duration.ofDays(1).toMillis(); // 1 day
-            long startDate = currentTime - oneDay;
+            long duration = Duration.ofDays(14).toMillis();
+            long startDate = currentTime - duration;
 
             var tokens = kaspiTokenRepository.findAll();
 
@@ -39,7 +39,7 @@ public class Scheduler {
 
             tokens.forEach(token -> {
                 try {
-                    orderService.processTokenOrders(token, startDate, currentTime);
+                    orderService.processTokenOrders(token, startDate, currentTime, 0);
                 } catch (Exception ex) {
                     log.error("Error processing orders for token: {}", token, ex);
                 }

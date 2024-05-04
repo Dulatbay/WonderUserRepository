@@ -26,6 +26,9 @@ public class KaspiApi {
 
     public KaspiApi() {
         webClient = WebClient.builder()
+                .codecs(clientCodecConfigurer -> {
+                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(500 * 1024 * 1024);
+                })
                 .baseUrl(kaspiUrl)
                 .build();
 
