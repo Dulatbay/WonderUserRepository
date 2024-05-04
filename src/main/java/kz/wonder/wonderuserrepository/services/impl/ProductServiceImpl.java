@@ -210,10 +210,22 @@ public class ProductServiceImpl implements ProductService {
                             .name(product.getName())
                             .vendorCode(product.getVendorCode())
                             .count(count)
+                            // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
                                 var productPrice = new ProductPriceResponse.ProductPrice();
-                                productPrice.setCityId(price.getId());
-                                productPrice.setCityName(price.getKaspiCity().getName());
+                                var city = price.getKaspiCity();
+
+                                // todo: сделал поставку в город, где не указана цена
+
+                                productPrice.setCityId(city.getId());
+                                productPrice.setCityName(city.getName());
+                                productPrice.setCount(product.getSupplyBoxes()
+                                        .stream()
+                                        .filter(p ->
+                                                p.getState() == ProductStateInStore.ACCEPTED
+                                                        && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
+                                        )
+                                        .count());
                                 productPrice.setPrice(price.getPrice());
                                 return productPrice;
                             }).toList())
