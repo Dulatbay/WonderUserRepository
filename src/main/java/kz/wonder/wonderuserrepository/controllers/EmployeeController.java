@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.request.EmployeeUpdateRequest;
 import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeCreateResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeResponse;
+import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.StoreEmployeeService;
@@ -124,7 +125,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, EmployeeUpdateRequest employeeUpdateRequest) {
+    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, @RequestBody EmployeeUpdateRequest employeeUpdateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
@@ -135,7 +136,12 @@ public class EmployeeController {
         if (!isHisEmployee && !isSuperAdmin)
             throw new IllegalArgumentException("Employee doesn't exist");
 
-        var userResource = keycloakService.updateUser(employeeUpdateRequest).toRepresentation();
+        var keycloakBaseUser = new KeycloakBaseUser();
+        keycloakBaseUser.setEmail(employeeUpdateRequest.getEmail());
+        keycloakBaseUser.setFirstName(employeeUpdateRequest.getFirstName());
+        keycloakBaseUser.setLastName(employeeUpdateRequest.getLastName());
+
+        var userResource = keycloakService.updateUser(keycloakBaseUser).toRepresentation();
         var employee = storeEmployeeService.updateStoreEmployee(userId, employeeUpdateRequest.getStoreId(), employeeUpdateRequest.getPhoneNumber());
 
         var updatedEmployee = EmployeeResponse.builder()

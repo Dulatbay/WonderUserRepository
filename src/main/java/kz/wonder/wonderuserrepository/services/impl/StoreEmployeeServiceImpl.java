@@ -60,8 +60,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         storeEmployee.setWonderUser(wonderUser);
         userRepository.save(wonderUser);
         storeEmployeeRepository.save(storeEmployee);
-		    log.info("Employee successfully created. EmployeeID: {} KaspiStoreID: {}", storeEmployee.getId(), storeEmployee.getKaspiStore().getId());
-      
+        log.info("Employee successfully created. EmployeeID: {} KaspiStoreID: {}", storeEmployee.getId(), storeEmployee.getKaspiStore().getId());
+
     }
 
     @Override
@@ -83,8 +83,8 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     @Override
     public List<EmployeeResponse> getAllStoreEmployees(List<UserRepresentation> employeesInKeycloak) {
         final var storeEmployees = storeEmployeeRepository.findAll();
-		    log.info("Getting all store employees. StoreEmployees size: {}, Employees In Keycloak size: {}", storeEmployees.size(), employeesInKeycloak.size());
-      
+        log.info("Getting all store employees. StoreEmployees size: {}, Employees In Keycloak size: {}", storeEmployees.size(), employeesInKeycloak.size());
+
         return storeEmployees.stream()
                 .map(storeEmployee -> toEmployeeResponse(storeEmployee, employeesInKeycloak))
                 .filter(Objects::nonNull)
@@ -128,7 +128,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
         final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
 
-		    log.info("Getting all store employees with size: {}", storeEmployees.size());
+        log.info("Getting all store employees with size: {}", storeEmployees.size());
 
         return storeEmployees.stream()
                 .map(storeEmployee -> toEmployeeResponse(storeEmployee, userRepresentations))
@@ -139,7 +139,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     @Override
     public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId) {
         final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
-		    
+
         log.info("Store employee update with id: {}", storeEmployee.getId());
 
         return storeEmployeeRepository.save(storeEmployee);
@@ -160,15 +160,15 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         final var kaspiStore = kaspiStoreRepository.findById(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please try one more time with another params"));
 
-		    log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
-      
+        log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
+
         storeEmployee.setKaspiStore(kaspiStore);
         return storeEmployee;
     }
 
     @Override
     public void deleteStoreEmployee(StoreEmployee storeEmployee) {
-		    log.info("Deleting Employee");
+        log.info("Deleting Employee");
         storeEmployeeRepository.delete(storeEmployee);
     }
 }
