@@ -125,7 +125,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, EmployeeUpdateRequest employeeUpdateRequest) {
+    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, @RequestBody EmployeeUpdateRequest employeeUpdateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
