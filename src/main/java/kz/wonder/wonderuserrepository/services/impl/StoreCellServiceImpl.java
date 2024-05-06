@@ -38,6 +38,7 @@ public class StoreCellServiceImpl implements StoreCellService {
         storeCell.setRow(storeCellCreateRequest.getRow());
         storeCell.setComment(storeCellCreateRequest.getComment());
         storeCell.setWidth(storeCellCreateRequest.getWidth());
+        storeCell.setDepth(storeCellCreateRequest.getDepth());
         storeCell.setHeight(storeCellCreateRequest.getHeight());
         storeCell.setKaspiStore(kaspiStore);
 
