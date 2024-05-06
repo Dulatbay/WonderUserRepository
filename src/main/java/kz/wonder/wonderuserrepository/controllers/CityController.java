@@ -19,12 +19,8 @@ public class CityController {
     private final CityService cityService;
 
     @GetMapping()
-    public ResponseEntity<PaginatedResponse<CityResponse>> getCities(@RequestParam(defaultValue = "0") int page,
-                                                                     @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        PaginatedResponse<CityResponse> paginatedResponse = new PaginatedResponse<>(cityService.getAllCities(pageable));
-        return ResponseEntity.ok(paginatedResponse);
+    public ResponseEntity<List<CityResponse>> getCities() {
+        return ResponseEntity.ok(cityService.getAllCities());
     }
 
     @PostMapping("/sync")
