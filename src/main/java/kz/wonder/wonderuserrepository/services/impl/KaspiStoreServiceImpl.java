@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.AvailableWorkTime;
 import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
+import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableBoxTypes;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableTimes;
@@ -73,13 +74,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 		kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
 		kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
 		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
-		String formattedAddress = String.format("%s, %s, %s, %s, %s, %s",
-				selectedCity.getName(),
-				kaspiStoreCreateRequest.getStreetName(),
-				kaspiStoreCreateRequest.getStreetNumber(),
-				kaspiStoreCreateRequest.getTown(),
-				kaspiStoreCreateRequest.getDistrict(),
-				kaspiStoreCreateRequest.getBuilding());
+		String formattedAddress = getFormattedAddress(kaspiStore, selectedCity);
 		kaspiStore.setFormattedAddress(formattedAddress);
 		kaspiStore.setEnabled(true);
 
@@ -87,6 +82,16 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
 		kaspiStoreRepository.save(kaspiStore);
 		kaspiStoreAvailableTimesRepository.saveAll(availableTimes);
+	}
+
+	private static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
+        return String.format("%s, %s, %s, %s, %s, %s",
+				selectedCity.getName(),
+				kaspiStore.getStreetName(),
+				kaspiStore.getStreetNumber(),
+				kaspiStore.getTown(),
+				kaspiStore.getDistrict(),
+				kaspiStore.getBuilding());
 	}
 
 	@Override
@@ -173,7 +178,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 						.id(city.getId())
 						.name(city.getName())
 						.build())
-				.address(kaspiStore.getFormattedAddress())
+				.streetName(kaspiStore.getStreetName())
+				.streetNumber(kaspiStore.getStreetNumber())
+				.town(kaspiStore.getTown())
+				.district(kaspiStore.getDistrict())
+				.building(kaspiStore.getBuilding())
+				.apartment(kaspiStore.getBuilding())
 				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
 				.availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
 						j -> StoreDetailResponse.AvailableBoxType.builder()
@@ -213,15 +223,21 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
 		log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
 
-		kaspiStoreRepository.save(mapToEntity(changeRequest, kaspiStore));
+		var toSave = mapToEntity(changeRequest, kaspiStore);
+		toSave.setFormattedAddress(getFormattedAddress(toSave, kaspiStore.getKaspiCity()));
+
+		kaspiStoreRepository.save(toSave);
 	}
 
 	@Override
 	public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
-		final var storeToDelete = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
+		final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Store doesn't exist"));
 
-		kaspiStoreRepository.save(mapToEntity(changeRequest, storeToDelete));
+		var toSave = mapToEntity(changeRequest, kaspiStore);
+		toSave.setFormattedAddress(getFormattedAddress(toSave, kaspiStore.getKaspiCity()));
+
+		kaspiStoreRepository.save(toSave);
 	}
 
 	@Override
@@ -347,7 +363,10 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     }
 
     private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
-        kaspiStore.setApartment(changeRequest.getApartment());
+		var kaspiCity = kaspiCityRepository.findById(changeRequest.getCityId())
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+
+		kaspiStore.setApartment(changeRequest.getApartment());
         kaspiStore.setKaspiId(changeRequest.getKaspiId());
         kaspiStore.setEnabled(changeRequest.isEnabled());
         kaspiStore.setStreetName(changeRequest.getStreetName());
@@ -356,11 +375,9 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         kaspiStore.setDistrict(changeRequest.getDistrict());
         kaspiStore.setBuilding(changeRequest.getBuilding());
         kaspiStore.setApartment(changeRequest.getApartment());
+		kaspiStore.setFormattedAddress(getFormattedAddress(kaspiStore, kaspiCity));
 
-        kaspiStore.setKaspiCity(
-                kaspiCityRepository.findById(changeRequest.getCityId())
-                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"))
-        );
+        kaspiStore.setKaspiCity(kaspiCity);
         kaspiStore.getAvailableTimes().clear();
         kaspiStore.getAvailableTimes().addAll(mapToEntity(changeRequest.getDayOfWeekWorks(), kaspiStore));
         return kaspiStore;
