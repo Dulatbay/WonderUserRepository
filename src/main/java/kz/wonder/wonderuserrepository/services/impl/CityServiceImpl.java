@@ -51,15 +51,15 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
-    public Page<CityResponse> getAllCities(Pageable pageable) {
-        return cityRepository.findAll(pageable).map(kaspiCity -> {
+    public List<CityResponse> getAllCities() {
+        return cityRepository.findAll().stream().map(kaspiCity -> {
             CityResponse cityResponse = new CityResponse();
             cityResponse.setId(kaspiCity.getId());
             cityResponse.setName(kaspiCity.getName());
             cityResponse.setEnabled(kaspiCity.isEnabled());
             cityResponse.setCode(kaspiCity.getCode());
             return cityResponse;
-        });
+        }).toList();
     }
 
     @Override

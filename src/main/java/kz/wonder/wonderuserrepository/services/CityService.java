@@ -5,10 +5,12 @@ import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface CityService {
     void syncWithKaspi();
 
-    Page<CityResponse> getAllCities(Pageable pageable);
+    List<CityResponse> getAllCities();
 
     KaspiCity getKaspiCityByName(String name);
 }
