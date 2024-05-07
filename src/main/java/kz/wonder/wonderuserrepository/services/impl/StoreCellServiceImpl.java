@@ -62,6 +62,7 @@ public class StoreCellServiceImpl implements StoreCellService {
                     storeCell.setComment(cell.getComment());
                     storeCell.setWidth(cell.getWidth());
                     storeCell.setHeight(cell.getHeight());
+                    storeCell.setDepth(cell.getDepth());
                     storeCell.setId(cell.getId());
                     return storeCell;
                 })
