@@ -67,31 +67,31 @@ public class OrderController {
         return ResponseEntity.ok().body(orders);
     }
 
-    @GetMapping("/admin/details/{orderId}")
-    public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderId") String orderId) {
+    @GetMapping("/admin/details/{orderCode}")
+    public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
-        List<OrderDetailResponse> orderResponse = orderService.getAdminOrderDetails(keycloakId, orderId);
+        List<OrderDetailResponse> orderResponse = orderService.getAdminOrderDetails(keycloakId, orderCode);
         return ResponseEntity.ok().body(orderResponse);
     }
 
-    @GetMapping("/seller/details/{orderId}")
-    public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderId") String orderId) {
+    @GetMapping("/seller/details/{orderCode}")
+    public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
 
-        List<OrderDetailResponse> orderResponse = orderService.getSellerOrderDetails(keycloakId, orderId);
+        List<OrderDetailResponse> orderResponse = orderService.getSellerOrderDetails(keycloakId, orderCode);
         return ResponseEntity.ok().body(orderResponse);
     }
 
-    @GetMapping("/employee/details/{orderId}")
-    public ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderId") String orderId) {
+    @GetMapping("/employee/details/{orderCode}")
+    public ResponseEntity<List<OrderEmployeeDetailResponse>> getEmployeeOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
 
-        List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderId);
+        List<OrderEmployeeDetailResponse> employeeOrderDetails = orderService.getEmployeeOrderDetails(keycloakId, orderCode);
         return ResponseEntity.ok().body(employeeOrderDetails);
     }
 
