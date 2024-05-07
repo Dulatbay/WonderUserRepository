@@ -155,9 +155,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable) {
+    public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
         log.info("Retrieving products with keycloak id: {}", keycloakUserId);
-        return productRepository.findAllByKeycloakId(keycloakUserId, pageable)
+        return productRepository.findByParams(keycloakUserId, searchValue, searchValue, isPublished, pageable)
                 .map(this::mapToResponse);
     }
 
@@ -259,7 +259,7 @@ public class ProductServiceImpl implements ProductService {
         var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
-        if(product.isEnabled() == isPublished) {
+        if (product.isEnabled() == isPublished) {
             throw new IllegalArgumentException("The product is already has same publish state");
         }
 

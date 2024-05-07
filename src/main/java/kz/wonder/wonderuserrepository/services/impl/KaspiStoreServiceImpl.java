@@ -326,10 +326,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
                         "Store doesn't exist"));
 
-        if (!isSuperAdmin && !store
-                .getWonderUser()
-                .getKeycloakId()
-                .equals(keycloakId))
+		var isHisStore = store
+				.getWonderUser()
+				.getKeycloakId()
+				.equals(keycloakId);
+
+        if (!isSuperAdmin && (!isHisStore && !store.isEnabled()))
             throw new IllegalStateException("Store doesn't exist");
 
         return mapToResponse(store);
@@ -343,7 +345,9 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 						HttpStatus.BAD_REQUEST.getReasonPhrase(),
 						"Store doesn't exist"));
 
-		if (!isSuperAdmin && !store.getWonderUser().getKeycloakId().equals(keycloakId))
+		var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
+
+		if (!isSuperAdmin && (!isHisStore && !store.isEnabled()))
 			throw new IllegalArgumentException("Store doesn't exist");
 
 		log.info("Retrieving store with id: {}", store.getId());

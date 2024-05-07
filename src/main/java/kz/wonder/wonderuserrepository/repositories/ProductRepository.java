@@ -1,10 +1,11 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.entities.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findAllBy(Pageable pageable);
 
-    Page<Product> findAllByKeycloakId(String keycloakUserId, Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE " +
+            "p.keycloakId = :keycloakUserId AND " +
+            "((:name IS NULL OR p.name LIKE %:name%) OR (:vendorCode IS NULL OR p.vendorCode LIKE %:vendorCode%)) AND " +
+            "(:isEnabled IS NULL OR p.enabled = :isEnabled)")
+    Page<Product> findByParams(
+            @Param("keycloakUserId") String keycloakUserId,
+            @Param("name") String name,
+            @Param("vendorCode") String vendorCode,
+            @Param("isEnabled") Boolean isEnabled,
+            Pageable pageable);
+
     List<Product> findAllByKeycloakId(String keycloakUserId);
+    Page<Product> findAllByKeycloakId(String keycloakUserId, Pageable pageable);
 }

@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 public interface ProductService {
     List<ProductResponse> processExcelFile(MultipartFile file, String token);
 
-    Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable);
+    Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue);
 
     String generateOfProductsXmlByKeycloakId(String userId) throws IOException, javax.xml.bind.JAXBException;
 
