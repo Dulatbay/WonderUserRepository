@@ -183,7 +183,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 				.town(kaspiStore.getTown())
 				.district(kaspiStore.getDistrict())
 				.building(kaspiStore.getBuilding())
-				.apartment(kaspiStore.getBuilding())
+				.apartment(kaspiStore.getApartment())
 				.address(kaspiStore.getFormattedAddress())
 				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
 				.availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
