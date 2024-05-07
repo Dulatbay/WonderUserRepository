@@ -16,6 +16,7 @@ public class StoreDetailResponse {
     private String district;
     private String building;
     private String apartment;
+    private String address;
     private City city;
     private List<AvailableWorkTime> availableWorkTimes;
     private List<AvailableBoxType> availableBoxTypes;

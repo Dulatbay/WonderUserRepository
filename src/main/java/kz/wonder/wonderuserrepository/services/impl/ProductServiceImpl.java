@@ -254,6 +254,20 @@ public class ProductServiceImpl implements ProductService {
         return new PageImpl<>(new ArrayList<>(Collections.singleton(productPriceResponse)), pageable, products.getTotalElements());
     }
 
+    @Override
+    public void changePublish(String keycloakId, Long productId, Boolean isPublished) {
+        var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+        if(product.isEnabled() == isPublished) {
+            throw new IllegalArgumentException("The product is already has same publish state");
+        }
+
+        product.setEnabled(isPublished);
+
+        productRepository.save(product);
+    }
+
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
         KaspiCatalog kaspiCatalog = new KaspiCatalog();
         kaspiCatalog.setCompany(kaspiToken.getSellerName());

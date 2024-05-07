@@ -151,17 +151,22 @@ public class StoreController {
     public ResponseEntity<List<StoreDetailResponse>> getAllDetailOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
+        log.info("authorities: {}", authorities);
+
 
         if (authorities.contains(KeycloakRole.SELLER.name())) {
+            log.info("Get as seller");
             List<StoreDetailResponse> response = kaspiStoreService.getAllDetailForSeller();
             return ResponseEntity.ok(response);
         }
 
         if (authorities.contains(KeycloakRole.ADMIN.name())) {
+            log.info("Get as admin");
             return ResponseEntity.ok(kaspiStoreService.getAllDetailByUser(Utils.extractIdFromToken(token)));
         }
 
         if (authorities.contains(KeycloakRole.SUPER_ADMIN.name())) {
+            log.info("Get as SUPER admin");
             return ResponseEntity.ok(kaspiStoreService.getAllDetail());
         }
 

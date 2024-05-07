@@ -68,6 +68,16 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/publish")
+    public ResponseEntity<Void> updatePublish(@RequestParam Long productId, @RequestParam Boolean isPublished) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        productService.changePublish(keycloakId,productId,isPublished);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> getProduct(@PathVariable Long productId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
