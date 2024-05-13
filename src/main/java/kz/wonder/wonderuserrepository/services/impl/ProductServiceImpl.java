@@ -268,6 +268,21 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
     }
 
+    @Override
+    public void changePrice(String keycloakId, Long productId, Double newPrice, Long cityId) {
+        var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+        var city = kaspiCityRepository.findById(cityId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+
+        var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+        productPrice.setPrice(newPrice);
+        productPriceRepository.save(productPrice);
+    }
+
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
         KaspiCatalog kaspiCatalog = new KaspiCatalog();
         kaspiCatalog.setCompany(kaspiToken.getSellerName());
@@ -316,7 +331,7 @@ public class ProductServiceImpl implements ProductService {
         List<KaspiCatalog.Offer.Availability> availabilities = product.getPrices().stream()
                 .map(price -> {
                     KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
-                    availability.setAvailable(price.getPrice() != null ? "yes" : "no");
+                    availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
                     availability.setStoreId(price.getKaspiCity().getId().toString());
                     return availability;
                 })

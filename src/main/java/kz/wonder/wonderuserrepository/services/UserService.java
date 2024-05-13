@@ -9,6 +9,7 @@ public interface UserService {
     void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest);
 
     WonderUser getUserByKeycloakId(String keycloakId);
+    WonderUser getUserById(Long id);
 
     @Transactional
     void syncUsersBetweenDBAndKeycloak();
