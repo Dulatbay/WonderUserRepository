@@ -72,6 +72,12 @@ public class UserServiceImpl implements UserService {
 
 	}
 
+	@Override
+	public WonderUser getUserById(Long id) {
+		return userRepository.findById(id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
+	}
+
 
 	@Override
 	@Transactional
