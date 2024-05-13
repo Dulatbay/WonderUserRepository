@@ -21,4 +21,6 @@ public interface ProductService {
     Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable);
 
     void changePublish(String keycloakId, Long productId, Boolean isPublished);
+
+    void changePrice(String keycloakId, Long productId, Double newPrice, Long cityId);
 }

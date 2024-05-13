@@ -81,6 +81,15 @@ public class ProductController {
 
         return ResponseEntity.noContent().build();
     }
+    @PatchMapping("/price")
+    public ResponseEntity<Void> updatePrice(@RequestParam Long productId, @RequestParam Double newPrice, @RequestParam Long cityId) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        productService.changePrice(keycloakId, productId, newPrice, cityId);
+
+        return ResponseEntity.noContent().build();
+    }
 
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> getProduct(@PathVariable Long productId) {
