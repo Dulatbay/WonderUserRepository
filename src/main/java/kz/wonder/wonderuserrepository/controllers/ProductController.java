@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
+import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,10 +46,13 @@ public class ProductController {
 
     @GetMapping()
     public ResponseEntity<PaginatedResponse<ProductResponse>> getProducts(@RequestParam(defaultValue = "0") int page,
-                                                                          @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+                                                                          @RequestParam(defaultValue = "10") int size,
+                                                                          @RequestParam(name = "searchValue", required = false) String searchValue,
+                                                                          @RequestParam(name = "isPublished", required = false) Boolean isPublished,
+                                                                          @RequestParam(name = "sortBy", required = false) String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        Page<ProductResponse> productPage = productService.findAllByKeycloakId(Utils.extractIdFromToken(token), pageable);
+        Page<ProductResponse> productPage = productService.findAllByKeycloakId(Utils.extractIdFromToken(token), pageable, isPublished, searchValue);
         PaginatedResponse<ProductResponse> response = new PaginatedResponse<>(productPage);
         return ResponseEntity.ok(response);
     }
@@ -66,6 +71,25 @@ public class ProductController {
         var response = new PaginatedResponse<>(productsPrices);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/publish")
+    public ResponseEntity<Void> updatePublish(@RequestParam Long productId, @RequestParam Boolean isPublished) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        productService.changePublish(keycloakId, productId, isPublished);
+
+        return ResponseEntity.noContent().build();
+    }
+    @PatchMapping("/price")
+    public ResponseEntity<Void> updatePrice(@RequestParam Long productId, @RequestBody ProductPriceChangeRequest productPriceChangeRequest) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        productService.changePrice(keycloakId, productId, productPriceChangeRequest);
+
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{productId}")

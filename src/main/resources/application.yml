@@ -1,17 +1,19 @@
 application:
   title: Wonder
   version: 1.0.0
-  keycloak-url: ${KEYCLOAK_URL:http://34.118.81.46/keycloak}
+  keycloak-url: ${KEYCLOAK_URL:http://34.118.60.220}
   realm: wonder
   client-id: wonder
   username: admin_qit
   password: admin_password
   sync-users: true
-  sync-cities: true
+  sync-cities: false
   init-users: false
   kaspi-token: 1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=
-  admin-keycloak-id: e6f17bcd-384e-4403-95b9-059e5fbe0f69
+  admin-keycloak-id: 91b78e85-459c-47d2-9b7b-e3abe57b482e
 spring:
+  codec:
+    max-in-memory-size: 500KB
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
 #    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
@@ -45,6 +47,7 @@ server:
     context-path: '/api/'
   error:
     include-message: always
-  port: ${PORT:8181}
+  port: ${PORT:8080}
   address: 0.0.0.0
+
 

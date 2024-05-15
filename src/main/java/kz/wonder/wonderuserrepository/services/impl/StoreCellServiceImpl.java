@@ -26,6 +26,7 @@ public class StoreCellServiceImpl implements StoreCellService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final StoreCellProductRepository storeCellProductRepository;
+    private final UserRepository userRepository;
 
     @Override
     public void create(StoreCellCreateRequest storeCellCreateRequest, String keycloakId) {
@@ -38,6 +39,7 @@ public class StoreCellServiceImpl implements StoreCellService {
         storeCell.setRow(storeCellCreateRequest.getRow());
         storeCell.setComment(storeCellCreateRequest.getComment());
         storeCell.setWidth(storeCellCreateRequest.getWidth());
+        storeCell.setDepth(storeCellCreateRequest.getDepth());
         storeCell.setHeight(storeCellCreateRequest.getHeight());
         storeCell.setKaspiStore(kaspiStore);
 
@@ -61,6 +63,7 @@ public class StoreCellServiceImpl implements StoreCellService {
                     storeCell.setComment(cell.getComment());
                     storeCell.setWidth(cell.getWidth());
                     storeCell.setHeight(cell.getHeight());
+                    storeCell.setDepth(cell.getDepth());
                     storeCell.setId(cell.getId());
                     return storeCell;
                 })
@@ -109,17 +112,10 @@ public class StoreCellServiceImpl implements StoreCellService {
     public void changeStoreCell(String keycloakId, Long cellId, StoreCellChangeRequest storeCellChangeRequest) {
         final var storeCell = storeCellRepository.findById(cellId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Cell doesn't exist"));
-        final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Employee doesn't exist"));
-
         var kaspiStoreOfCell = storeCell.getKaspiStore();
-        var kaspiStoreOfEmployee = employee.getKaspiStore();
 
-        var isEmployeeWorkHere = kaspiStoreOfCell.getId().equals(kaspiStoreOfEmployee.getId());
-
-        if (!isEmployeeWorkHere) {
-            // todo: Own illegal argument exception for getting not found page
-            throw new IllegalArgumentException("Employee doesn't exist");
+        if(!kaspiStoreOfCell.getWonderUser().getKeycloakId().equals(keycloakId)) {
+            throw new IllegalArgumentException("The cell doesn't exist");
         }
 
         storeCell.setRow(storeCellChangeRequest.getRow());

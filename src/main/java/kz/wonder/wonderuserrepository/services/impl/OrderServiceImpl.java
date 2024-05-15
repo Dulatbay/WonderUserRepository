@@ -198,12 +198,15 @@ public class OrderServiceImpl implements OrderService {
         return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
             var product = kaspiOrderProduct.getProduct();
             var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+            if(supplyBoxProduct == null)
+                supplyBoxProduct = new SupplyBoxProduct();
+
             var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
 
 
             OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
             orderDetailResponse.setProductName(product == null ? "N\\A" : product.getName());
-            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
+            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle() == null ? "N\\A" : supplyBoxProduct.getArticle());
             orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
             orderDetailResponse.setProductVendorCode(product == null ? "N\\A" : product.getVendorCode());
             orderDetailResponse.setProductTradePrice(product == null ? 0 : product.getTradePrice());

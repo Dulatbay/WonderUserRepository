@@ -39,5 +39,6 @@ public class ProductPriceResponse {
         private Long cityId;
         private String cityName;
         private Double price;
+        private Long count;
     }
 }

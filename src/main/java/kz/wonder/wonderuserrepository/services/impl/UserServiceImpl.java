@@ -30,38 +30,10 @@ public class UserServiceImpl implements UserService {
 	private final KaspiTokenRepository kaspiTokenRepository;
 	private final UserRepository userRepository;
 	private final KeycloakService keycloakService;
-	private final KaspiApi kaspiApi;
 	private final EntityManager entityManager;
 
 	@Value("${application.kaspi-token}")
 	private String apiToken;
-
-	@Override
-	public void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest) {
-		if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
-			throw new IllegalArgumentException("Token is invalid");
-		if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
-			throw new IllegalArgumentException("Phone number must be unique");
-		if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
-			throw new IllegalArgumentException("Seller id must be unique");
-
-		WonderUser wonderUser = new WonderUser();
-		wonderUser.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
-		wonderUser.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
-
-		KaspiToken kaspiToken = new KaspiToken();
-		kaspiToken.setEnabled(true);
-		kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
-		kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
-		kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
-		kaspiToken.setWonderUser(wonderUser);
-		userRepository.save(wonderUser);
-
-		log.info("Created User with id {}\nCreated Kaspi token with id {}", wonderUser.getId(), kaspiToken.getId());
-
-		// todo: возвращает 401 если token is null
-		kaspiTokenRepository.save(kaspiToken);
-	}
 
 
 	@Override
@@ -70,6 +42,12 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findByKeycloakId(keycloakId)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 
+	}
+
+	@Override
+	public WonderUser getUserById(Long id) {
+		return userRepository.findById(id)
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
 	}
 
 
@@ -87,7 +65,7 @@ public class UserServiceImpl implements UserService {
 
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
 				.filter(user -> {
-							if (user.getEmail().equals("tester@mail.ru")) {
+							if (user.getEmail() != null && user.getEmail().equals("tester@mail.ru")) {
 								testerUserId.set(user.getId());
 								return false;
 							}
@@ -165,14 +143,5 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    private boolean isTokenValid(String token) {
-//        try {
-//            kaspiApi.getDataCitiesWithToken(token);
-//            return true;
-//        }catch (Exception e) {
-//            log.info("Exception: ", e);
-//            return false;
-//        }
-        return true;
-    }
+
 }

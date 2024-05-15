@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
+import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
@@ -155,9 +156,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable) {
+    public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
         log.info("Retrieving products with keycloak id: {}", keycloakUserId);
-        return productRepository.findAllByKeycloakId(keycloakUserId, pageable)
+        return productRepository.findByParams(keycloakUserId, searchValue, searchValue, isPublished, pageable)
                 .map(this::mapToResponse);
     }
 
@@ -210,10 +211,22 @@ public class ProductServiceImpl implements ProductService {
                             .name(product.getName())
                             .vendorCode(product.getVendorCode())
                             .count(count)
+                            // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
                                 var productPrice = new ProductPriceResponse.ProductPrice();
-                                productPrice.setCityId(price.getId());
-                                productPrice.setCityName(price.getKaspiCity().getName());
+                                var city = price.getKaspiCity();
+
+                                // todo: сделал поставку в город, где не указана цена
+
+                                productPrice.setCityId(city.getId());
+                                productPrice.setCityName(city.getName());
+                                productPrice.setCount(product.getSupplyBoxes()
+                                        .stream()
+                                        .filter(p ->
+                                                p.getState() == ProductStateInStore.ACCEPTED
+                                                        && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
+                                        )
+                                        .count());
                                 productPrice.setPrice(price.getPrice());
                                 return productPrice;
                             }).toList())
@@ -240,6 +253,39 @@ public class ProductServiceImpl implements ProductService {
         productPriceResponse.setCities(cityResponseMap.values().stream().toList());
 
         return new PageImpl<>(new ArrayList<>(Collections.singleton(productPriceResponse)), pageable, products.getTotalElements());
+    }
+
+    @Override
+    public void changePublish(String keycloakId, Long productId, Boolean isPublished) {
+        var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+        if (product.isEnabled() == isPublished) {
+            throw new IllegalArgumentException("The product is already has same publish state");
+        }
+
+        product.setEnabled(isPublished);
+
+        productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public void changePrice(String keycloakId, Long productId, ProductPriceChangeRequest productPriceChangeRequest) {
+        var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+        productPriceChangeRequest.getPriceList()
+                .forEach(price -> {
+                    var city = kaspiCityRepository.findById(price.getCityId())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+
+                    var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+                    productPrice.setPrice(price.getPrice());
+                    productPriceRepository.save(productPrice);
+                });
     }
 
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
@@ -290,7 +336,7 @@ public class ProductServiceImpl implements ProductService {
         List<KaspiCatalog.Offer.Availability> availabilities = product.getPrices().stream()
                 .map(price -> {
                     KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
-                    availability.setAvailable(price.getPrice() != null ? "yes" : "no");
+                    availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
                     availability.setStoreId(price.getKaspiCity().getId().toString());
                     return availability;
                 })

@@ -10,8 +10,13 @@ import java.util.List;
 public class StoreDetailResponse {
     private Long id;
     private String kaspiId;
+    private String streetName;
+    private String streetNumber;
+    private String town;
+    private String district;
+    private String building;
+    private String apartment;
     private String address;
-    private String street;
     private City city;
     private List<AvailableWorkTime> availableWorkTimes;
     private List<AvailableBoxType> availableBoxTypes;

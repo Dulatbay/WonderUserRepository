@@ -78,7 +78,6 @@ dependencies {
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:2.3.3")
 
 //    implementation("org.flywaydb:flyway-core")
-
 }
 
 dependencyManagement {

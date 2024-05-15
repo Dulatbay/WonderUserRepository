@@ -20,9 +20,9 @@ public interface OrderService {
 
     List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate);
 
-    List<OrderDetailResponse> getAdminOrderDetails(String keycloakId, String orderId);
+    List<OrderDetailResponse> getAdminOrderDetails(String keycloakId, String orderCode);
 
-    List<OrderDetailResponse> getSellerOrderDetails(String keycloakId, String orderId);
+    List<OrderDetailResponse> getSellerOrderDetails(String keycloakId, String orderCode);
 
-    List<OrderEmployeeDetailResponse> getEmployeeOrderDetails(String keycloakId, String orderId);
+    List<OrderEmployeeDetailResponse> getEmployeeOrderDetails(String keycloakId, String orderCode);
 }
