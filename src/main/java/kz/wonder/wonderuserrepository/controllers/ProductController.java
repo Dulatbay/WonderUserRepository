@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
+import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
@@ -82,11 +83,11 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
     @PatchMapping("/price")
-    public ResponseEntity<Void> updatePrice(@RequestParam Long productId, @RequestParam Double newPrice, @RequestParam Long cityId) {
+    public ResponseEntity<Void> updatePrice(@RequestParam Long productId, @RequestBody ProductPriceChangeRequest productPriceChangeRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        productService.changePrice(keycloakId, productId, newPrice, cityId);
+        productService.changePrice(keycloakId, productId, productPriceChangeRequest);
 
         return ResponseEntity.noContent().build();
     }

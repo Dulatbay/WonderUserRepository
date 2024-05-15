@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
-import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
+import kz.wonder.wonderuserrepository.dto.request.UpdatePasswordRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakError;
@@ -209,7 +209,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 	}
 
 	@Override
-	public void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword) {
+	public void updatePassword(String keycloakId, UpdatePasswordRequest updatePassword) {
 		try {
 			var keycloak = getKeycloak(updatePassword.getEmail(), updatePassword.getOldPassword());
 			keycloak.tokenManager().getAccessTokenString();

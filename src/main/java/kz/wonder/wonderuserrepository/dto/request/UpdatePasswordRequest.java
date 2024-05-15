@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 @Data
-public class StoreEmployeeUpdatePassword {
+public class UpdatePasswordRequest {
     @JsonIgnore
     private String email;
     private String oldPassword;

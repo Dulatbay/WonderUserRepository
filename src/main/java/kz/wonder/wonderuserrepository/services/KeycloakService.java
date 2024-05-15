@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.services;
 
-import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
+import kz.wonder.wonderuserrepository.dto.request.UpdatePasswordRequest;
 import kz.wonder.wonderuserrepository.dto.response.AuthResponse;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
@@ -24,5 +24,5 @@ public interface KeycloakService {
 
     UserResource updateUser(KeycloakBaseUser keycloakBaseUser);
 
-    void updatePassword(String keycloakId, StoreEmployeeUpdatePassword updatePassword);
+    void updatePassword(String keycloakId, UpdatePasswordRequest updatePassword);
 }
