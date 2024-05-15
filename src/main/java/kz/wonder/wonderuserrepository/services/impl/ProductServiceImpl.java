@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
+import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
@@ -269,18 +270,22 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void changePrice(String keycloakId, Long productId, Double newPrice, Long cityId) {
+    @Transactional
+    public void changePrice(String keycloakId, Long productId, ProductPriceChangeRequest productPriceChangeRequest) {
         var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
-        var city = kaspiCityRepository.findById(cityId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+        productPriceChangeRequest.getPriceList()
+                .forEach(price -> {
+                    var city = kaspiCityRepository.findById(price.getCityId())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-        var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                    var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
-        productPrice.setPrice(newPrice);
-        productPriceRepository.save(productPrice);
+                    productPrice.setPrice(price.getPrice());
+                    productPriceRepository.save(productPrice);
+                });
     }
 
     private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
