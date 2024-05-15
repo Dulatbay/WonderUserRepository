@@ -3,7 +3,7 @@ package kz.wonder.wonderuserrepository.controllers;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeUpdateRequest;
-import kz.wonder.wonderuserrepository.dto.request.StoreEmployeeUpdatePassword;
+import kz.wonder.wonderuserrepository.dto.request.UpdatePasswordRequest;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeCreateResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeResponse;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
@@ -104,7 +104,7 @@ public class EmployeeController {
     }
 
     @PatchMapping("/update-password/{userId}")
-    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody StoreEmployeeUpdatePassword updatePassword) {
+    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody UpdatePasswordRequest updatePassword) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());

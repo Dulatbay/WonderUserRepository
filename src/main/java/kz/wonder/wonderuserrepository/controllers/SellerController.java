@@ -2,8 +2,10 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.request.SellerUserUpdateRequest;
+import kz.wonder.wonderuserrepository.dto.request.UpdatePasswordRequest;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.SellerUserResponse;
 import kz.wonder.wonderuserrepository.mappers.UserMapper;
@@ -16,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -40,6 +44,19 @@ public class SellerController {
         var result = userMapper.toUserResponse(wonderUser, keycloakUser.toRepresentation(), wonderUser.getKaspiToken());
 
         return ResponseEntity.ok(result);
+    }
+
+    @PatchMapping("/update-password")
+    public ResponseEntity<Void> updateSellerUserById(@RequestBody UpdatePasswordRequest updatePasswordRequest) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        var keycloakUser = keycloakService.getUserById(keycloakId).toRepresentation();
+
+        updatePasswordRequest.setEmail(keycloakUser.getEmail());
+        keycloakService.updatePassword(keycloakUser.getId(), updatePasswordRequest);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PutMapping("{id}")
