@@ -6,7 +6,6 @@ import kz.wonder.wonderuserrepository.entities.WonderUser;
 
 public interface UserService {
     // todo: remove to another service(SellerService)
-    void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest);
 
     WonderUser getUserByKeycloakId(String keycloakId);
     WonderUser getUserById(Long id);
