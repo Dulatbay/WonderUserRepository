@@ -38,8 +38,6 @@ public class BoxTypeServiceImpl implements BoxTypeService {
                 .build();
     }
 
-    // test
-
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
         var boxType = new BoxType();

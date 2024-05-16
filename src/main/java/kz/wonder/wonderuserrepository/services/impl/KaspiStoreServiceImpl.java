@@ -26,9 +26,7 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMATTER;
@@ -85,13 +83,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	}
 
 	private static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
-        return String.format("%s, %s, %s, %s, %s, %s",
-				selectedCity.getName(),
-				kaspiStore.getStreetName(),
-				kaspiStore.getStreetNumber(),
-				kaspiStore.getTown(),
-				kaspiStore.getDistrict(),
-				kaspiStore.getBuilding());
+		StringJoiner addressJoiner = new StringJoiner(",");
+		Optional.ofNullable(selectedCity.getName()).ifPresent(addressJoiner::add);
+		Optional.ofNullable(kaspiStore.getStreetName()).ifPresent(addressJoiner::add);
+		Optional.ofNullable(kaspiStore.getStreetNumber()).ifPresent(addressJoiner::add);
+		Optional.ofNullable(kaspiStore.getTown()).ifPresent(addressJoiner::add);
+		Optional.ofNullable(kaspiStore.getDistrict()).ifPresent(addressJoiner::add);
+		Optional.ofNullable(kaspiStore.getBuilding()).ifPresent(addressJoiner::add);
+		return addressJoiner.toString();
 	}
 
 	@Override
