@@ -83,14 +83,13 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	}
 
 	private static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
-		StringJoiner addressJoiner = new StringJoiner(",");
-		Optional.ofNullable(selectedCity.getName()).ifPresent(addressJoiner::add);
-		Optional.ofNullable(kaspiStore.getStreetName()).ifPresent(addressJoiner::add);
-		Optional.ofNullable(kaspiStore.getStreetNumber()).ifPresent(addressJoiner::add);
-		Optional.ofNullable(kaspiStore.getTown()).ifPresent(addressJoiner::add);
-		Optional.ofNullable(kaspiStore.getDistrict()).ifPresent(addressJoiner::add);
-		Optional.ofNullable(kaspiStore.getBuilding()).ifPresent(addressJoiner::add);
-		return addressJoiner.toString();
+		String name = selectedCity.getName() != null ? selectedCity.getName() + "," : "";
+		String streetName = kaspiStore.getStreetName() != null ? kaspiStore.getStreetName() + "," : "";
+		String streetNumber = kaspiStore.getStreetNumber() != null ? kaspiStore.getStreetNumber() + "," : "";
+		String town = kaspiStore.getTown() != null ? kaspiStore.getTown() + "," : "";
+		String district = kaspiStore.getDistrict() != null ? kaspiStore.getDistrict() + "," : "";
+		String building = kaspiStore.getBuilding() != null ? kaspiStore.getBuilding() : "";
+		return name + streetName + streetNumber + town + district + building;
 	}
 
 	@Override
