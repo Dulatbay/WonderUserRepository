@@ -5,12 +5,11 @@ import kz.wonder.kaspi.client.model.CitiesDataResponse;
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
 import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.CityMapper;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,7 @@ import java.util.List;
 public class CityServiceImpl implements CityService {
     private final KaspiApi kaspiApi;
     private final KaspiCityRepository cityRepository;
+    private final CityMapper cityMapper;
 
     @Override
     public void syncWithKaspi() {
@@ -35,11 +35,7 @@ public class CityServiceImpl implements CityService {
 
             for (var city : cities) {
                 if (!cityRepository.existsByName(city.getAttributes().getName()) && !cityRepository.existsByCode(city.getAttributes().getCode())) {
-                    final var newCity = new KaspiCity();
-                    newCity.setCode(city.getAttributes().getCode());
-                    newCity.setName(city.getAttributes().getName());
-                    newCity.setEnabled(city.getAttributes().isActive());
-                    kaspiCities.add(newCity);
+                    kaspiCities.add(cityMapper.toEntity(city));
                 }
             }
 
@@ -52,14 +48,10 @@ public class CityServiceImpl implements CityService {
 
     @Override
     public List<CityResponse> getAllCities() {
-        return cityRepository.findAll().stream().map(kaspiCity -> {
-            CityResponse cityResponse = new CityResponse();
-            cityResponse.setId(kaspiCity.getId());
-            cityResponse.setName(kaspiCity.getName());
-            cityResponse.setEnabled(kaspiCity.isEnabled());
-            cityResponse.setCode(kaspiCity.getCode());
-            return cityResponse;
-        }).toList();
+        return cityRepository.findAll()
+                .stream()
+                .map(cityMapper::toResponse)
+                .toList();
     }
 
     @Override
