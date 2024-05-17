@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.services;
 
-import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import org.springframework.data.domain.Pageable;
@@ -23,5 +22,5 @@ public interface ProductService {
 
     void changePublish(String keycloakId, Long productId, Boolean isPublished);
 
-    void changePrice(String keycloakId, Long productId, ProductPriceChangeRequest productPriceChangeRequest);
+    void changePrice(String keycloakId, Long productId, Double newPrice, Long cityId);
 }
