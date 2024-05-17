@@ -1,12 +1,9 @@
 package kz.wonder.wonderuserrepository.mappers;
 
 import kz.wonder.wonderuserrepository.dto.response.SellerUserResponse;
-import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
-import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import lombok.RequiredArgsConstructor;
-import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Component;
 

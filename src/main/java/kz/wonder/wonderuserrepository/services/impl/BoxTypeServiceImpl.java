@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.entities.BoxType;
 import kz.wonder.wonderuserrepository.entities.BoxTypeImages;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableBoxTypes;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.BoxTypeMapper;
 import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -28,15 +28,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     private final BoxTypeRepository boxTypeRepository;
     private final KaspiStoreRepository storeRepository;
     private final FileService fileService;
-
-    private static BoxTypeResponse getBoxTypeResponse(BoxType boxType) {
-        return BoxTypeResponse.builder()
-                .id(boxType.getId())
-                .name(boxType.getName())
-                .description(boxType.getDescription())
-                .imageUrls(boxType.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
-                .build();
-    }
+    private final BoxTypeMapper boxTypeMapper;
 
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
@@ -49,10 +41,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
         if (boxTypeCreateRequest.getImages() != null)
             boxTypeCreateRequest.getImages()
                     .forEach(i -> {
-                        var boxTypeImages = new BoxTypeImages();
-                        boxTypeImages.setBoxType(boxType);
-                        boxTypeImages.setImageUrl(fileService.save(i));
-                        images.add(boxTypeImages);
+                        images.add(boxTypeMapper.toImage(boxType, fileService.save(i)));
                     });
 
         boxType.setImages(images);
@@ -70,14 +59,14 @@ public class BoxTypeServiceImpl implements BoxTypeService {
                     .getAvailableBoxTypes()
                     .stream()
                     .map(KaspiStoreAvailableBoxTypes::getBoxType)
-                    .map(BoxTypeServiceImpl::getBoxTypeResponse)
+                    .map(boxTypeMapper::toResponse)
                     .toList();
         }
 
 
         return boxTypeRepository.findAll()
                 .stream()
-                .map(BoxTypeServiceImpl::getBoxTypeResponse).toList();
+                .map(boxTypeMapper::toResponse).toList();
     }
 
     @Override
