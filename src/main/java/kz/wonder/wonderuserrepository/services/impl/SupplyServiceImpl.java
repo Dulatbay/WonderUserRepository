@@ -279,6 +279,7 @@ public class SupplyServiceImpl implements SupplyService {
                                 .supplyAcceptTime(supply.getAcceptedTime())
                                 .supplyState(supply.getSupplyState())
                                 .id(supply.getId())
+                                .formattedAddress(supply.getKaspiStore().getFormattedAddress())
                                 .build()
                 ).collect(Collectors.toList());
     }
