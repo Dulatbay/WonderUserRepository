@@ -148,7 +148,7 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductPrice processProductPrice(Product product, KaspiCity city, Double priceValue) {
         var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
-                .orElse(new ProductPrice(city, product, priceValue));
+                .orElse(new ProductPrice(city, product, priceValue, false));
         productPrice.setKaspiCity(city);
         productPrice.setPrice(priceValue);
         productPrice.setUpdatedAt(LocalDateTime.now());
@@ -211,6 +211,7 @@ public class ProductServiceImpl implements ProductService {
                             .name(product.getName())
                             .vendorCode(product.getVendorCode())
                             .count(count)
+                            .isPublished(product.isEnabled())
                             // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
                                 var productPrice = new ProductPriceResponse.ProductPrice();
@@ -220,6 +221,7 @@ public class ProductServiceImpl implements ProductService {
 
                                 productPrice.setCityId(city.getId());
                                 productPrice.setCityName(city.getName());
+                                productPrice.setMainPrice(productPrice.isMainPrice());
                                 productPrice.setCount(product.getSupplyBoxes()
                                         .stream()
                                         .filter(p ->
@@ -329,27 +331,44 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private KaspiCatalog.Offer mapToOffer(Product product) {
+        List<KaspiCatalog.Offer.Availability> availabilities = new ArrayList<>();
+        List<KaspiCatalog.Offer.CityPrice> cityPrices = new ArrayList<>();
         KaspiCatalog.Offer offer = new KaspiCatalog.Offer();
         offer.setSku(product.getVendorCode());
         offer.setModel(product.getName());
 
-        List<KaspiCatalog.Offer.Availability> availabilities = product.getPrices().stream()
-                .map(price -> {
-                    KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
-                    availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
-                    availability.setStoreId(price.getKaspiCity().getId().toString());
-                    return availability;
-                })
-                .toList();
+        var optionalMainPrice = productPriceRepository.findByProductAndIsMainPrice(product, true);
 
-        List<KaspiCatalog.Offer.CityPrice> cityPrices = product.getPrices().stream()
-                .map(price -> {
-                    KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
-                    cityPrice.setCityId(price.getKaspiCity().getId().toString());
-                    cityPrice.setPrice(price.getPrice().toString());
-                    return cityPrice;
-                })
-                .toList();
+
+        if (optionalMainPrice.isEmpty()) {
+            product.getPrices()
+                    .forEach(price -> {
+                        KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
+                        availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
+                        availability.setStoreId(price.getKaspiCity().getId().toString());
+                        availabilities.add(availability);
+
+                        KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
+                        cityPrice.setCityId(price.getKaspiCity().getId().toString());
+                        cityPrice.setPrice(price.getPrice().toString());
+                        cityPrices.add(cityPrice);
+                    });
+        } else {
+            var price = optionalMainPrice.get();
+            product.getPrices()
+                    .forEach(p -> {
+                        KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
+                        availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
+                        availability.setStoreId(price.getKaspiCity().getId().toString());
+                        availabilities.add(availability);
+
+                        KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
+                        cityPrice.setCityId(price.getKaspiCity().getId().toString());
+                        cityPrice.setPrice(price.getPrice().toString());
+                        cityPrices.add(cityPrice);
+                    });
+        }
+
 
         offer.setAvailabilities(availabilities);
         offer.setCityprices(cityPrices);
@@ -369,6 +388,7 @@ public class ProductServiceImpl implements ProductService {
                                         ProductResponse.ProductPriceResponse.builder()
                                                 .price(productPrice.getPrice())
                                                 .cityName(productPrice.getKaspiCity().getName())
+                                                .isMainPrice(productPrice.getIsMainPrice())
                                                 .build()
                         ).collect(Collectors.toList())
                 )
