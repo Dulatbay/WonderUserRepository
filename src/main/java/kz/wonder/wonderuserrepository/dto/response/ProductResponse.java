@@ -13,7 +13,7 @@ public record ProductResponse(Long id,
                               boolean enabled,
                               List<ProductPriceResponse> prices) {
     @Builder
-    public record ProductPriceResponse(String cityName, Double price) {
+    public record ProductPriceResponse(String cityName, Double price, boolean isMainPrice) {
 
     }
 }

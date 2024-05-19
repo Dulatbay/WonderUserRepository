@@ -23,6 +23,6 @@ public class TelegramAccount extends AbstractEntity<Long> {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(columnDefinition = "integer", name = "user_id")
+    @JoinColumn(name = "user_id")
     private WonderUser wonderUser;
 }

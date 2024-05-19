@@ -31,6 +31,7 @@ public class ProductPriceResponse {
         private String vendorCode;
         private String name;
         private Long count;
+        private boolean isPublished;
         private List<ProductPrice> prices;
     }
 
@@ -39,6 +40,7 @@ public class ProductPriceResponse {
         private Long cityId;
         private String cityName;
         private Double price;
+        private boolean isMainPrice;
         private Long count;
     }
 }

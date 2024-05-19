@@ -24,5 +24,9 @@ public class ProductPrice extends AbstractEntity<Long> {
     @JoinColumn(name = "product_id", columnDefinition = "integer")
     private Product product;
 
+    @Column(name = "price", nullable = false)
     private Double price;
+
+    @Column(name = "is_main_price", nullable = false)
+    private Boolean isMainPrice;
 }

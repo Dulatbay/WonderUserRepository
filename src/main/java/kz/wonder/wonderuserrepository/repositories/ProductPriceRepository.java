@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long> {
     Optional<ProductPrice> findByProductAndKaspiCityName(Product product, String cityName);
+    Optional<ProductPrice> findByProductAndIsMainPrice(Product product, boolean isMainPrice);
 
 }
