@@ -59,15 +59,18 @@ public class ProductController {
 
     @GetMapping("/prices")
     public ResponseEntity<PaginatedResponse<ProductPriceResponse>> getProductPrices(@RequestParam(defaultValue = "0") int page,
-                                                                                    @RequestParam(defaultValue = "10") int size) {
+                                                                                    @RequestParam(defaultValue = "10") int size,
+                                                                                    @RequestParam(name = "searchValue", required = false) String searchValue,
+                                                                                    @RequestParam(name = "isPublished", required = false) Boolean isPublished,
+                                                                                    @RequestParam(name = "sortBy", required = false) String sortBy) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 
 
-        var productsPrices = productService.getProductsPrices(keycloakId, isSuperAdmin, pageable);
+        var productsPrices = productService.getProductsPrices(keycloakId, isSuperAdmin, pageable, isPublished, searchValue);
         var response = new PaginatedResponse<>(productsPrices);
 
         return ResponseEntity.ok(response);

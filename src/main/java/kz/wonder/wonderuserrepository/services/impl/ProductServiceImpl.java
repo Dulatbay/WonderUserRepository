@@ -189,15 +189,15 @@ public class ProductServiceImpl implements ProductService {
 
     // todo: refactoring
     @Override
-    public Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable) {
+    public Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
         Page<Product> products;
         Map<Long, CityResponse> cityResponseMap = new HashMap<>();
 
 
         if (isSuperAdmin) {
-            products = productRepository.findAllBy(pageable);
+            products = productRepository.findAllBy(searchValue, searchValue, isPublished, pageable);
         } else {
-            products = productRepository.findAllByKeycloakId(keycloakId, pageable);
+            products = productRepository.findAllByKeycloakId(keycloakId, searchValue, searchValue, isPublished, pageable);
         }
 
         List<ProductPriceResponse.ProductInfo> response = new ArrayList<>();
@@ -289,7 +289,7 @@ public class ProductServiceImpl implements ProductService {
                     var city = kaspiCityRepository.findById(price.getMainCityId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-                    if(price.isSelected()){
+                    if (price.isSelected()) {
                         var mainPriceOptional = productPriceRepository.findByProductAndIsMainPrice(product, true);
 
                         if (mainPriceOptional.isPresent()) {
