@@ -6,11 +6,11 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: true
+  sync-users: false
   sync-cities: false
   init-users: false
   kaspi-token: 1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=
-  admin-keycloak-id: 91b78e85-459c-47d2-9b7b-e3abe57b482e
+  admin-keycloak-id: 99d66d43-e8a1-4fe6-a854-8ce686c73ed6
 spring:
   codec:
     max-in-memory-size: 500KB
