@@ -23,5 +23,5 @@ public interface ProductService {
 
     void changePublish(String keycloakId, Long productId, Boolean isPublished);
 
-    void changePrice(String keycloakId, Long productId, ProductPriceChangeRequest productPriceChangeRequest);
+    void changePrice(String keycloakId, ProductPriceChangeRequest productPriceChangeRequest);
 }

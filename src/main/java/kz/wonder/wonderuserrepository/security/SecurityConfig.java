@@ -43,7 +43,7 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/auth/**",
             "/actuator/**",
-            "/api/sellers/registration",
+            "/sellers/registration",
     };
     @Value("${application.client-id}")
     private String clientId;

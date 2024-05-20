@@ -273,12 +273,47 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void changePrice(String keycloakId, Long productId, ProductPriceChangeRequest productPriceChangeRequest) {
-        var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+    public void changePrice(String keycloakId, ProductPriceChangeRequest productPriceChangeRequest) {
+        if (!productPriceChangeRequest.getPriceList().isEmpty())
+            updatePrice(keycloakId, productPriceChangeRequest.getPriceList());
+        if (!productPriceChangeRequest.getMainPriceList().isEmpty())
+            updateMainCities(keycloakId, productPriceChangeRequest.getMainPriceList());
+    }
 
-        productPriceChangeRequest.getPriceList()
+    private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {
+        mainPrices
                 .forEach(price -> {
+                    var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+                    var city = kaspiCityRepository.findById(price.getMainCityId())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+
+                    if(price.isSelected()){
+                        var mainPriceOptional = productPriceRepository.findByProductAndIsMainPrice(product, true);
+
+                        if (mainPriceOptional.isPresent()) {
+                            var mainPrice = mainPriceOptional.get();
+                            mainPrice.setIsMainPrice(false);
+                            productPriceRepository.save(mainPrice);
+                        }
+                    }
+
+
+                    var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                    productPrice.setIsMainPrice(price.isSelected());
+                    productPriceRepository.save(productPrice);
+
+                });
+    }
+
+    private void updatePrice(String keycloakId, List<ProductPriceChangeRequest.Price> prices) {
+        prices
+                .forEach(price -> {
+                    var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
                     var city = kaspiCityRepository.findById(price.getCityId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
