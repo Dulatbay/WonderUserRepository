@@ -389,24 +389,32 @@ public class SupplyServiceImpl implements SupplyService {
                     List<StoreCellProduct> storeCellProducts = productArticles
                             .stream()
                             .map(article -> {
-                                var sbp = supplyBoxProductsRepository.findByArticle(article)
+                                var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
                                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
-                                sbp.setState(ProductStateInStore.ACCEPTED);
-                                sbp.setAcceptedTime(now);
-                                supplyBoxProductsRepository.save(sbp);
+                                supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
+                                supplyBoxProduct.setAcceptedTime(now);
+                                supplyBoxProductsRepository.save(supplyBoxProduct);
 
                                 StoreCellProduct storeCellProduct = new StoreCellProduct();
 
                                 storeCellProduct.setStoreEmployee(employee);
                                 storeCellProduct.setStoreCell(storeCell);
-                                storeCellProduct.setSupplyBoxProduct(sbp);
+                                storeCellProduct.setSupplyBoxProduct(supplyBoxProduct);
 
                                 return storeCellProduct;
                             }).toList();
 
                     storeCellProductRepository.saveAll(storeCellProducts);
                 });
+
+        supply.setAcceptedTime(now);
+        var isAccepted = supply.getSupplyBoxes()
+                .stream()
+                .noneMatch(supplyBox -> supplyBox.getSupplyBoxProducts()
+                        .stream()
+                        .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
+        supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
     }
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
