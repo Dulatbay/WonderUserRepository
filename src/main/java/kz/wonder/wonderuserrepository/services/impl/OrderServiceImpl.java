@@ -176,10 +176,13 @@ public class OrderServiceImpl implements OrderService {
 
         final LocalDate finalStartDate = startDate.minusDays(1);
 
+        // todo: переделать запрос на уровень репозитория
+
         return store.getOrders().stream()
                 .filter(kaspiOrder -> {
                     LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
-                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate));
+                    var products = kaspiOrder.getProducts();
+                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate) && !products.isEmpty() && products.stream().noneMatch(kp -> kp.getProduct() == null || kp.getSupplyBoxProduct() == null));
                 })
                 .map(OrderServiceImpl::getEmployeeOrderResponse)
                 .toList();
@@ -258,20 +261,20 @@ public class OrderServiceImpl implements OrderService {
         return order.getProducts()
                 .stream()
                 .map(kaspiOrderProduct -> {
-                    var product = kaspiOrderProduct.getProduct();
-                    var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
-                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
+                    var productOptional = Optional.ofNullable(kaspiOrderProduct.getProduct());
+                    var supplyBoxProductOptional = Optional.ofNullable(kaspiOrderProduct.getSupplyBoxProduct());
+                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProductOptional.isEmpty() ? -1L : supplyBoxProductOptional.get().getId());
 
-                    return getOrderEmployeeDetailResponse(product, supplyBoxProduct, storeCellProductOptional);
+                    return getOrderEmployeeDetailResponse(productOptional, supplyBoxProductOptional, storeCellProductOptional);
                 }).toList();
     }
 
-    private static @NotNull OrderEmployeeDetailResponse getOrderEmployeeDetailResponse(Product product, SupplyBoxProduct supplyBoxProduct, Optional<StoreCellProduct> storeCellProductOptional) {
+    private static @NotNull OrderEmployeeDetailResponse getOrderEmployeeDetailResponse(Optional<Product> product, Optional<SupplyBoxProduct> supplyBoxProductOptional, Optional<StoreCellProduct> storeCellProductOptional) {
         OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
-        orderEmployeeDetailResponse.setOrderName(product.getName());
-        orderEmployeeDetailResponse.setOrderArticle(supplyBoxProduct.getArticle());
+        orderEmployeeDetailResponse.setOrderName(product.isEmpty() ? "N\\A" : product.get().getName());
+        orderEmployeeDetailResponse.setOrderArticle(supplyBoxProductOptional.isEmpty() ? "N\\A" : supplyBoxProductOptional.get().getArticle());
         orderEmployeeDetailResponse.setOrderCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
-        orderEmployeeDetailResponse.setOrderVendorCode(product.getVendorCode());
+        orderEmployeeDetailResponse.setOrderVendorCode(product.isEmpty() ? "N\\A" : product.get().getVendorCode());
         return orderEmployeeDetailResponse;
     }
 
