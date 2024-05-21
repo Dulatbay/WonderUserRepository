@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -152,8 +151,8 @@ public class OrderServiceImpl implements OrderService {
                             log.info("orders count: {}, products count: {}", orders.size(), products.size());
 
                             for (var order : orders) {
-                                var optionalOrderEntry = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).findFirst();
-                                optionalOrderEntry.ifPresent(orderEntry -> processOrder(order, token, orderEntry));
+                                var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
+                                orderEntries.forEach(orderEntry -> processOrder(order, token, orderEntry));
                             }
 
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
@@ -177,10 +176,13 @@ public class OrderServiceImpl implements OrderService {
 
         final LocalDate finalStartDate = startDate.minusDays(1);
 
+        // todo: переделать запрос на уровень репозитория
+
         return store.getOrders().stream()
                 .filter(kaspiOrder -> {
                     LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
-                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate));
+                    var products = kaspiOrder.getProducts();
+                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate) && !products.isEmpty() && products.stream().noneMatch(kp -> kp.getProduct() == null || kp.getSupplyBoxProduct() == null));
                 })
                 .map(OrderServiceImpl::getEmployeeOrderResponse)
                 .toList();
@@ -198,7 +200,7 @@ public class OrderServiceImpl implements OrderService {
         return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
             var product = kaspiOrderProduct.getProduct();
             var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
-            if(supplyBoxProduct == null)
+            if (supplyBoxProduct == null)
                 supplyBoxProduct = new SupplyBoxProduct();
 
             var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
@@ -259,36 +261,33 @@ public class OrderServiceImpl implements OrderService {
         return order.getProducts()
                 .stream()
                 .map(kaspiOrderProduct -> {
-                    var product = kaspiOrderProduct.getProduct();
-                    var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
-                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
+                    var productOptional = Optional.ofNullable(kaspiOrderProduct.getProduct());
+                    var supplyBoxProductOptional = Optional.ofNullable(kaspiOrderProduct.getSupplyBoxProduct());
+                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProductOptional.isEmpty() ? -1L : supplyBoxProductOptional.get().getId());
 
-                    return getOrderEmployeeDetailResponse(product, supplyBoxProduct, storeCellProductOptional);
+                    return getOrderEmployeeDetailResponse(productOptional, supplyBoxProductOptional, storeCellProductOptional);
                 }).toList();
     }
 
-    private static @NotNull OrderEmployeeDetailResponse getOrderEmployeeDetailResponse(Product product, SupplyBoxProduct supplyBoxProduct, Optional<StoreCellProduct> storeCellProductOptional) {
+    private static @NotNull OrderEmployeeDetailResponse getOrderEmployeeDetailResponse(Optional<Product> product, Optional<SupplyBoxProduct> supplyBoxProductOptional, Optional<StoreCellProduct> storeCellProductOptional) {
         OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
-        orderEmployeeDetailResponse.setOrderName(product.getName());
-        orderEmployeeDetailResponse.setOrderArticle(supplyBoxProduct.getArticle());
+        orderEmployeeDetailResponse.setOrderName(product.isEmpty() ? "N\\A" : product.get().getName());
+        orderEmployeeDetailResponse.setOrderArticle(supplyBoxProductOptional.isEmpty() ? "N\\A" : supplyBoxProductOptional.get().getArticle());
         orderEmployeeDetailResponse.setOrderCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
-        orderEmployeeDetailResponse.setOrderVendorCode(product.getVendorCode());
+        orderEmployeeDetailResponse.setOrderVendorCode(product.isEmpty() ? "N\\A" : product.get().getVendorCode());
         return orderEmployeeDetailResponse;
     }
 
     private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
-        var now = LocalDateTime.now().atZone(ZONE_ID).minusMinutes(15).toLocalDateTime();
         if (optionalKaspiOrder.isPresent()) {
             var kaspiOrder = optionalKaspiOrder.get();
-            if (kaspiOrder.getUpdatedAt().isBefore(now)) {
-                try {
-                    getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
-                    updatedCount++;
-                } catch (Exception e) {
-                    log.error("Error processing order: {}", e.getMessage(), e);
-                }
+            try {
+                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
+                updatedCount++;
+            } catch (Exception e) {
+                log.error("Error processing order: {}", e.getMessage(), e);
             }
         } else {
             try {
