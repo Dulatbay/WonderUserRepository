@@ -378,7 +378,6 @@ public class OrderServiceImpl implements OrderService {
                 supplyBoxProductToSave.setState(ProductStateInStore.SOLD);
                 supplyBoxProductsRepository.save(supplyBoxProductToSave);
                 log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
-
             }
         }
 

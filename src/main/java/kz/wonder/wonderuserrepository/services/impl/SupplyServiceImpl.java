@@ -407,6 +407,14 @@ public class SupplyServiceImpl implements SupplyService {
 
                     storeCellProductRepository.saveAll(storeCellProducts);
                 });
+
+        supply.setAcceptedTime(now);
+        var isAccepted = supply.getSupplyBoxes()
+                .stream()
+                .noneMatch(supplyBox -> supplyBox.getSupplyBoxProducts()
+                        .stream()
+                        .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
+        supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
     }
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
