@@ -23,14 +23,15 @@ public class AssemblyServiceImpl implements AssemblyService {
 
     @Override
     public Page<EmployeeAssemblyResponse> findAssembliesByParams(String keycloakId, AssemblySearchParameters assemblySearchParameters) {
+        long startUnixTimestamp = assemblySearchParameters.getOrderCreationStartDate().atStartOfDay().atZone(ZONE_ID).toInstant().getEpochSecond() * 1000;
+        long endUnixTimestamp = assemblySearchParameters.getOrderCreationEndDate().atStartOfDay().plusDays(1).atZone(ZONE_ID).toInstant().getEpochSecond() * 1000;
+
         PageRequest pageRequest = PageRequest.of(assemblySearchParameters.getPage(), assemblySearchParameters.getSize(), Sort.by(assemblySearchParameters.getSortBy()));
-        long startUnixTimestamp = assemblySearchParameters.getStartDate().atStartOfDay().atZone(ZONE_ID).toInstant().getEpochSecond();
-        long endUnixTimestamp = assemblySearchParameters.getEndDate().atStartOfDay().plusDays(1).atZone(ZONE_ID).toInstant().getEpochSecond();
+        String productState = assemblySearchParameters.getProductStateInStore() == null ? null : assemblySearchParameters.getProductStateInStore().name();
+        String deliveryMode = assemblySearchParameters.getDeliveryMode() == null ? null : assemblySearchParameters.getDeliveryMode().name();
 
-        log.info("start unix timestamp: {}, endUnixTimeStamp: {}", startUnixTimestamp, endUnixTimestamp);
-
-        var products = supplyBoxProductsRepository.findAllEmployeeResponse(pageRequest);
-        log.info("products size {}", products.getSize());
+        log.info("start unix timestamp: {}, endUnixTimeStamp: {}, product state: {}, delivery mode: {}", startUnixTimestamp, endUnixTimestamp, productState, deliveryMode);
+        var products = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, pageRequest);
 
         return products.map(this::mapToEmployeeAssemblyResponse);
     }

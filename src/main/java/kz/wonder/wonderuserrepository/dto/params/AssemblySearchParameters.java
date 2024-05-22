@@ -2,34 +2,33 @@ package kz.wonder.wonderuserrepository.dto.params;
 
 import jakarta.persistence.Convert;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
-import kz.wonder.wonderuserrepository.dto.enums.AssemblyMode;
-import kz.wonder.wonderuserrepository.dto.enums.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
 import lombok.Data;
 
-import javax.management.ConstructorParameters;
 import java.time.LocalDate;
 
 @Data
 public class AssemblySearchParameters {
     @Convert(converter = LocalDateTimeAttributeConverter.class)
-    private LocalDate startDate;
+    private LocalDate orderCreationStartDate;
 
     @Convert(converter = LocalDateTimeAttributeConverter.class)
-    private LocalDate endDate;
+    private LocalDate orderCreationEndDate;
 
-    private int page = 0;
-    private int size = 10;
+    private int page;
+    private int size;
     private DeliveryMode deliveryMode;
-    private AssemblyMode assemblyMode;
     private String sortBy;
+    private ProductStateInStore productStateInStore;
 
-    public AssemblySearchParameters(LocalDate startDate, LocalDate endDate, int page, int size, DeliveryMode deliveryMode, AssemblyMode assemblyMode, String sortBy) {
-        this.startDate = startDate;
-        this.endDate = endDate;
+    public AssemblySearchParameters(LocalDate orderCreationStartDate, LocalDate orderCreationEndDate, int page, int size, DeliveryMode deliveryMode, String sortBy, ProductStateInStore productStateInStore) {
+        this.orderCreationStartDate = orderCreationStartDate;
+        this.orderCreationEndDate = orderCreationEndDate;
         this.page = page;
         this.size = size;
         this.deliveryMode = deliveryMode;
-        this.assemblyMode = assemblyMode;
         this.sortBy = sortBy;
+        this.productStateInStore = productStateInStore;
     }
 }

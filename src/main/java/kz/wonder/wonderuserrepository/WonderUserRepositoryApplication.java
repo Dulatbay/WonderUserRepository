@@ -1,13 +1,9 @@
 package kz.wonder.wonderuserrepository;
 
 import kz.wonder.kaspi.client.api.KaspiApi;
-import kz.wonder.wonderuserrepository.config.Initializer;
-import kz.wonder.wonderuserrepository.services.CityService;
 import kz.wonder.wonderuserrepository.services.FileService;
-import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,15 +17,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Slf4j
 @RequiredArgsConstructor
 public class WonderUserRepositoryApplication {
-    private final Initializer initializer;
-    @Value("${application.sync-users}")
-    private Boolean syncUsers;
-
-    @Value("${application.sync-cities}")
-    private Boolean syncCities;
-
-    @Value("${application.init-users}")
-    private Boolean initUsers;
 
     public static void main(String[] args) {
         SpringApplication.run(WonderUserRepositoryApplication.class, args);
@@ -44,21 +31,9 @@ public class WonderUserRepositoryApplication {
     // todo: на некоторые сущности вместо keycloakId написать userId
 
     @Bean
-    CommandLineRunner init(UserService userService,
-                           FileService fileService,
-                           CityService cityService) {
+    CommandLineRunner init(FileService fileService) {
         return args -> {
-            if (syncUsers)
-                userService.syncUsersBetweenDBAndKeycloak();
-
-            if (syncCities)
-                cityService.syncWithKaspi();
-
-            if (initUsers)
-                initializer.init();
-
             fileService.init();
-
             log.info("Application Successfully Started");
         };
     }

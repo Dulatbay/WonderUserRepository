@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
-import kz.wonder.wonderuserrepository.dto.enums.AssemblyMode;
-import kz.wonder.wonderuserrepository.dto.enums.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,7 +10,6 @@ public class EmployeeAssemblyResponse {
     private Long orderId;
     private String orderCode;
     private DeliveryMode deliveryMode;
-    private AssemblyMode assemblyMode;
     private LocalDateTime deliveryDate;
     private LocalDateTime orderDate;
     private String shopName;
