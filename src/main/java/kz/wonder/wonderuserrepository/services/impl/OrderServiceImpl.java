@@ -139,9 +139,11 @@ public class OrderServiceImpl implements OrderService {
                             for (var order : orders) {
                                 var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
                                 var kaspiOrder = getKaspiOrder(order, token);
-                                orderEntries.forEach(orderEntry -> {
-                                    processOrderProduct(token, kaspiOrder, orderEntry);
-                                });
+                                if (!kaspiOrder.getStatus().equals("CANCELLING"))
+                                    orderEntries.forEach(orderEntry -> {
+                                        processOrderProduct(token, kaspiOrder, orderEntry);
+                                    });
+
                             }
 
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
@@ -224,7 +226,7 @@ public class OrderServiceImpl implements OrderService {
             OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
             orderDetailResponse.setProductName(product.getName());
             orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
-            orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
+            orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "Not accepted yet");
             orderDetailResponse.setProductVendorCode(product.getVendorCode());
             orderDetailResponse.setProductTradePrice(product.getTradePrice());
             orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)

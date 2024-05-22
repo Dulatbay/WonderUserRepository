@@ -12,6 +12,7 @@ RUN chmod +x ./gradlew
 COPY client-libs client-libs
 
 RUN ./gradlew dependencies
+RUN ./gradlew dependencyInsight --dependency springdoc-openapi
 
 COPY src src
 
