@@ -19,7 +19,8 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +
             "JOIN schema_wonder.kaspi_order_product kop ON kop.supply_box_product_id = sbp.id " +
-            "JOIN schema_wonder.kaspi_order ko ON ko.id = kop.kaspi_order_id")
-    Page<SupplyBoxProduct> findAllEmployeeResponse(Pageable pageable);
+            "JOIN schema_wonder.kaspi_order ko ON ko.id = kop.kaspi_order_id " +
+            "WHERE (ko.creation_date BETWEEN :start AND :end) AND (:productState IS NULL OR sbp.product_state = :productState) AND (:deliveryMode IS NULL OR ko.delivery_mode = :deliveryMode)")
+    Page<SupplyBoxProduct> findAllEmployeeResponse(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, Pageable pageable);
 
 }

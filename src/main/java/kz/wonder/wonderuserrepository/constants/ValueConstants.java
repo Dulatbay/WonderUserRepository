@@ -21,4 +21,8 @@ public class ValueConstants {
 
     public static final long ORDERS_INIT_DURATION = 300000L; // five minutes
     public static final long CITIES_INIT_DURATION = 604800000L; // one week
+    public static final long SYNC_USERS_DURATION = 300000L; // five minutes
+    public static final String UPDATE_ORDERS_PROPERTY_NAME = "update_orders";
+    public static final String SYNC_CITIES_PROPERTY_NAME = "sync_cities";
+    public static final String SYNC_USERS_PROPERTY_NAME = "sync_users";
 }

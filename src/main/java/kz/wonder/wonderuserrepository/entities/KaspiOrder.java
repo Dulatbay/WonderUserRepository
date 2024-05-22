@@ -50,7 +50,8 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private Boolean isKaspiDelivery;
 
     @Column(name = "delivery_mode")
-    private String deliveryMode;
+    @Enumerated(value = EnumType.STRING)
+    private DeliveryMode deliveryMode;
 
     @Column(name = "signature_required")
     private Boolean signatureRequired;
