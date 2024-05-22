@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -8,7 +9,7 @@ import java.time.LocalDateTime;
 public class EmployeeOrderResponse {
     private String orderCode;
     private LocalDateTime orderCreatedAt;
-    private String deliveryType;
+    private DeliveryMode deliveryType;
     private LocalDateTime orderToSendTime;
     private String orderStatus;
 }

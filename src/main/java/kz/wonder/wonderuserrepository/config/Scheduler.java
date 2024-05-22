@@ -25,29 +25,29 @@ public class Scheduler {
 //        cityService.syncWithKaspi();
 //    }
 
-    @Scheduled(fixedRate = ORDERS_INIT_DURATION)
-    public void updateOrders() {
-        try {
-            log.info("Updating orders started");
-            long currentTime = System.currentTimeMillis();
-            long duration = Duration.ofDays(14).toMillis();
-            long startDate = currentTime - duration;
-
-            var tokens = kaspiTokenRepository.findAll();
-
-            log.info("Found {} tokens", tokens.size());
-
-            tokens.forEach(token -> {
-                try {
-                    orderService.processTokenOrders(token, startDate, currentTime, 0);
-                } catch (Exception ex) {
-                    log.error("Error processing orders for token: {}", token, ex);
-                }
-            });
-        } catch (Exception ex) {
-            log.error("Error updating orders", ex);
-        }
-    }
+//    @Scheduled(fixedRate = ORDERS_INIT_DURATION)
+//    public void updateOrders() {
+//        try {
+//            log.info("Updating orders started");
+//            long currentTime = System.currentTimeMillis();
+//            long duration = Duration.ofDays(14).toMillis();
+//            long startDate = currentTime - duration;
+//
+//            var tokens = kaspiTokenRepository.findAll();
+//
+//            log.info("Found {} tokens", tokens.size());
+//
+//            tokens.forEach(token -> {
+//                try {
+//                    orderService.processTokenOrders(token, startDate, currentTime, 0);
+//                } catch (Exception ex) {
+//                    log.error("Error processing orders for token: {}", token, ex);
+//                }
+//            });
+//        } catch (Exception ex) {
+//            log.error("Error updating orders", ex);
+//        }
+//    }
 
 
 }

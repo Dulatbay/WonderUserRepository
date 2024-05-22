@@ -320,7 +320,7 @@ public class OrderServiceImpl implements OrderService {
         kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
         kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
         kaspiOrder.setIsKaspiDelivery(orderAttributes.getIsKaspiDelivery());
-        kaspiOrder.setDeliveryMode(orderAttributes.getDeliveryMode());
+        kaspiOrder.setDeliveryMode(DeliveryMode.valueOf(orderAttributes.getDeliveryMode()));
         kaspiOrder.setSignatureRequired(orderAttributes.getSignatureRequired());
         kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
         kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());

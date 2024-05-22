@@ -2,10 +2,10 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
-import kz.wonder.wonderuserrepository.dto.enums.AssemblyMode;
-import kz.wonder.wonderuserrepository.dto.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
 import kz.wonder.wonderuserrepository.services.AssemblyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,17 +29,17 @@ public class AssemblyController {
 
 
     @GetMapping
-    public ResponseEntity<PaginatedResponse<EmployeeAssemblyResponse>> getCurrentAssemblies(@RequestParam("start-date") LocalDate startDate,
-                                                                                            @RequestParam("end-date") LocalDate endDate,
+    public ResponseEntity<PaginatedResponse<EmployeeAssemblyResponse>> getCurrentAssemblies(@RequestParam("orderCreationStartDate") LocalDate orderCreationStartDate,
+                                                                                            @RequestParam("orderCreationEndDate") LocalDate orderCreationEndDate,
                                                                                             @RequestParam(defaultValue = "0") int page,
                                                                                             @RequestParam(defaultValue = "10") int size,
                                                                                             @RequestParam(name = "deliveryMode", required = false) DeliveryMode deliveryMode,
-                                                                                            @RequestParam(name = "assemblyMode", required = false) AssemblyMode assemblyMode,
+                                                                                            @RequestParam(name = "productStateInStore", required = false) ProductStateInStore productStateInStore,
                                                                                             @RequestParam(name = "sortBy", required = false, defaultValue = "id") String sortBy) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        Page<EmployeeAssemblyResponse> assemblyResponse = assemblyService.findAssembliesByParams(keycloakId, new AssemblySearchParameters(startDate, endDate, page, size, deliveryMode, assemblyMode, sortBy));
+        Page<EmployeeAssemblyResponse> assemblyResponse = assemblyService.findAssembliesByParams(keycloakId, new AssemblySearchParameters(orderCreationStartDate, orderCreationEndDate, page, size, deliveryMode, sortBy, productStateInStore));
 
         return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
     }
