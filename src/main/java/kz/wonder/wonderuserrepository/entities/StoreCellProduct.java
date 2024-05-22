@@ -13,14 +13,14 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Table(name = "store_cell_product", schema = schemaName)
 public class StoreCellProduct extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "store_cell_id", columnDefinition = "integer", nullable = false)
+    @JoinColumn(name = "store_cell_id", nullable = false)
     private StoreCell storeCell;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "supply_box_product_id", columnDefinition = "integer", nullable = false)
+    @JoinColumn(name = "supply_box_product_id", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "employee_id", columnDefinition = "integer", nullable = false)
+    @JoinColumn(name = "employee_id", nullable = false)
     private StoreEmployee storeEmployee;
 }
