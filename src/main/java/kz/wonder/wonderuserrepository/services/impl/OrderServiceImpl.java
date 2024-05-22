@@ -10,13 +10,13 @@ import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.KaspiOrderMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -41,18 +41,13 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiOrderRepository kaspiOrderRepository;
     private final UserService userService;
     private final KaspiApi kaspiApi;
-    private final KaspiCityRepository kaspiCityRepository;
-    private final KaspiStoreRepository kaspiStoreRepository;
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
-    // todo: переделать этот говно код
-    @Value("${application.admin-keycloak-id}")
-    private String adminKeycloakId;
-    private WonderUser admin;
+    private final KaspiOrderMapper kaspiOrderMapper;
 
 
     @Override
@@ -101,19 +96,6 @@ public class OrderServiceImpl implements OrderService {
         return orderResponse;
     }
 
-    private static @NotNull KaspiDeliveryAddress getKaspiDeliveryAddress(OrdersDataResponse.OrderAttributes orderAttributes) {
-        KaspiDeliveryAddress kaspiDeliveryAddress = new KaspiDeliveryAddress();
-        kaspiDeliveryAddress.setStreetName(orderAttributes.getDeliveryAddress().getStreetName());
-        kaspiDeliveryAddress.setStreetNumber(orderAttributes.getDeliveryAddress().getStreetNumber());
-        kaspiDeliveryAddress.setTown(orderAttributes.getDeliveryAddress().getTown());
-        kaspiDeliveryAddress.setDistrict(orderAttributes.getDeliveryAddress().getDistrict());
-        kaspiDeliveryAddress.setBuilding(orderAttributes.getDeliveryAddress().getBuilding());
-        kaspiDeliveryAddress.setApartment(orderAttributes.getDeliveryAddress().getApartment());
-        kaspiDeliveryAddress.setFormattedAddress(orderAttributes.getDeliveryAddress().getFormattedAddress());
-        kaspiDeliveryAddress.setLatitude(orderAttributes.getDeliveryAddress().getLatitude());
-        kaspiDeliveryAddress.setLongitude(orderAttributes.getDeliveryAddress().getLongitude());
-        return kaspiDeliveryAddress;
-    }
 
     @Override
     public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
@@ -156,7 +138,10 @@ public class OrderServiceImpl implements OrderService {
 
                             for (var order : orders) {
                                 var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
-                                orderEntries.forEach(orderEntry -> processOrder(order, token, orderEntry));
+                                var kaspiOrder = getKaspiOrder(order, token);
+                                orderEntries.forEach(orderEntry -> {
+                                    processOrderProduct(token, kaspiOrder, orderEntry);
+                                });
                             }
 
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
@@ -314,73 +299,28 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void processOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token, OrderEntry orderEntry) {
+    private KaspiOrder getKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
+
         if (optionalKaspiOrder.isPresent()) {
-            var kaspiOrder = optionalKaspiOrder.get();
-            try {
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
-                updatedCount++;
-            } catch (Exception e) {
-                log.error("Error processing order: {}", e.getMessage(), e);
-            }
+            var updatedKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
+            updatedKaspiOrder.setId(optionalKaspiOrder.get().getId());
+            updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
+            updatedKaspiOrder = kaspiOrderRepository.save(updatedKaspiOrder);
+            updatedCount++;
+            return updatedKaspiOrder;
         } else {
-            try {
-                KaspiOrder kaspiOrder = new KaspiOrder();
-                getKaspiOrderByParams(token, order, orderAttributes, kaspiOrder, orderEntry);
-                createdCount++;
-            } catch (Exception e) {
-                log.error("Error processing order: {}", e.getMessage(), e);
-            }
+            var toCreateKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
+            toCreateKaspiOrder = kaspiOrderRepository.save(toCreateKaspiOrder);
+            createdCount++;
+            return toCreateKaspiOrder;
         }
     }
 
-    private void getKaspiOrderByParams(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
-        kaspiOrder.setKaspiId(order.getOrderId());
-        kaspiOrder.setCode(orderAttributes.getCode());
-        kaspiOrder.setTotalPrice(orderAttributes.getTotalPrice());
-        kaspiOrder.setPaymentMode(orderAttributes.getPaymentMode());
 
-        if (orderAttributes.getDeliveryAddress() != null) {
-            kaspiOrder.setDeliveryAddress(getKaspiDeliveryAddress(orderAttributes));
-        }
-        var kaspiCity = getKaspiCity(orderAttributes);
-
-        var kaspiStore = getKaspiStore(orderAttributes.getOriginAddress(), getKaspiCity(orderAttributes));
-
-        kaspiOrder.setKaspiStore(kaspiStore);
-        kaspiOrder.setCreditTerm(orderAttributes.getCreditTerm());
-        kaspiOrder.setKaspiCity(kaspiCity);
-        kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
-        kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
-        kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
-        kaspiOrder.setIsKaspiDelivery(orderAttributes.getIsKaspiDelivery());
-        kaspiOrder.setDeliveryMode(DeliveryMode.buildDeliveryMode(orderAttributes.getDeliveryMode(), orderAttributes.getIsKaspiDelivery()));
-        kaspiOrder.setSignatureRequired(orderAttributes.getSignatureRequired());
-        kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
-        kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());
-        kaspiOrder.setCourierTransmissionPlanningDate(orderAttributes.getKaspiDelivery().getCourierTransmissionPlanningDate());
-        kaspiOrder.setWaybillNumber(orderAttributes.getKaspiDelivery().getWaybillNumber());
-        kaspiOrder.setExpress(orderAttributes.getKaspiDelivery().getExpress());
-        kaspiOrder.setReturnedToWarehouse(orderAttributes.getKaspiDelivery().getReturnedToWarehouse());
-        kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
-        kaspiOrder.setPreOrder(orderAttributes.getPreOrder());
-        kaspiOrder.setPickupPointId(orderAttributes.getPickupPointId());
-        kaspiOrder.setState(orderAttributes.getState());
-        kaspiOrder.setAssembled(orderAttributes.getAssembled());
-        kaspiOrder.setApprovedByBankDate(orderAttributes.getApprovedByBankDate());
-        kaspiOrder.setStatus(orderAttributes.getStatus());
-        kaspiOrder.setCustomerName(orderAttributes.getCustomer().getName());
-        kaspiOrder.setCustomerCellPhone(orderAttributes.getCustomer().getCellPhone());
-        kaspiOrder.setCustomerFirstName(orderAttributes.getCustomer().getFirstName());
-        kaspiOrder.setCustomerLastName(orderAttributes.getCustomer().getLastName());
-        kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
-        kaspiOrder.setWonderUser(token.getWonderUser());
-
-        // todo: внедрить мапперы в проект
+    private void processOrderProduct(KaspiToken token, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
         // todo: замечать отмену заказов в шелудер
-
 
         var vendorCode = orderEntry.getAttributes().getOffer().getCode();
 
@@ -397,10 +337,10 @@ public class OrderServiceImpl implements OrderService {
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
-            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiStore.getId(), product.getId());
+            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiOrder.getKaspiStore().getId(), product.getId());
 
 
-            var sellAt = Instant.ofEpochMilli(orderAttributes.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
+            var sellAt = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
             // todo: просто получить сразу один продукт поставки сразу, не перебирая весь цикл
 
             for (var supplyBoxProduct : supplyBoxProductList) {
@@ -418,81 +358,24 @@ public class OrderServiceImpl implements OrderService {
             if (supplyBoxProductToSave != null) {
                 supplyBoxProductToSave.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
                 supplyBoxProductsRepository.save(supplyBoxProductToSave);
-                log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
+                log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), kaspiOrder.getCode());
             }
         }
 
-
-        // todo: here is bug with kaspi order products(duplicates in db)
-        KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderId(product == null ? null : product.getId(), kaspiOrder.getId())
-                .orElse(new KaspiOrderProduct());
-        kaspiOrderProduct.setOrder(kaspiOrder);
-        kaspiOrderProduct.setProduct(product);
-        kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
-        kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
-
         kaspiOrderRepository.save(kaspiOrder);
-        kaspiOrderProductRepository.save(kaspiOrderProduct);
-    }
-
-    private @NotNull KaspiCity getKaspiCity(OrdersDataResponse.OrderAttributes orderAttributes) {
-        return kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
-    }
-
-    public @NotNull KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
-        var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(address.getId());
 
 
-        if (optionalKaspiStore.isEmpty()) {
-
-            String apartment = address.getAddress().getApartment() == null ? null : address.getAddress().getApartment().trim();
-            String streetName = address.getAddress().getStreetName() == null ? null : address.getAddress().getStreetName().trim();
-            String streetNumber = address.getAddress().getStreetNumber() == null ? null : address.getAddress().getStreetNumber().trim();
-            String town = address.getAddress().getTown() == null ? null : address.getAddress().getTown().trim();
-            String building = address.getAddress().getBuilding() == null ? null : address.getAddress().getBuilding().trim();
-            String district = address.getAddress().getDistrict() == null ? null : address.getAddress().getDistrict().trim();
-
-            address.getAddress().setApartment(apartment);
-            address.getAddress().setStreetName(streetName);
-            address.getAddress().setStreetNumber(streetNumber);
-            address.getAddress().setTown(town);
-            address.getAddress().setBuilding(building);
-            address.getAddress().setDistrict(district);
-
-            optionalKaspiStore = kaspiStoreRepository.findByStoreAddress(apartment, streetName, streetNumber, town, building, district);
+        if (product != null && supplyBoxProductToSave != null) {
+            KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderIdAndSupplyBoxProductId(product.getId(), kaspiOrder.getId(), supplyBoxProductToSave.getId())
+                    .orElse(new KaspiOrderProduct());
+            kaspiOrderProduct.setOrder(kaspiOrder);
+            kaspiOrderProduct.setProduct(product);
+            kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
+            kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
+            kaspiOrderProductRepository.save(kaspiOrderProduct);
         }
 
-        if (optionalKaspiStore.isPresent()) {
-            return optionalKaspiStore.get();
-        } else {
-            KaspiStore kaspiStore = getStore(address, kaspiCity);
-            return kaspiStoreRepository.save(kaspiStore);
-        }
     }
 
-    private @NotNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
-        // todo: этот store создается для какого юзера(сделаю пока для main админа)
-        KaspiStore kaspiStore = new KaspiStore();
 
-
-        kaspiStore.setKaspiId(address.getDisplayName());
-        kaspiStore.setStreetName(address.getAddress().getStreetName());
-        kaspiStore.setStreetNumber(address.getAddress().getStreetNumber());
-        kaspiStore.setTown(address.getAddress().getTown());
-        kaspiStore.setDistrict(address.getAddress().getDistrict());
-        kaspiStore.setBuilding(address.getAddress().getBuilding());
-        kaspiStore.setApartment(address.getAddress().getApartment());
-        kaspiStore.setFormattedAddress(address.getAddress().getFormattedAddress());
-        kaspiStore.setLatitude(address.getAddress().getLatitude());
-        kaspiStore.setLongitude(address.getAddress().getLongitude());
-        kaspiStore.setKaspiCity(kaspiCity);
-        kaspiStore.setOriginAddressId(address.getId());
-
-        if (admin == null)
-            admin = userService.getUserByKeycloakId(adminKeycloakId);
-
-        kaspiStore.setWonderUser(admin);
-        return kaspiStore;
-    }
 }
