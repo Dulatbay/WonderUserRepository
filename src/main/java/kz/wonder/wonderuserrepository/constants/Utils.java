@@ -8,11 +8,14 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.USER_ID_CLAIM;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
@@ -46,5 +49,9 @@ public class Utils {
             randomNumber.append(random.nextInt(10));
         }
         return randomNumber.toString();
+    }
+
+    public static LocalDateTime getLocalDateTimeFromTimestamp(Long timestamp) {
+        return Instant.ofEpochMilli(timestamp).atZone(ZONE_ID).toLocalDateTime();
     }
 }

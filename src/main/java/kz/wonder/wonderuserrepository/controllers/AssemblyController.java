@@ -13,10 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
@@ -35,7 +32,7 @@ public class AssemblyController {
                                                                                             @RequestParam(defaultValue = "10") int size,
                                                                                             @RequestParam(name = "deliveryMode", required = false) DeliveryMode deliveryMode,
                                                                                             @RequestParam(name = "productStateInStore", required = false) ProductStateInStore productStateInStore,
-                                                                                            @RequestParam(name = "sortBy", required = false, defaultValue = "id") String sortBy) {
+                                                                                            @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
@@ -43,4 +40,11 @@ public class AssemblyController {
 
         return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
     }
+
+    @PatchMapping("/start-assemble")
+    public ResponseEntity<?> startAssemble() {
+
+        return ResponseEntity.ok().build();
+    }
+
 }
