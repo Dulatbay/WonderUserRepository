@@ -1,5 +1,10 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.enums.AssemblyMode;
@@ -29,6 +34,14 @@ public class AssemblyController {
 
 
     @GetMapping
+    @Operation(summary = "Get Current Assemblies", description = "Returns a paginated list of current assemblies based on the provided search parameters")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved assemblies",
+                    content = @Content(schema = @Schema(implementation = PaginatedResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input parameters"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized access"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public ResponseEntity<PaginatedResponse<EmployeeAssemblyResponse>> getCurrentAssemblies(@RequestParam("start-date") LocalDate startDate,
                                                                                             @RequestParam("end-date") LocalDate endDate,
                                                                                             @RequestParam(defaultValue = "0") int page,
