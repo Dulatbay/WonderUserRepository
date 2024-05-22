@@ -396,7 +396,8 @@ public class SupplyServiceImpl implements SupplyService {
                                 supplyBoxProduct.setAcceptedTime(now);
                                 supplyBoxProductsRepository.save(supplyBoxProduct);
 
-                                StoreCellProduct storeCellProduct = new StoreCellProduct();
+                                StoreCellProduct storeCellProduct = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
+                                        .orElse(new StoreCellProduct());
 
                                 storeCellProduct.setStoreEmployee(employee);
                                 storeCellProduct.setStoreCell(storeCell);
@@ -500,7 +501,7 @@ public class SupplyServiceImpl implements SupplyService {
 
     private void updateReportCounts(SupplyBoxProduct supplyBoxProduct, SupplyReportResponse report) {
         switch (supplyBoxProduct.getState()) {
-            case ACCEPTED:
+            case ACCEPTED: case SOLD: case ASSEMBLED: case IN_ASSEMBLY: case WAITING_FOR_ASSEMBLY:
                 report.setCountOfProductAccepted(report.getCountOfProductAccepted() + 1);
                 break;
             case DECLINED:

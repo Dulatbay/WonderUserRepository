@@ -343,6 +343,9 @@ public class OrderServiceImpl implements OrderService {
         kaspiOrder.setWonderUser(token.getWonderUser());
 
         // todo: внедрить мапперы в проект
+        // todo: замечать отмену заказов в шелудер
+
+
 
         var vendorCode = orderEntry.getAttributes().getOffer().getCode();
 
@@ -363,11 +366,14 @@ public class OrderServiceImpl implements OrderService {
 
 
             var sellAt = Instant.ofEpochMilli(orderAttributes.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
+            // todo: просто получить сразу один продукт поставки сразу, не перебирая весь цикл
+
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
                     log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
                     if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
                         supplyBoxProductToSave = supplyBoxProduct;
+                        log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
                         break;
                     }
                 }
@@ -375,7 +381,7 @@ public class OrderServiceImpl implements OrderService {
 
 
             if (supplyBoxProductToSave != null) {
-                supplyBoxProductToSave.setState(ProductStateInStore.SOLD);
+                supplyBoxProductToSave.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
                 supplyBoxProductsRepository.save(supplyBoxProductToSave);
                 log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), order.getOrderId());
             }
