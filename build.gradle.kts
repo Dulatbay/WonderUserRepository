@@ -74,13 +74,6 @@ dependencies {
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
 
-    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
-    implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
-    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-data-rest
-    implementation("org.springdoc:springdoc-openapi-data-rest:1.7.0")
-
-
-
     // Для обработки аннотаций @Xml* при компиляции
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:2.3.3")
 
