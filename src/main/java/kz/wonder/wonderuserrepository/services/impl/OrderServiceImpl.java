@@ -143,6 +143,7 @@ public class OrderServiceImpl implements OrderService {
                                     orderEntries.forEach(orderEntry -> {
                                         processOrderProduct(token, kaspiOrder, orderEntry);
                                     });
+
                             }
 
                             log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
