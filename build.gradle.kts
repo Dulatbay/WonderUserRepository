@@ -74,8 +74,6 @@ dependencies {
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.3")
 
-    // https://mvnrepository.com/artifact/io.springfox/springfox-swagger2
-    implementation("io.springfox:springfox-swagger2:2.9.2")
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
     implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-data-rest
