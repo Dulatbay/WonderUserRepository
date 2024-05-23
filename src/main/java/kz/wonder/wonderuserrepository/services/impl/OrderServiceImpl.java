@@ -123,13 +123,15 @@ public class OrderServiceImpl implements OrderService {
 
     int createdCount = 0, updatedCount = 0;
 
-    private void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber) {
-        kaspiApi.getOrders(token.getToken(), startDate, currentTime, OrderState.KASPI_DELIVERY, pageNumber, 100)
+    private void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber, OrderState state) {
+        kaspiApi.getOrders(token.getToken(), startDate, currentTime, state, pageNumber, 100)
                 .subscribe(
                         ordersDataResponse -> {
-                            log.info("Found orders data, startDate: {}, endDate: {}, ordersDataResponse.data size: {}",
+                            log.info("Found orders data, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, ordersDataResponse.data size: {}",
                                     startDate,
                                     currentTime,
+                                    state,
+                                    pageNumber,
                                     ordersDataResponse.getData().size());
                             var orders = ordersDataResponse.getData();
                             var products = ordersDataResponse.getIncluded();
@@ -151,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
                             updatedCount = 0;
 
                             if (ordersDataResponse.getMeta().getPageCount() > pageNumber + 1) {
-                                processTokenOrders(token, startDate, currentTime, pageNumber + 1);
+                                processTokenOrders(token, startDate, currentTime, pageNumber + 1, state);
                             }
                         },
                         error -> log.error("Error updating orders: {}", error.getMessage(), error)
@@ -291,7 +293,9 @@ public class OrderServiceImpl implements OrderService {
 
             tokens.forEach(token -> {
                 try {
-                    this.processTokenOrders(token, startDate, currentTime, 0);
+                    this.processTokenOrders(token, startDate, currentTime, 0, OrderState.KASPI_DELIVERY);
+                    this.processTokenOrders(token, startDate, currentTime, 0, OrderState.PICKUP);
+                    this.processTokenOrders(token, startDate, currentTime, 0, OrderState.ARCHIVE);
                 } catch (Exception ex) {
                     log.error("Error processing orders for token: {}", token, ex);
                 }
@@ -310,6 +314,7 @@ public class OrderServiceImpl implements OrderService {
             updatedKaspiOrder.setId(optionalKaspiOrder.get().getId());
             updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
             updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
+
             updatedKaspiOrder = kaspiOrderRepository.save(updatedKaspiOrder);
             updatedCount++;
             return updatedKaspiOrder;
@@ -349,11 +354,11 @@ public class OrderServiceImpl implements OrderService {
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
                     log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-//                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
                         supplyBoxProductToSave = supplyBoxProduct;
                         log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
                         break;
-//                    }
+                    }
                 }
             }
 

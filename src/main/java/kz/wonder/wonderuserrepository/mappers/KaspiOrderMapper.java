@@ -6,16 +6,20 @@ import kz.wonder.wonderuserrepository.entities.KaspiOrder;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
+import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class KaspiOrderMapper {
     private final KaspiDeliveryAddressMapper deliveryAddressMapper;
     private final KaspiStoreMapper kaspiStoreMapper;
     private final KaspiCityRepository kaspiCityRepository;
+    private final KaspiStoreRepository kaspiStoreRepository;
 
 
     public KaspiOrder toKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
@@ -28,15 +32,32 @@ public class KaspiOrderMapper {
         if (orderAttributes.getDeliveryAddress() != null) {
             kaspiOrder.setDeliveryAddress(deliveryAddressMapper.getKaspiDeliveryAddress(orderAttributes));
         }
-        var kaspiCity = kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
-        ;
 
-        var kaspiStore = kaspiStoreMapper.getKaspiStore(orderAttributes.getOriginAddress(), kaspiCity);
+        if (orderAttributes.getOriginAddress() != null) {
+            var kaspiCity = kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
+                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
 
-        kaspiOrder.setKaspiStore(kaspiStore);
+            var kaspiStore = kaspiStoreMapper.getKaspiStore(orderAttributes.getOriginAddress(), kaspiCity);
+
+            kaspiOrder.setKaspiStore(kaspiStore);
+            kaspiOrder.setKaspiCity(kaspiCity);
+        } else {
+            var pickupPointId = orderAttributes.getPickupPointId();
+            var divided = pickupPointId.split("_");
+            if (divided.length == 2) {
+                var kaspiId = divided[1];
+
+                var kaspiStoreOptional = kaspiStoreRepository.findByKaspiIdAndWonderUserKeycloakId(kaspiId, token.getWonderUser().getKeycloakId());
+
+                if (kaspiStoreOptional.isPresent()) {
+                    kaspiOrder.setKaspiStore(kaspiStoreOptional.get());
+                    kaspiOrder.setKaspiCity(kaspiStoreOptional.get().getKaspiCity());
+                }
+            }
+        }
+
+
         kaspiOrder.setCreditTerm(orderAttributes.getCreditTerm());
-        kaspiOrder.setKaspiCity(kaspiCity);
         kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
         kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
         kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());

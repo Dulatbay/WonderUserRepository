@@ -17,6 +17,8 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
 
     Optional<KaspiStore> findByOriginAddressId(String originAddressId);
 
+    Optional<KaspiStore> findByKaspiIdAndWonderUserKeycloakId(String kaspiId, String keycloakId);
+
     List<KaspiStore> findAllByEnabledIsTrue();
 
     @Query("SELECT ks FROM KaspiStore ks " +

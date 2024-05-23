@@ -33,7 +33,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -148,10 +147,9 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductPrice processProductPrice(Product product, KaspiCity city, Double priceValue) {
         var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
-                .orElse(new ProductPrice(city, product, priceValue, false));
+                .orElse(new ProductPrice(city, product, priceValue));
         productPrice.setKaspiCity(city);
         productPrice.setPrice(priceValue);
-        productPrice.setUpdatedAt(LocalDateTime.now());
         return productPriceRepository.save(productPrice);
     }
 
@@ -221,7 +219,6 @@ public class ProductServiceImpl implements ProductService {
 
                                 productPrice.setCityId(city.getId());
                                 productPrice.setCityName(city.getName());
-                                productPrice.setMainPrice(productPrice.isMainPrice());
                                 productPrice.setCount(product.getSupplyBoxes()
                                         .stream()
                                         .filter(p ->
@@ -274,37 +271,39 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void changePrice(String keycloakId, ProductPriceChangeRequest productPriceChangeRequest) {
-        if (!productPriceChangeRequest.getPriceList().isEmpty())
+        if (productPriceChangeRequest.getPriceList() != null && !productPriceChangeRequest.getPriceList().isEmpty())
             updatePrice(keycloakId, productPriceChangeRequest.getPriceList());
-        if (!productPriceChangeRequest.getMainPriceList().isEmpty())
+        if (productPriceChangeRequest.getMainPriceList() != null && !productPriceChangeRequest.getMainPriceList().isEmpty())
             updateMainCities(keycloakId, productPriceChangeRequest.getMainPriceList());
     }
 
     private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {
         mainPrices
                 .forEach(price -> {
+
                     var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+
+                    if (price.getMainCityId() == -1) {
+                        var priceToDelete = product.getMainCityPrice();
+                        if (priceToDelete == null)
+                            throw new IllegalArgumentException("Price already unselected");
+
+                        product.setMainCityPrice(null);
+                        productRepository.save(product);
+                        productPriceRepository.delete(priceToDelete);
+                        return;
+                    }
 
                     var city = kaspiCityRepository.findById(price.getMainCityId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-                    if (price.isSelected()) {
-                        var mainPriceOptional = productPriceRepository.findByProductAndIsMainPrice(product, true);
-
-                        if (mainPriceOptional.isPresent()) {
-                            var mainPrice = mainPriceOptional.get();
-                            mainPrice.setIsMainPrice(false);
-                            productPriceRepository.save(mainPrice);
-                        }
-                    }
-
-
                     var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
-                    productPrice.setIsMainPrice(price.isSelected());
-                    productPriceRepository.save(productPrice);
 
+                    product.setMainCityPrice(productPrice);
+                    productRepository.save(product);
                 });
     }
 
@@ -372,7 +371,7 @@ public class ProductServiceImpl implements ProductService {
         offer.setSku(product.getVendorCode());
         offer.setModel(product.getName());
 
-        var optionalMainPrice = productPriceRepository.findByProductAndIsMainPrice(product, true);
+        var optionalMainPrice = Optional.ofNullable(product.getMainCityPrice());
 
 
         if (optionalMainPrice.isEmpty()) {
@@ -417,13 +416,13 @@ public class ProductServiceImpl implements ProductService {
                 .name(product.getName())
                 .vendorCode(product.getVendorCode())
                 .keycloakUserId(product.getKeycloakId())
+                .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
                 .prices(
                         product.getPrices().stream().map(
                                 productPrice ->
                                         ProductResponse.ProductPriceResponse.builder()
                                                 .price(productPrice.getPrice())
                                                 .cityName(productPrice.getKaspiCity().getName())
-                                                .isMainPrice(productPrice.getIsMainPrice())
                                                 .build()
                         ).collect(Collectors.toList())
                 )
