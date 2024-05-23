@@ -348,11 +348,11 @@ public class OrderServiceImpl implements OrderService {
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
                     log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+//                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
                         supplyBoxProductToSave = supplyBoxProduct;
                         log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
                         break;
-                    }
+//                    }
                 }
             }
 

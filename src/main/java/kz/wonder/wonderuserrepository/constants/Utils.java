@@ -14,8 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.USER_ID_CLAIM;
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
@@ -25,6 +24,10 @@ public class Utils {
 
     public static String extractIdFromToken(JwtAuthenticationToken token) {
         return token.getToken().getClaim(USER_ID_CLAIM);
+    }
+
+    public static String extractNameFromToken(JwtAuthenticationToken token) {
+        return token.getToken().getClaim(USER_NAME_CLAIM);
     }
 
     public static String getStringFromExcelCell(Cell vendorCodeCell) {
