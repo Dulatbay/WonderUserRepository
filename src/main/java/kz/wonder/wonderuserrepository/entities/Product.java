@@ -38,6 +38,10 @@ public class Product extends AbstractEntity<Long> {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductPrice> prices;
 
+    @OneToOne
+    @JoinColumn(name = "main_city_price_id")
+    private ProductPrice mainCityPrice;
+
     @Column(name = "keycloak_id", nullable = false)
     private String keycloakId;
 

@@ -26,7 +26,4 @@ public class ProductPrice extends AbstractEntity<Long> {
 
     @Column(name = "price", nullable = false)
     private Double price;
-
-    @Column(name = "is_main_price", nullable = false)
-    private Boolean isMainPrice;
 }
