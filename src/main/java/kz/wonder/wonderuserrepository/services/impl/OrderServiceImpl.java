@@ -16,6 +16,7 @@ import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -139,12 +140,11 @@ public class OrderServiceImpl implements OrderService {
             log.info("orders count: {}, products count: {}", orders.size(), products.size());
 
             for (var order : orders) {
-                KaspiOrder kaspiOrder = new KaspiOrder();
-                var isCreated = saveKaspiOrder(kaspiOrder, order, token);
-                if (isCreated) {
+                var pairResult = saveKaspiOrder(order, token);
+                if (pairResult.getValue()) {
                     var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
                     orderEntries.forEach(orderEntry -> {
-                        processOrderProduct(token, kaspiOrder, orderEntry);
+                        processOrderProduct(token, pairResult.getKey(), orderEntry);
                     });
                 }
 
@@ -329,7 +329,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private Boolean saveKaspiOrder(KaspiOrder kaspiOrder, OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
+    private Pair<KaspiOrder, Boolean> saveKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
 
@@ -339,12 +339,11 @@ public class OrderServiceImpl implements OrderService {
             updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
             updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
 
-            kaspiOrder = kaspiOrderRepository.save(updatedKaspiOrder);
-            return false;
+            return Pair.of(kaspiOrderRepository.save(updatedKaspiOrder), false);
         } else {
             var toCreateKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
-            kaspiOrder = kaspiOrderRepository.save(toCreateKaspiOrder);
-            return true;
+            kaspiOrderRepository.save(toCreateKaspiOrder);
+            return Pair.of(kaspiOrderRepository.save(toCreateKaspiOrder), false);
         }
     }
 
