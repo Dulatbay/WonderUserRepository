@@ -309,17 +309,17 @@ public class OrderServiceImpl implements OrderService {
 
             tokens.parallelStream().forEach(token -> {
                 try {
-                    CompletableFuture<Void> future1 = CompletableFuture.runAsync(() ->
+                    CompletableFuture<Void> kaspiDeliveryFuture = CompletableFuture.runAsync(() ->
                             this.processTokenOrders(token, currentTime - durationOf14Days, currentTime, 0, OrderState.KASPI_DELIVERY)
                     );
-                    CompletableFuture<Void> future2 = CompletableFuture.runAsync(() ->
+                    CompletableFuture<Void> pickupFuture = CompletableFuture.runAsync(() ->
                             this.processTokenOrders(token, currentTime - durationOf14Days, currentTime, 0, OrderState.PICKUP)
                     );
-                    CompletableFuture<Void> future3 = CompletableFuture.runAsync(() ->
+                    CompletableFuture<Void> archiveFuture = CompletableFuture.runAsync(() ->
                             this.processTokenOrders(token, currentTime - durationOf5Days, currentTime, 0, OrderState.ARCHIVE)
                     );
 
-                    CompletableFuture.allOf(future1, future2, future3).join();
+                    CompletableFuture.allOf(kaspiDeliveryFuture, pickupFuture, archiveFuture).join();
                 } catch (Exception ex) {
                     log.error("Error processing orders for token: {}", token, ex);
                 }
