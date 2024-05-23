@@ -33,6 +33,7 @@ public class KaspiOrderMapper {
             kaspiOrder.setDeliveryAddress(deliveryAddressMapper.getKaspiDeliveryAddress(orderAttributes));
         }
 
+        // if the originAddress is null, then an order delivery type is express
         if (orderAttributes.getOriginAddress() != null) {
             var kaspiCity = kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
                     .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
@@ -41,6 +42,13 @@ public class KaspiOrderMapper {
 
             kaspiOrder.setKaspiStore(kaspiStore);
             kaspiOrder.setKaspiCity(kaspiCity);
+            kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
+            kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());
+            kaspiOrder.setCourierTransmissionPlanningDate(orderAttributes.getKaspiDelivery().getCourierTransmissionPlanningDate());
+            kaspiOrder.setWaybillNumber(orderAttributes.getKaspiDelivery().getWaybillNumber());
+            kaspiOrder.setExpress(orderAttributes.getKaspiDelivery().getExpress());
+            kaspiOrder.setReturnedToWarehouse(orderAttributes.getKaspiDelivery().getReturnedToWarehouse());
+            kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
         } else {
             var pickupPointId = orderAttributes.getPickupPointId();
             var divided = pickupPointId.split("_");
@@ -64,13 +72,6 @@ public class KaspiOrderMapper {
         kaspiOrder.setIsKaspiDelivery(orderAttributes.getIsKaspiDelivery());
         kaspiOrder.setDeliveryMode(DeliveryMode.buildDeliveryMode(orderAttributes.getDeliveryMode(), orderAttributes.getIsKaspiDelivery()));
         kaspiOrder.setSignatureRequired(orderAttributes.getSignatureRequired());
-        kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
-        kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());
-        kaspiOrder.setCourierTransmissionPlanningDate(orderAttributes.getKaspiDelivery().getCourierTransmissionPlanningDate());
-        kaspiOrder.setWaybillNumber(orderAttributes.getKaspiDelivery().getWaybillNumber());
-        kaspiOrder.setExpress(orderAttributes.getKaspiDelivery().getExpress());
-        kaspiOrder.setReturnedToWarehouse(orderAttributes.getKaspiDelivery().getReturnedToWarehouse());
-        kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
         kaspiOrder.setPreOrder(orderAttributes.getPreOrder());
         kaspiOrder.setPickupPointId(orderAttributes.getPickupPointId());
         kaspiOrder.setState(orderAttributes.getState());
