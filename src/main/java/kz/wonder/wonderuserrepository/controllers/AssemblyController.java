@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
+import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
+import kz.wonder.wonderuserrepository.dto.response.AssembleProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
@@ -54,10 +56,32 @@ public class AssemblyController {
         return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
     }
 
-    @PatchMapping("/start-assemble")
-    public ResponseEntity<?> startAssemble() {
+    @PostMapping("/start-assemble/{orderCode}")
+    public ResponseEntity<AssembleProcessResponse> startAssemble(@PathVariable String orderCode) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-        return ResponseEntity.ok().build();
+        AssembleProcessResponse assembleProcessResponse = assemblyService.startAssemble(token, orderCode);
+
+        return ResponseEntity.ok(assembleProcessResponse);
+    }
+
+    @GetMapping("/{orderCode}")
+    public ResponseEntity<AssembleProcessResponse> getAssembly(@PathVariable String orderCode) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        AssembleProcessResponse assembleProcessResponse = assemblyService.getAssemble(token, orderCode);
+
+        return ResponseEntity.ok(assembleProcessResponse);
+
+    }
+
+    @PostMapping("/assemble-product/{productArticle}")
+    public ResponseEntity<AssembleProductResponse> assembleProduct(@PathVariable String productArticle, @RequestParam(value = "order-code") String orderCode) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        AssembleProductResponse assembleProductResponse = assemblyService.assembleProduct(token, productArticle, orderCode);
+
+        return ResponseEntity.ok(assembleProductResponse);
     }
 
 }

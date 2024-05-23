@@ -1,16 +1,25 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
+import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
+import kz.wonder.wonderuserrepository.dto.response.AssembleProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
-import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
-import kz.wonder.wonderuserrepository.repositories.SupplyBoxProductsRepository;
+import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.OrderAssembleMapper;
+import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.AssemblyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
+
+import javax.ws.rs.NotAuthorizedException;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
@@ -19,6 +28,12 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 @RequiredArgsConstructor
 public class AssemblyServiceImpl implements AssemblyService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
+    private final KaspiOrderRepository kaspiOrderRepository;
+    private final StoreEmployeeRepository storeEmployeeRepository;
+    private final OrderAssembleRepository orderAssembleRepository;
+    private final OrderAssembleMapper orderAssembleMapper;
+    private final StoreCellProductRepository storeCellProductRepository;
+    private final OrderAssembleProcessRepository orderAssembleProcessRepository;
 
 
     @Override
@@ -33,13 +48,110 @@ public class AssemblyServiceImpl implements AssemblyService {
         log.info("start unix timestamp: {}, endUnixTimeStamp: {}, product state: {}, delivery mode: {}", startUnixTimestamp, endUnixTimestamp, productState, deliveryMode);
         var products = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, pageRequest);
 
-        return products.map(this::mapToEmployeeAssemblyResponse);
+        return products.map(orderAssembleMapper::mapToEmployeeAssemblyResponse);
+    }
+
+    @Override
+    public AssembleProcessResponse startAssemble(JwtAuthenticationToken starterToken, String orderCode) {
+        var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
+                .orElseThrow(() -> new NotAuthorizedException(""));
+
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Order not found"));
+
+        validateEmployeeWithStore(storeEmployee, order);
+
+        var orderAssembleOptional = orderAssembleRepository.findByKaspiOrderId(order.getId());
+
+        if (orderAssembleOptional.isPresent()) {
+            throw new IllegalArgumentException("Assembly already started");
+        }
+
+        var orderAssemble = orderAssembleRepository.save(orderAssembleMapper.toEntity(storeEmployee, order, AssembleState.STARTED));
+
+        return orderAssembleMapper.toProcessResponse(order, Utils.extractNameFromToken(starterToken), orderAssemble.getId());
     }
 
 
-    private EmployeeAssemblyResponse mapToEmployeeAssemblyResponse(SupplyBoxProduct supplyBoxProduct) {
-        EmployeeAssemblyResponse response = new EmployeeAssemblyResponse();
-        response.setShopName(supplyBoxProduct.getArticle());
-        return response;
+    @Override
+    public AssembleProductResponse assembleProduct(JwtAuthenticationToken starterToken, String productArticle, String orderCode) {
+        var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
+                .orElseThrow(() -> new NotAuthorizedException(""));
+
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        var store = validateEmployeeWithStore(storeEmployee, order);
+
+        var assemble = order.getOrderAssemble();
+
+        if (assemble == null || assemble.getAssembleState() != AssembleState.STARTED) {
+            throw new IllegalArgumentException("Assembly did not start yet");
+        }
+
+        var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Incorrect article"));
+
+        var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
+
+        supplyBoxProduct.setState(ProductStateInStore.ASSEMBLED);
+        supplyBoxProductsRepository.save(supplyBoxProduct);
+
+
+        storeCellProduct.setBusy(false);
+        storeCellProductRepository.save(storeCellProduct);
+
+        var orderAssembleProcessOptional = orderAssembleProcessRepository.findByOrderAssembleIdAndStoreCellProductId(assemble.getId(), storeCellProduct.getId());
+
+        if (orderAssembleProcessOptional.isEmpty()) {
+            orderAssembleProcessRepository.save(orderAssembleMapper.toOrderAssembleProcessEntity(order, storeEmployee, storeCellProduct));
+        } else {
+            var orderAssembleProcess = orderAssembleProcessOptional.get();
+            orderAssembleProcess.setStoreEmployee(storeEmployee);
+            orderAssembleProcessRepository.save(orderAssembleProcess);
+        }
+
+
+        return new AssembleProductResponse(this.getWaybill(order), orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble.getId()));
     }
+
+    @Override
+    public AssembleProcessResponse getAssemble(JwtAuthenticationToken starterToken, String orderCode) {
+        var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
+                .orElseThrow(() -> new NotAuthorizedException(""));
+
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        validateEmployeeWithStore(storeEmployee, order);
+
+        var orderAssemble = order.getOrderAssemble();
+
+
+        return orderAssembleMapper.toProcessResponse(order, orderAssemble == null ? "N\\A" : orderAssemble.getStartedEmployee().getWonderUser().getUsername(), orderAssemble == null ? null : orderAssemble.getId());
+
+    }
+
+    private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
+        var storeEmployeeKaspiStore = storeEmployee.getKaspiStore();
+        var orderStore = order.getKaspiStore();
+
+        if (!storeEmployeeKaspiStore.getId().equals(orderStore.getId()))
+            throw new IllegalArgumentException("Order not found");
+
+        var orderProducts = order.getProducts();
+
+        if (orderProducts == null || orderProducts.isEmpty())
+            throw new IllegalArgumentException("Order not enabled to assemble");
+
+        return orderStore;
+    }
+
+    private String getWaybill(KaspiOrder kaspiOrder) {
+        if (kaspiOrder.getWaybill() != null) return kaspiOrder.getWaybill();
+        // generate with api
+        return "generated(soon)";
+    }
+
+
 }

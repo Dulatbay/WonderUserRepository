@@ -402,6 +402,7 @@ public class SupplyServiceImpl implements SupplyService {
                                 storeCellProduct.setStoreEmployee(employee);
                                 storeCellProduct.setStoreCell(storeCell);
                                 storeCellProduct.setSupplyBoxProduct(supplyBoxProduct);
+                                storeCellProduct.setBusy(true);
 
                                 return storeCellProduct;
                             }).toList();

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.mail.Store;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
@@ -22,6 +21,11 @@ public class WonderUser extends AbstractEntity<Long> {
     private String phoneNumber;
     @Column(name = "keycloak_id", unique = true, nullable = false)
     private String keycloakId;
+
+
+    @Column(name = "username")
+    private String username;
+
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",

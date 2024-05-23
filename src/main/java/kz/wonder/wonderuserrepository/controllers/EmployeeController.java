@@ -142,7 +142,7 @@ public class EmployeeController {
         keycloakBaseUser.setLastName(employeeUpdateRequest.getLastName());
 
         var userResource = keycloakService.updateUser(keycloakBaseUser).toRepresentation();
-        var employee = storeEmployeeService.updateStoreEmployee(userId, employeeUpdateRequest.getStoreId(), employeeUpdateRequest.getPhoneNumber());
+        var employee = storeEmployeeService.updateStoreEmployee(userId, employeeUpdateRequest.getStoreId(), employeeUpdateRequest.getPhoneNumber(), employeeUpdateRequest.getFirstName() + " " + employeeUpdateRequest.getLastName());
 
         var updatedEmployee = EmployeeResponse.builder()
                 .id(employee.getId())

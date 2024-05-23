@@ -16,6 +16,7 @@ public class ValueConstants {
     public static final String UPLOADED_FOLDER = "upload-dir/";
 
     public static final String USER_ID_CLAIM = "user_id";
+    public static final String USER_NAME_CLAIM = "name";
 
     public static final LocalDateTime SERVER_INIT_TIME = LocalDateTime.parse("01.04.2024 00:00", DATE_TIME_FORMATTER);
 

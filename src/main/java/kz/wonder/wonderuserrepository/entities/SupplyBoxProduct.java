@@ -30,14 +30,18 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @Enumerated(value = EnumType.STRING)
     private ProductStateInStore state;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kaspi_order_id")
+    private KaspiOrder kaspiOrder;
+
     @Column(name = "accepted_time")
     private LocalDateTime acceptedTime;
 
-    @OneToMany(fetch = FetchType.LAZY,
+    @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<StoreCellProduct> storeCellProducts;
+    private StoreCellProduct storeCellProduct;
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",

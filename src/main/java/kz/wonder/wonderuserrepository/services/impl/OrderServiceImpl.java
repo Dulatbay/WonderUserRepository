@@ -309,6 +309,7 @@ public class OrderServiceImpl implements OrderService {
             var updatedKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
             updatedKaspiOrder.setId(optionalKaspiOrder.get().getId());
             updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
+            updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
             updatedKaspiOrder = kaspiOrderRepository.save(updatedKaspiOrder);
             updatedCount++;
             return updatedKaspiOrder;
@@ -348,17 +349,18 @@ public class OrderServiceImpl implements OrderService {
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
                     log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+//                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
                         supplyBoxProductToSave = supplyBoxProduct;
                         log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
                         break;
-                    }
+//                    }
                 }
             }
 
 
             if (supplyBoxProductToSave != null) {
                 supplyBoxProductToSave.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
+                supplyBoxProductToSave.setKaspiOrder(kaspiOrder);
                 supplyBoxProductsRepository.save(supplyBoxProductToSave);
                 log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), kaspiOrder.getCode());
             }

@@ -17,6 +17,10 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.article = :article and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+    Optional<SupplyBoxProduct> findByArticleAndStore(@Param("article") String article, @Param("kaspiStoreId") Long kaspiStoreId);
+
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +
             "JOIN schema_wonder.kaspi_order_product kop ON kop.supply_box_product_id = sbp.id " +
             "JOIN schema_wonder.kaspi_order ko ON ko.id = kop.kaspi_order_id " +

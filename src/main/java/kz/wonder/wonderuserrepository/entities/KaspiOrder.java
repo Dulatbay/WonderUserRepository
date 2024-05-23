@@ -127,4 +127,10 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
     private List<KaspiOrderProduct> products;
 
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "kaspiOrder",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private OrderAssemble orderAssemble;
+
 }
