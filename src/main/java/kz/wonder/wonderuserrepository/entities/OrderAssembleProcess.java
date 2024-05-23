@@ -1,9 +1,6 @@
 package kz.wonder.wonderuserrepository.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -12,7 +9,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-@Table(name = "order_assemble_process", schema = schemaName)
+@Table(name = "order_assemble_process", schema = schemaName, uniqueConstraints = {@UniqueConstraint(columnNames = {"order_assemble_id", "store_cell_product_id"})})
 public class OrderAssembleProcess extends AbstractEntity<Long> {
     @ManyToOne
     @JoinColumn(name = "order_assemble_id", nullable = false)
@@ -22,7 +19,7 @@ public class OrderAssembleProcess extends AbstractEntity<Long> {
     @JoinColumn(name = "store_employee_id", nullable = false)
     private StoreEmployee storeEmployee;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "store_cell_product_id", nullable = false)
     private StoreCellProduct storeCellProduct;
 }

@@ -128,6 +128,7 @@ public class UserServiceImpl implements UserService {
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
+			wonderUser.setUsername("Tester");
 
 			KaspiToken kaspiToken = new KaspiToken();
 			kaspiToken.setEnabled(true);

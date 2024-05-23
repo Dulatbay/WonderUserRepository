@@ -309,6 +309,7 @@ public class OrderServiceImpl implements OrderService {
             var updatedKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
             updatedKaspiOrder.setId(optionalKaspiOrder.get().getId());
             updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
+            updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
             updatedKaspiOrder = kaspiOrderRepository.save(updatedKaspiOrder);
             updatedCount++;
             return updatedKaspiOrder;
@@ -359,6 +360,7 @@ public class OrderServiceImpl implements OrderService {
 
             if (supplyBoxProductToSave != null) {
                 supplyBoxProductToSave.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
+                supplyBoxProductToSave.setKaspiOrder(kaspiOrder);
                 supplyBoxProductsRepository.save(supplyBoxProductToSave);
                 log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), kaspiOrder.getCode());
             }

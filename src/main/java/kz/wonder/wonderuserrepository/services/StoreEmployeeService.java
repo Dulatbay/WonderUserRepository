@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services;
 
+import jakarta.validation.constraints.Digits;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeResponse;
 import kz.wonder.wonderuserrepository.entities.StoreEmployee;
@@ -19,7 +20,7 @@ public interface StoreEmployeeService {
 
     List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations, boolean isSuperAdmin,String keycloakIdOfCreator);
 
-    StoreEmployee updateStoreEmployee(Long employeeId, Long storeId);
+    StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber, String username);
 
     StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber);
 

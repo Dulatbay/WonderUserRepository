@@ -41,6 +41,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         WonderUser wonderUser = new WonderUser();
         wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
         wonderUser.setKeycloakId(employeeCreateRequest.getKeycloakId());
+        wonderUser.setUsername(employeeCreateRequest.getFirstName() + " " + employeeCreateRequest.getLastName());
 
         final var store = kaspiStoreRepository.findById(employeeCreateRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please write correct ID of store"));
@@ -137,8 +138,13 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     }
 
     @Override
-    public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId) {
+    public StoreEmployee updateStoreEmployee(Long employeeId, Long storeId, String phoneNumber, String username) {
         final var storeEmployee = getStoreEmployeeWithStoreId(employeeId, storeId);
+
+        var wonderUser = storeEmployee.getWonderUser();
+        wonderUser.setPhoneNumber(phoneNumber);
+        wonderUser.setUsername(username);
+        userRepository.save(wonderUser);
 
         log.info("Store employee update with id: {}", storeEmployee.getId());
 

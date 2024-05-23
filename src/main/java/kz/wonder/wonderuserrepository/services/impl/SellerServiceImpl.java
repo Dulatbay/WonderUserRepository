@@ -36,6 +36,7 @@ public class SellerServiceImpl implements SellerService {
         WonderUser wonderUser = new WonderUser();
         wonderUser.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
         wonderUser.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
+        wonderUser.setUsername(sellerRegistrationRequest.getFirstName() + " " + sellerRegistrationRequest.getLastName());
 
         KaspiToken kaspiToken = new KaspiToken();
         kaspiToken.setEnabled(true);
@@ -58,6 +59,7 @@ public class SellerServiceImpl implements SellerService {
 
         final var kaspiToken = user.getKaspiToken();
 
+        user.setUsername(sellerUserUpdateRequest.getFirstName() + " " + sellerUserUpdateRequest.getLastName());
         user.setPhoneNumber(sellerUserUpdateRequest.getPhoneNumber());
         user.setPhoneNumber(sellerUserUpdateRequest.getPhoneNumber());
         kaspiToken.setSellerName(sellerUserUpdateRequest.getSellerName());

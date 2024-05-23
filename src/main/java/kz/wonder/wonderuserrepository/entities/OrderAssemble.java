@@ -11,8 +11,9 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "order_assemble", schema = schemaName)
 public class OrderAssemble extends AbstractEntity<Long> {
-    @Column(name = "order_id", nullable = false, unique = true)
-    private Long orderId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private KaspiOrder kaspiOrder;
 
     @ManyToOne
     @JoinColumn(name = "started_employee_id", nullable = false)

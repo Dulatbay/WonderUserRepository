@@ -16,9 +16,15 @@ public class StoreCellProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "store_cell_id", nullable = false)
     private StoreCell storeCell;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
+
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "storeCellProduct",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private OrderAssembleProcess assembleProcess;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "employee_id", nullable = false)
