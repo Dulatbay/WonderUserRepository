@@ -16,6 +16,7 @@ import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -29,6 +30,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getLocalDateTimeFromTimestamp;
@@ -121,43 +123,57 @@ public class OrderServiceImpl implements OrderService {
         return new PageImpl<>(result, pageRequest, result.size());
     }
 
-    int createdCount = 0, updatedCount = 0;
 
     private void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber, OrderState state) {
-        kaspiApi.getOrders(token.getToken(), startDate, currentTime, state, pageNumber, 100)
-                .subscribe(
-                        ordersDataResponse -> {
-                            log.info("Found orders data, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, ordersDataResponse.data size: {}",
-                                    startDate,
-                                    currentTime,
-                                    state,
-                                    pageNumber,
-                                    ordersDataResponse.getData().size());
-                            var orders = ordersDataResponse.getData();
-                            var products = ordersDataResponse.getIncluded();
+        try {
+            var ordersDataResponse = kaspiApi.getOrders(token.getToken(), startDate, currentTime, state, pageNumber, 100).block();
+            log.info("Found orders data, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, ordersDataResponse.data size: {}",
+                    token.getSellerName(),
+                    startDate,
+                    currentTime,
+                    state,
+                    pageNumber,
+                    ordersDataResponse.getData().size());
+            var orders = ordersDataResponse.getData();
+            var products = ordersDataResponse.getIncluded();
 
-                            log.info("orders count: {}, products count: {}", orders.size(), products.size());
+            log.info("orders count: {}, products count: {}", orders.size(), products.size());
 
-                            for (var order : orders) {
-                                var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
-                                var kaspiOrder = getKaspiOrder(order, token);
-                                if (!kaspiOrder.getStatus().equals("CANCELLING"))
-                                    orderEntries.forEach(orderEntry -> {
-                                        processOrderProduct(token, kaspiOrder, orderEntry);
-                                    });
+            for (var order : orders) {
+                var pairResult = saveKaspiOrder(order, token);
+                if (pairResult.getValue()) {
+                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
+                    orderEntries.forEach(orderEntry -> {
+                        processOrderProduct(token, pairResult.getKey(), orderEntry);
+                    });
+                }
 
-                            }
+            }
 
-                            log.info("Initializing orders finished, created count: {}, updated count: {}", createdCount, updatedCount);
-                            createdCount = 0;
-                            updatedCount = 0;
+            if (ordersDataResponse.getMeta().getPageCount() > pageNumber + 1) {
+                processTokenOrders(token, startDate, currentTime, pageNumber + 1, state);
+            }
 
-                            if (ordersDataResponse.getMeta().getPageCount() > pageNumber + 1) {
-                                processTokenOrders(token, startDate, currentTime, pageNumber + 1, state);
-                            }
-                        },
-                        error -> log.error("Error updating orders: {}", error.getMessage(), error)
-                );
+            log.info("Initializing finished, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, ordersDataResponse.data size: {}",
+                    token.getSellerName(),
+                    startDate,
+                    currentTime,
+                    state,
+                    pageNumber,
+                    orders.size());
+
+        } catch (Exception e) {
+            log.info("Initializing error, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}",
+                    token.getSellerName(),
+                    startDate,
+                    currentTime,
+                    state,
+                    pageNumber);
+
+            log.error("Error processing token orders", e);
+        }
+
+
     }
 
     @Override
@@ -284,18 +300,26 @@ public class OrderServiceImpl implements OrderService {
         try {
             log.info("Updating orders started");
             long currentTime = System.currentTimeMillis();
-            long duration = Duration.ofDays(14).toMillis();
-            long startDate = currentTime - duration;
+            long durationOf14Days = Duration.ofDays(14).toMillis();
+            long durationOf5Days = Duration.ofDays(5).toMillis();
 
             var tokens = kaspiTokenRepository.findAll();
 
             log.info("Found {} tokens", tokens.size());
 
-            tokens.forEach(token -> {
+            tokens.parallelStream().forEach(token -> {
                 try {
-                    this.processTokenOrders(token, startDate, currentTime, 0, OrderState.KASPI_DELIVERY);
-                    this.processTokenOrders(token, startDate, currentTime, 0, OrderState.PICKUP);
-                    this.processTokenOrders(token, startDate, currentTime, 0, OrderState.ARCHIVE);
+                    CompletableFuture<Void> kaspiDeliveryFuture = CompletableFuture.runAsync(() ->
+                            this.processTokenOrders(token, currentTime - durationOf14Days, currentTime, 0, OrderState.KASPI_DELIVERY)
+                    );
+                    CompletableFuture<Void> pickupFuture = CompletableFuture.runAsync(() ->
+                            this.processTokenOrders(token, currentTime - durationOf14Days, currentTime, 0, OrderState.PICKUP)
+                    );
+                    CompletableFuture<Void> archiveFuture = CompletableFuture.runAsync(() ->
+                            this.processTokenOrders(token, currentTime - durationOf5Days, currentTime, 0, OrderState.ARCHIVE)
+                    );
+
+                    CompletableFuture.allOf(kaspiDeliveryFuture, pickupFuture, archiveFuture).join();
                 } catch (Exception ex) {
                     log.error("Error processing orders for token: {}", token, ex);
                 }
@@ -305,7 +329,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private KaspiOrder getKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
+    private Pair<KaspiOrder, Boolean> saveKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
 
@@ -315,14 +339,11 @@ public class OrderServiceImpl implements OrderService {
             updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
             updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
 
-            updatedKaspiOrder = kaspiOrderRepository.save(updatedKaspiOrder);
-            updatedCount++;
-            return updatedKaspiOrder;
+            return Pair.of(kaspiOrderRepository.save(updatedKaspiOrder), false);
         } else {
             var toCreateKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
-            toCreateKaspiOrder = kaspiOrderRepository.save(toCreateKaspiOrder);
-            createdCount++;
-            return toCreateKaspiOrder;
+            kaspiOrderRepository.save(toCreateKaspiOrder);
+            return Pair.of(kaspiOrderRepository.save(toCreateKaspiOrder), false);
         }
     }
 
