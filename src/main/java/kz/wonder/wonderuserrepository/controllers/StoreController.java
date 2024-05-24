@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
@@ -31,6 +32,7 @@ public class StoreController {
     private final UserService userService;
 
     @PostMapping()
+    @Operation(summary = "Create new store", description = "This endpoint allows to create a new store")
     public ResponseEntity<Void> createStore(@RequestBody
                                             @Valid
                                             KaspiStoreCreateRequest kaspiStoreCreateRequest) {
@@ -53,6 +55,7 @@ public class StoreController {
 
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete store by id", description = "This endpoint deletes the store by its own id")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
@@ -66,6 +69,7 @@ public class StoreController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Change the specific store", description = "This endpoint allows to update details about the store")
     public ResponseEntity<Void> changeStore(@RequestBody
                                             @Valid
                                             KaspiStoreChangeRequest changeRequest,
@@ -84,6 +88,7 @@ public class StoreController {
     }
 
     @PostMapping("/add-box-type")
+    @Operation(summary = "Add new acceptable box type for the store", description = "This endpoint allows the store to add the type of box it can accept")
     public ResponseEntity<Void> addBoxTypeToStore(@RequestParam("box-type-id") Long boxTypeId,
                                                   @RequestParam("store-id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -99,6 +104,7 @@ public class StoreController {
     }
 
     @DeleteMapping("/remove-box-type")
+    @Operation(summary = "Delete specific box type for the store", description = "This endpoint allows a store to remove a box type that it will no longer support")
     public ResponseEntity<Void> removeBoxTypeFromStore(@RequestParam("box-type-id") Long boxTypeId,
                                                        @RequestParam("store-id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -112,6 +118,7 @@ public class StoreController {
     }
 
     @GetMapping()
+    @Operation(summary = "Get all stores", description = "Retrieves the list of all stores details")
     public ResponseEntity<List<StoreResponse>> getAllOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -137,6 +144,7 @@ public class StoreController {
     }
 
     @GetMapping("{id}")
+    @Operation(summary = "Get store by id", description = "Retrieves the information about the specific store")
     public ResponseEntity<StoreResponse> getByIdOwnStore(@PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var isSuperAdmin = getAuthorities(token.getAuthorities())
@@ -148,6 +156,7 @@ public class StoreController {
     }
 
     @GetMapping("/details")
+    @Operation(summary = "Get stores details", description = "Retrieves the list of all stores details with available box types")
     public ResponseEntity<List<StoreDetailResponse>> getAllDetailOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -174,6 +183,7 @@ public class StoreController {
     }
 
     @GetMapping("/details/{id}")
+    @Operation(summary = "Get specific store details", description = "Retrieves the details with available box types of the specific store")
     public ResponseEntity<StoreDetailResponse> getByIdDetailOwnStores(@PathVariable("id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var isSuperAdmin = getAuthorities(token.getAuthorities())
