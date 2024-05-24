@@ -13,6 +13,7 @@ import kz.wonder.wonderuserrepository.entities.KaspiStore;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableBoxTypes;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableTimes;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.KaspiStoreMapper;
 import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreAvailableTimesRepository;
@@ -40,15 +41,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 	private final KaspiCityRepository kaspiCityRepository;
 	private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
 	private final BoxTypeRepository boxTypeRepository;
-
+	private final KaspiStoreMapper kaspiStoreMapper;
 
 	@Override
 	@Transactional(rollbackOn = Exception.class)
 	public void createStore(final KaspiStoreCreateRequest kaspiStoreCreateRequest) {
-		final KaspiStore kaspiStore = new KaspiStore();
+		KaspiStore kaspiStore = new KaspiStore();
 
 		log.info("kaspiStoreCreateRequest.getWonderUser().getKeycloakId(): {}", kaspiStoreCreateRequest.getWonderUser().getKeycloakId());
-
 
 		var oo = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId());
 
@@ -63,18 +63,9 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
 		log.info("Available times with size: {}", availableTimes.size());
 
-		kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
-		kaspiStore.setKaspiCity(selectedCity);
-		kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
-		kaspiStore.setStreetName(kaspiStoreCreateRequest.getStreetName());
-		kaspiStore.setStreetNumber(kaspiStoreCreateRequest.getStreetNumber());
-		kaspiStore.setTown(kaspiStoreCreateRequest.getTown());
-		kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
-		kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
-		kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
 		String formattedAddress = getFormattedAddress(kaspiStore, selectedCity);
-		kaspiStore.setFormattedAddress(formattedAddress);
-		kaspiStore.setEnabled(true);
+
+		kaspiStore = kaspiStoreMapper.mapToCreateStore(kaspiStoreCreateRequest, selectedCity, formattedAddress);
 
 		log.info("Created Kaspi store with id: {}", kaspiStore.getId());
 

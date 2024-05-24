@@ -111,8 +111,9 @@ public class AssemblyServiceImpl implements AssemblyService {
             orderAssembleProcessRepository.save(orderAssembleProcess);
         }
 
+        AssembleProcessResponse assembleMapperProcessResponse = orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble.getId());
 
-        return new AssembleProductResponse(this.getWaybill(order), orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble.getId()));
+        return new AssembleProductResponse(this.getWaybill(order), assembleMapperProcessResponse);
     }
 
     @Override
@@ -127,9 +128,10 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         var orderAssemble = order.getOrderAssemble();
 
+        String employeeUsername = orderAssemble != null ? orderAssemble.getStartedEmployee().getWonderUser().getUsername() : "N\\A";
+        Long assembleId = orderAssemble != null ? orderAssemble.getId() : null;
 
-        return orderAssembleMapper.toProcessResponse(order, orderAssemble == null ? "N\\A" : orderAssemble.getStartedEmployee().getWonderUser().getUsername(), orderAssemble == null ? null : orderAssemble.getId());
-
+        return orderAssembleMapper.toProcessResponse(order, employeeUsername, assembleId);
     }
 
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
@@ -152,6 +154,4 @@ public class AssemblyServiceImpl implements AssemblyService {
         // generate with api
         return "generated(soon)";
     }
-
-
 }
