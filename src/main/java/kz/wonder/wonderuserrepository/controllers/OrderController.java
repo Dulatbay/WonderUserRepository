@@ -72,6 +72,7 @@ public class OrderController {
     }
 
     @GetMapping("/admin/details/{orderCode}")
+    @Operation(summary = "Get order details", description = "Retrieves any order data by Order Code")
     public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
