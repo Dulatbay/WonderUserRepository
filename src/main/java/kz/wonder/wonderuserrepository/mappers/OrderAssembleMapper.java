@@ -91,7 +91,8 @@ public class OrderAssembleMapper {
         response.setDeliveryMode(order == null ? null : order.getDeliveryMode());
         response.setOrderId(order == null ? null : order.getId());
         response.setOrderDate(Utils.getLocalDateTimeFromTimestamp(order != null ? order.getCreationDate() : 0));
-        response.setDeliveryDate(Utils.getLocalDateTimeFromTimestamp(order != null ? order.getPlannedDeliveryDate() : 0));
+        if (order != null && order.getPlannedDeliveryDate() != null)
+            response.setDeliveryDate(Utils.getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
         response.setProductsCount(order != null ? order.getProducts().size() : 0);
         return response;
     }

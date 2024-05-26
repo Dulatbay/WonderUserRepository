@@ -37,11 +37,11 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
-        List<ProductResponse> result = productService.processExcelFile(file, userId);
+        productService.processExcelFile(file, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(result);
+                .build();
     }
 
     @GetMapping()
