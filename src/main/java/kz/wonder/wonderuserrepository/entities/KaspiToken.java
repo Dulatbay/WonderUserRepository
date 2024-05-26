@@ -22,7 +22,7 @@ public class KaspiToken extends AbstractEntity<Long> {
     private String sellerId;
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(columnDefinition = "integer", name = "user_id")
     private WonderUser wonderUser;
 }

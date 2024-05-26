@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
@@ -124,7 +125,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-    private void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber, OrderState state) {
+    @Transactional
+    public void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber, OrderState state) {
         try {
             var ordersDataResponse = kaspiApi.getOrders(token.getToken(), startDate, currentTime, state, pageNumber, 100).block();
             log.info("Found orders data, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, ordersDataResponse.data size: {}",
@@ -136,6 +138,7 @@ public class OrderServiceImpl implements OrderService {
                     ordersDataResponse.getData().size());
             var orders = ordersDataResponse.getData();
             var products = ordersDataResponse.getIncluded();
+
 
             log.info("orders count: {}, products count: {}", orders.size(), products.size());
 
