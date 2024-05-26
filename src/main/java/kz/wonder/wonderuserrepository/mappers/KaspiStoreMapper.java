@@ -6,8 +6,8 @@ import kz.wonder.wonderuserrepository.entities.KaspiStore;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.UserService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ public class KaspiStoreMapper {
     @Value("${application.admin-keycloak-id}")
     private String adminKeycloakId;
     private WonderUser admin;
-    private UserService userService;
+    private final UserService userService;
 
     public KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(address.getId());
@@ -52,7 +52,7 @@ public class KaspiStoreMapper {
         }
     }
 
-    private @NotNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
+    private @NonNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         // todo: этот store создается для какого юзера(сделаю пока для main админа)
         KaspiStore kaspiStore = new KaspiStore();
 
