@@ -51,6 +51,9 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "kaspi_id", nullable = false)
     private String kaspiId;
 
+    @Column(name = "pickup_point_id")
+    private String pickupPointId;
+
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
