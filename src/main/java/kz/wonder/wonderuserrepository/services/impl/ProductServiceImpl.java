@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -114,8 +113,6 @@ public class ProductServiceImpl implements ProductService {
             return null;
         }
 
-        log.info("#{}, Processing product code: {}, user's keycloak id: {}", row.getRowNum() - 2, vendorCode, keycloakUserId);
-
         String name = getStringFromExcelCell(row.getCell(1));
         String link = row.getCell(2) == null ? null : getStringFromExcelCell(row.getCell(2));
         String isPublic = getStringFromExcelCell(row.getCell(3));
@@ -126,6 +123,9 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = processProduct(vendorCode, name, link, isPublic, tradePrice, keycloakUserId);
         processProductPrices(product, priceAlmaty, priceAstana, priceShymkent, cityCache);
+
+        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
+
 
         return product;
     }
@@ -166,6 +166,7 @@ public class ProductServiceImpl implements ProductService {
         var priceAtAlmaty = processProductPrice(product, cityAlmaty, priceAlmaty);
         var priceAtAstana = processProductPrice(product, cityAstana, priceAstana);
         var priceAtShymkent = processProductPrice(product, cityShymkent, priceShymkent);
+
 
         product.setPrices(new ArrayList<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
     }
