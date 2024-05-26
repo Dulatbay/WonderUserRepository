@@ -21,7 +21,7 @@ public class KaspiStoreMapper {
     private WonderUser admin;
     private final UserService userService;
 
-    public KaspiStore getKaspiStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
+    public KaspiStore getKaspiStore(OrdersDataResponse.OrderAttributes orderAttributes ,OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(address.getId());
 
 
@@ -47,12 +47,12 @@ public class KaspiStoreMapper {
         if (optionalKaspiStore.isPresent()) {
             return optionalKaspiStore.get();
         } else {
-            KaspiStore kaspiStore = getStore(address, kaspiCity);
+            KaspiStore kaspiStore = getStore(address, kaspiCity, orderAttributes.getPickupPointId());
             return kaspiStoreRepository.save(kaspiStore);
         }
     }
 
-    private @NonNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity) {
+    private @NonNull KaspiStore getStore(OrdersDataResponse.Address address, KaspiCity kaspiCity, String pickupPointId) {
         // todo: этот store создается для какого юзера(сделаю пока для main админа)
         KaspiStore kaspiStore = new KaspiStore();
 
@@ -69,6 +69,7 @@ public class KaspiStoreMapper {
         kaspiStore.setLongitude(address.getAddress().getLongitude());
         kaspiStore.setKaspiCity(kaspiCity);
         kaspiStore.setOriginAddressId(address.getId());
+        kaspiStore.setPickupPointId(pickupPointId);
 
         if (admin == null)
             admin = userService.getUserByKeycloakId(adminKeycloakId);

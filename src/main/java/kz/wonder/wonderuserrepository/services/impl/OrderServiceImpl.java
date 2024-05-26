@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
-import jakarta.transaction.Transactional;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
@@ -125,8 +124,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-    @Transactional
-    public void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber, OrderState state) {
+    private void processTokenOrders(KaspiToken token, long startDate, long currentTime, int pageNumber, OrderState state) {
         try {
             var ordersDataResponse = kaspiApi.getOrders(token.getToken(), startDate, currentTime, state, pageNumber, 100).block();
             log.info("Found orders data, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, ordersDataResponse.data size: {}",
@@ -311,6 +309,7 @@ public class OrderServiceImpl implements OrderService {
             log.info("Found {} tokens", tokens.size());
 
             tokens.parallelStream().forEach(token -> {
+                if (token.getToken().equals("tester")) return;
                 try {
                     CompletableFuture<Void> kaspiDeliveryFuture = CompletableFuture.runAsync(() ->
                             this.processTokenOrders(token, currentTime - durationOf14Days, currentTime, 0, OrderState.KASPI_DELIVERY)
@@ -369,6 +368,7 @@ public class OrderServiceImpl implements OrderService {
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
+            log.info("Store id: {}", kaspiOrder.getKaspiStore().getId());
             var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiOrder.getKaspiStore().getId(), product.getId());
 
 
@@ -378,11 +378,11 @@ public class OrderServiceImpl implements OrderService {
             for (var supplyBoxProduct : supplyBoxProductList) {
                 if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
                     log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
-                        supplyBoxProductToSave = supplyBoxProduct;
-                        log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
-                        break;
-                    }
+//                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+                    supplyBoxProductToSave = supplyBoxProduct;
+                    log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
+                    break;
+//                    }
                 }
             }
 

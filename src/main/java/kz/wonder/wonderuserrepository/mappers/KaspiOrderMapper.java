@@ -38,7 +38,7 @@ public class KaspiOrderMapper {
             var kaspiCity = kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
                     .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
 
-            var kaspiStore = kaspiStoreMapper.getKaspiStore(orderAttributes.getOriginAddress(), kaspiCity);
+            var kaspiStore = kaspiStoreMapper.getKaspiStore(orderAttributes, orderAttributes.getOriginAddress(), kaspiCity);
 
             kaspiOrder.setKaspiStore(kaspiStore);
             kaspiOrder.setKaspiCity(kaspiCity);
@@ -52,15 +52,12 @@ public class KaspiOrderMapper {
         } else {
             var pickupPointId = orderAttributes.getPickupPointId();
             var divided = pickupPointId.split("_");
-            if (divided.length == 2) {
-                var kaspiId = divided[1];
 
-                var kaspiStoreOptional = kaspiStoreRepository.findByKaspiIdAndWonderUserKeycloakId(kaspiId, token.getWonderUser().getKeycloakId());
+            var kaspiStoreOptional = kaspiStoreRepository.findByPickupPointIdAndWonderUserKeycloakId(pickupPointId, token.getWonderUser().getKeycloakId());
 
-                if (kaspiStoreOptional.isPresent()) {
-                    kaspiOrder.setKaspiStore(kaspiStoreOptional.get());
-                    kaspiOrder.setKaspiCity(kaspiStoreOptional.get().getKaspiCity());
-                }
+            if (kaspiStoreOptional.isPresent()) {
+                kaspiOrder.setKaspiStore(kaspiStoreOptional.get());
+                kaspiOrder.setKaspiCity(kaspiStoreOptional.get().getKaspiCity());
             }
         }
 
