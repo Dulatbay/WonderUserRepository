@@ -23,6 +23,6 @@ public class KaspiToken extends AbstractEntity<Long> {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(columnDefinition = "integer", name = "user_id")
+    @JoinColumn(columnDefinition = "integer", name = "user_id", nullable = false)
     private WonderUser wonderUser;
 }
