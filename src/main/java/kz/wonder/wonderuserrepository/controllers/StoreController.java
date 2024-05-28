@@ -164,7 +164,7 @@ public class StoreController {
     }
 
     @GetMapping("{id}")
-    @Operation(summary = "Get store by id", description = "Retrieves the information about the specific store")
+    @Operation(summary = "Get store by ID", description = "Retrieves the information about the specific store")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the store by ID")
     })
