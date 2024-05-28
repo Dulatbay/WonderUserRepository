@@ -162,6 +162,9 @@ public class SupplyController {
 
     @GetMapping("/employee/products")
     @Operation(summary = "Get employee supply products", description = "Retrieves the products associated with the specified supply ID for the employee")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee supply products")
+    })
     public ResponseEntity<ProductStorageResponse> getSuppliesEmployee(@RequestParam("supply-id")
                                                                       Long supplyId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
