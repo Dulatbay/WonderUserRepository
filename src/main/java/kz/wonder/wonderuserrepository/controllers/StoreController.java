@@ -1,6 +1,8 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
@@ -33,6 +35,9 @@ public class StoreController {
 
     @PostMapping()
     @Operation(summary = "Create new store", description = "This endpoint allows to create a new store")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully created new store")
+    })
     public ResponseEntity<Void> createStore(@RequestBody
                                             @Valid
                                             KaspiStoreCreateRequest kaspiStoreCreateRequest) {
@@ -56,6 +61,9 @@ public class StoreController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete store by id", description = "This endpoint deletes the store by its own id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the store by ID")
+    })
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
@@ -69,7 +77,10 @@ public class StoreController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Change the specific store", description = "This endpoint allows to update details about the store")
+    @Operation(summary = "Update the specific store by ID", description = "This endpoint allows to update details about the store")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the details about store by ID")
+    })
     public ResponseEntity<Void> changeStore(@RequestBody
                                             @Valid
                                             KaspiStoreChangeRequest changeRequest,
@@ -89,6 +100,9 @@ public class StoreController {
 
     @PostMapping("/add-box-type")
     @Operation(summary = "Add new acceptable box type for the store", description = "This endpoint allows the store to add the type of box it can accept")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully added new box type for the store")
+    })
     public ResponseEntity<Void> addBoxTypeToStore(@RequestParam("box-type-id") Long boxTypeId,
                                                   @RequestParam("store-id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -105,6 +119,9 @@ public class StoreController {
 
     @DeleteMapping("/remove-box-type")
     @Operation(summary = "Delete specific box type for the store", description = "This endpoint allows a store to remove a box type that it will no longer support")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the box type or the store")
+    })
     public ResponseEntity<Void> removeBoxTypeFromStore(@RequestParam("box-type-id") Long boxTypeId,
                                                        @RequestParam("store-id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -119,6 +136,9 @@ public class StoreController {
 
     @GetMapping()
     @Operation(summary = "Get all stores", description = "Retrieves the list of all stores details")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved all stores")
+    })
     public ResponseEntity<List<StoreResponse>> getAllOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -145,6 +165,9 @@ public class StoreController {
 
     @GetMapping("{id}")
     @Operation(summary = "Get store by id", description = "Retrieves the information about the specific store")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the store by ID")
+    })
     public ResponseEntity<StoreResponse> getByIdOwnStore(@PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var isSuperAdmin = getAuthorities(token.getAuthorities())
@@ -157,6 +180,9 @@ public class StoreController {
 
     @GetMapping("/details")
     @Operation(summary = "Get stores details", description = "Retrieves the list of all stores details with available box types")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the store details")
+    })
     public ResponseEntity<List<StoreDetailResponse>> getAllDetailOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -184,6 +210,9 @@ public class StoreController {
 
     @GetMapping("/details/{id}")
     @Operation(summary = "Get specific store details", description = "Retrieves the details with available box types of the specific store")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the store details by ID")
+    })
     public ResponseEntity<StoreDetailResponse> getByIdDetailOwnStores(@PathVariable("id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var isSuperAdmin = getAuthorities(token.getAuthorities())
