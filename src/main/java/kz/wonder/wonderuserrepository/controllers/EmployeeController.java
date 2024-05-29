@@ -1,5 +1,8 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeUpdateRequest;
@@ -27,6 +30,10 @@ public class EmployeeController {
     private final KeycloakService keycloakService;
 
     @PostMapping
+    @Operation(summary = "Create employee", description = "This endpoint creates an employee")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully created employee")
+    })
     public ResponseEntity<EmployeeCreateResponse> createEmployee(@RequestBody EmployeeCreateRequest employeeCreateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -47,6 +54,10 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all employees", description = "Returns a list of employees based on store ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved a list of employees")
+    })
     public ResponseEntity<List<EmployeeResponse>> getEmployees(@RequestParam(value = "store-id", required = false)
                                                                Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -67,6 +78,10 @@ public class EmployeeController {
 
 
     @GetMapping("/{userId}")
+    @Operation(summary = "Get employee by ID", description = "This endpoint returns an employee by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee")
+    })
     public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable Long userId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -87,6 +102,10 @@ public class EmployeeController {
 
 
     @DeleteMapping("/{userId}")
+    @Operation(summary = "Delete employee by ID", description = "This endpoint deletes the employee based on ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the employee")
+    })
     public ResponseEntity<Void> deleteEmployeeId(@PathVariable Long userId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -104,6 +123,10 @@ public class EmployeeController {
     }
 
     @PatchMapping("/update-password/{userId}")
+    @Operation(summary = "Update employee password", description = "This endpoint updates an employee's password")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the password")
+    })
     public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody UpdatePasswordRequest updatePassword) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -125,6 +148,10 @@ public class EmployeeController {
     }
 
     @PutMapping("/{userId}")
+    @Operation(summary = "Update employee", description = "This endpoint updates an employee")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the employee")
+    })
     public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, @RequestBody EmployeeUpdateRequest employeeUpdateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);

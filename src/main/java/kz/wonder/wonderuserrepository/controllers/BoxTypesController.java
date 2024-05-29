@@ -25,7 +25,7 @@ public class BoxTypesController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create new box type", description = "This endpoint allows to create new box types with given name and description")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully created a new box type")
+            @ApiResponse(responseCode = "201", description = "Successfully created a new box type")
     })
     public ResponseEntity<Void> create(@ModelAttribute @Valid BoxTypeCreateRequest boxTypeCreateRequest) {
         boxTypeService.createBoxType(boxTypeCreateRequest);
