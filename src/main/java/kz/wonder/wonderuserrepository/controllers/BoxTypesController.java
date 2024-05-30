@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -38,7 +39,8 @@ public class BoxTypesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved all box types for the store")
     })
-    public ResponseEntity<List<BoxTypeResponse>> getAll(@RequestParam(value = "store-id", required = false) Long storeId) {
+    public ResponseEntity<List<BoxTypeResponse>> getAll(@Parameter(description = "ID of the store to get box types", required = true)
+                                                            @RequestParam(value = "store-id", required = false) Long storeId) {
         return ResponseEntity.ok(boxTypeService.getAll(storeId));
     }
 
@@ -47,7 +49,8 @@ public class BoxTypesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted the box type by ID")
     })
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@Parameter(description = "ID of the box type to be deleted", required = true)
+                                           @PathVariable Long id) {
         boxTypeService.deleteById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
