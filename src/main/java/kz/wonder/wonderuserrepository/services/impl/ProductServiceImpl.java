@@ -19,8 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -33,9 +32,11 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
 
@@ -51,46 +52,54 @@ public class ProductServiceImpl implements ProductService {
     private final KaspiTokenRepository kaspiTokenRepository;
     private final FileService fileService;
 
-    @Override
     @Transactional
-    public List<ProductResponse> processExcelFile(MultipartFile excelFile, String keycloakUserId) {
-        try (Workbook workbook = WorkbookFactory.create(excelFile.getInputStream())) {
-            List<ProductResponse> productResponses = new ArrayList<>();
+    @Override
+    public void processExcelFile(MultipartFile excelFile, String keycloakUserId) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(excelFile.getInputStream());
+             ForkJoinPool customThreadPool = new ForkJoinPool(300)) {
+            final Map<String, KaspiCity> cityCache = Collections.synchronizedMap(new HashMap<>());
 
-            if (workbook.getNumberOfSheets() == 0)
+            log.info("{} sheets loaded", workbook.getNumberOfSheets());
+
+            if (workbook.getNumberOfSheets() == 0) {
                 throw new IllegalArgumentException("File must have at least one page!");
+            }
+
+            // get products page
             Sheet sheet = workbook.getSheetAt(workbook.getNumberOfSheets() - 1);
             Iterator<Row> rowIterator = sheet.iterator();
-            if (rowIterator.hasNext()) {
-                rowIterator.next();
-                rowIterator.next();
+
+            // Skip header rows
+            for (int i = 0; i < 3 && rowIterator.hasNext(); i++) {
                 rowIterator.next();
             }
 
-            // todo: improve TL
-            if (!rowIterator.hasNext())
+            if (!rowIterator.hasNext()) {
                 throw new IllegalArgumentException("Send file by requirements!!");
-
-            int count = 0;
-            while (rowIterator.hasNext()) {
-                Row row = rowIterator.next();
-
-                String vendorCode = getStringFromExcelCell(row.getCell(0));
-                if (vendorCode.isEmpty())
-                    continue;
-
-                log.info("#{}, product code: {}", ++count, vendorCode);
-
-                Product product = processProduct(row, keycloakUserId, vendorCode);
-
-                processProductPrices(product, row);
-
-                productResponses.add(mapToResponse(product));
             }
+
+            List<Row> rows = StreamSupport.stream(
+                    Spliterators.spliteratorUnknownSize(rowIterator, Spliterator.ORDERED), false
+            ).toList();
+
+            var productResponses = customThreadPool.submit(() ->
+                    rows.parallelStream()
+                            .map(row -> processRow(row, keycloakUserId, cityCache))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            ).get();
+
+            int batchSize = 500;
+            for (int i = 0; i < productResponses.size(); i += batchSize) {
+                var batch = productResponses.subList(i, Math.min(productResponses.size(), i + batchSize));
+                productRepository.saveAll(batch);
+            }
+
+            log.info("cities cache size: {}", cityCache.size());
             log.info("Product responses with size: {}", productResponses.size());
-            return productResponses;
-        } catch (IllegalStateException e) {
-            log.error("IllegalStateException: ", e);
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Parallel processing error: ", e);
+            Thread.currentThread().interrupt();
             throw new IllegalArgumentException("File process failed");
         } catch (Exception e) {
             log.error("Exception: ", e);
@@ -98,23 +107,46 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private Product processProduct(Row row, String keycloakUserId, String vendorCode) {
+    private Product processRow(Row row, String keycloakUserId, Map<String, KaspiCity> cityCache) {
+        String vendorCode = getStringFromExcelCell(row.getCell(0));
+        if (vendorCode.isEmpty()) {
+            return null;
+        }
+
+        String name = getStringFromExcelCell(row.getCell(1));
+        String link = row.getCell(2) == null ? null : getStringFromExcelCell(row.getCell(2));
+        String isPublic = getStringFromExcelCell(row.getCell(3));
+        double tradePrice = row.getCell(4).getNumericCellValue();
+        double priceAlmaty = row.getCell(5).getNumericCellValue();
+        double priceAstana = row.getCell(6).getNumericCellValue();
+        double priceShymkent = row.getCell(7).getNumericCellValue();
+
+        Product product = processProduct(vendorCode, name, link, isPublic, tradePrice, keycloakUserId);
+        processProductPrices(product, priceAlmaty, priceAstana, priceShymkent, cityCache);
+
+        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
+
+
+        return product;
+    }
+
+    private Product processProduct(String vendorCode, String name, String link, String isPublic, double tradePrice, String keycloakUserId) {
         var originVendorCode = vendorCode.split("_")[0];
         Product product = productRepository
                 .findByOriginalVendorCodeAndKeycloakId(originVendorCode, keycloakUserId)
                 .orElse(new Product());
         product.setVendorCode(vendorCode);
         product.setOriginalVendorCode(originVendorCode);
-        product.setName(row.getCell(1).getStringCellValue());
-        product.setLink(row.getCell(2) == null ? null : row.getCell(2).getStringCellValue());
+        product.setName(name);
+        product.setLink(link);
 
-        var isPublic = row.getCell(3).getStringCellValue();
         product.setEnabled(getBooleanFromString(isPublic));
-        product.setTradePrice(row.getCell(4).getNumericCellValue());
+        product.setTradePrice(tradePrice);
         product.setKeycloakId(keycloakUserId);
         product.setDeleted(false);
-        return productRepository.save(product);
+        return product;
     }
+
 
     private Boolean getBooleanFromString(String isPublic) {
         if (isPublic.equalsIgnoreCase("да")) return Boolean.TRUE;
@@ -122,23 +154,25 @@ public class ProductServiceImpl implements ProductService {
         return Boolean.parseBoolean(isPublic);
     }
 
-    private void processProductPrices(Product product, Row row) {
+    private void processProductPrices(Product product, double priceAlmaty, double priceAstana, double priceShymkent, Map<String, KaspiCity> cityCache) {
         final String CITY_ALMATY = "Алматы";
         final String CITY_ASTANA = "Астана";
         final String CITY_SHYMKENT = "Шымкент";
 
-        var cityAlmaty = getCityByName(CITY_ALMATY);
-        var cityAstana = getCityByName(CITY_ASTANA);
-        var cityShymkent = getCityByName(CITY_SHYMKENT);
+        var cityAlmaty = getCachedCity(CITY_ALMATY, cityCache);
+        var cityAstana = getCachedCity(CITY_ASTANA, cityCache);
+        var cityShymkent = getCachedCity(CITY_SHYMKENT, cityCache);
 
-        var priceAtAlmaty = processProductPrice(product, cityAlmaty, row.getCell(5).getNumericCellValue());
-        var priceAtAstana = processProductPrice(product, cityAstana, row.getCell(6).getNumericCellValue());
-        var priceAtShymkent = processProductPrice(product, cityShymkent, row.getCell(7).getNumericCellValue());
+        var priceAtAlmaty = processProductPrice(product, cityAlmaty, priceAlmaty);
+        var priceAtAstana = processProductPrice(product, cityAstana, priceAstana);
+        var priceAtShymkent = processProductPrice(product, cityShymkent, priceShymkent);
 
-        product.setPrices(new ArrayList<>());
-        product.getPrices().add(priceAtAlmaty);
-        product.getPrices().add(priceAtAstana);
-        product.getPrices().add(priceAtShymkent);
+
+        product.setPrices(new ArrayList<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
+    }
+
+    private KaspiCity getCachedCity(String cityName, Map<String, KaspiCity> cityCache) {
+        return cityCache.computeIfAbsent(cityName, this::getCityByName);
     }
 
     private KaspiCity getCityByName(String cityName) {
@@ -147,13 +181,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductPrice processProductPrice(Product product, KaspiCity city, Double priceValue) {
-        var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
-                .orElse(new ProductPrice(city, product, priceValue, false));
+        var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
+                .orElse(new ProductPrice(city, product, priceValue));
         productPrice.setKaspiCity(city);
         productPrice.setPrice(priceValue);
-        productPrice.setUpdatedAt(LocalDateTime.now());
-        return productPriceRepository.save(productPrice);
+        return productPrice;
     }
+
 
     @Override
     public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
@@ -221,7 +255,6 @@ public class ProductServiceImpl implements ProductService {
 
                                 productPrice.setCityId(city.getId());
                                 productPrice.setCityName(city.getName());
-                                productPrice.setMainPrice(productPrice.isMainPrice());
                                 productPrice.setCount(product.getSupplyBoxes()
                                         .stream()
                                         .filter(p ->
@@ -274,37 +307,39 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void changePrice(String keycloakId, ProductPriceChangeRequest productPriceChangeRequest) {
-        if (!productPriceChangeRequest.getPriceList().isEmpty())
+        if (productPriceChangeRequest.getPriceList() != null && !productPriceChangeRequest.getPriceList().isEmpty())
             updatePrice(keycloakId, productPriceChangeRequest.getPriceList());
-        if (!productPriceChangeRequest.getMainPriceList().isEmpty())
+        if (productPriceChangeRequest.getMainPriceList() != null && !productPriceChangeRequest.getMainPriceList().isEmpty())
             updateMainCities(keycloakId, productPriceChangeRequest.getMainPriceList());
     }
 
     private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {
         mainPrices
                 .forEach(price -> {
+
                     var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+
+
+                    if (price.getMainCityId() == -1) {
+                        var priceToDelete = product.getMainCityPrice();
+                        if (priceToDelete == null)
+                            throw new IllegalArgumentException("Price already unselected");
+
+                        product.setMainCityPrice(null);
+                        productRepository.save(product);
+                        productPriceRepository.delete(priceToDelete);
+                        return;
+                    }
 
                     var city = kaspiCityRepository.findById(price.getMainCityId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-                    if (price.isSelected()) {
-                        var mainPriceOptional = productPriceRepository.findByProductAndIsMainPrice(product, true);
-
-                        if (mainPriceOptional.isPresent()) {
-                            var mainPrice = mainPriceOptional.get();
-                            mainPrice.setIsMainPrice(false);
-                            productPriceRepository.save(mainPrice);
-                        }
-                    }
-
-
-                    var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+                    var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
-                    productPrice.setIsMainPrice(price.isSelected());
-                    productPriceRepository.save(productPrice);
 
+                    product.setMainCityPrice(productPrice);
+                    productRepository.save(product);
                 });
     }
 
@@ -317,7 +352,7 @@ public class ProductServiceImpl implements ProductService {
                     var city = kaspiCityRepository.findById(price.getCityId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-                    var productPrice = productPriceRepository.findByProductAndKaspiCityName(product, city.getName())
+                    var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
                     productPrice.setPrice(price.getPrice());
@@ -372,7 +407,7 @@ public class ProductServiceImpl implements ProductService {
         offer.setSku(product.getVendorCode());
         offer.setModel(product.getName());
 
-        var optionalMainPrice = productPriceRepository.findByProductAndIsMainPrice(product, true);
+        var optionalMainPrice = Optional.ofNullable(product.getMainCityPrice());
 
 
         if (optionalMainPrice.isEmpty()) {
@@ -417,13 +452,13 @@ public class ProductServiceImpl implements ProductService {
                 .name(product.getName())
                 .vendorCode(product.getVendorCode())
                 .keycloakUserId(product.getKeycloakId())
+                .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
                 .prices(
                         product.getPrices().stream().map(
                                 productPrice ->
                                         ProductResponse.ProductPriceResponse.builder()
                                                 .price(productPrice.getPrice())
                                                 .cityName(productPrice.getKaspiCity().getName())
-                                                .isMainPrice(productPrice.getIsMainPrice())
                                                 .build()
                         ).collect(Collectors.toList())
                 )

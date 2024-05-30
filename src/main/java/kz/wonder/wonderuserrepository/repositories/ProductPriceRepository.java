@@ -7,9 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long> {
-    Optional<ProductPrice> findByProductAndKaspiCityName(Product product, String cityName);
-
-    Optional<ProductPrice> findByProductAndIsMainPrice(Product product, boolean isMainPrice);
+    Optional<ProductPrice> findByProductIdAndKaspiCityName(Long productId, String cityName);
 
     Optional<ProductPrice> findAllByProductAndProductKeycloakId(Product product, String keycloakId);
 }

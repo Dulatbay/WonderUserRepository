@@ -1,9 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.List;
@@ -20,28 +18,36 @@ public class KaspiStoreChangeRequest {
     @NotNull(message = "Please provide city id")
     private Long cityId;
 
+    @Nullable
     @Size(min = 1, max = 50, message = "Street name must be in range 1-50")
     private String streetName;
 
-    @Size(min = 1, max = 5, message = "Street number must be in range 1-5")
+    @Nullable
+    @Size(min = 1, max = 50, message = "Street number must be in range 1-50")
     private String streetNumber;
 
+    @Nullable
     @Size(min = 1, max = 50, message = "Town name must be in range 1-50")
     private String town;
 
+    @Nullable
     @Size(min = 1, max = 50, message = "District must be in range 1-50")
     private String district;
 
-    @Size(min = 1, max = 5, message = "Building must be in range 1-5")
+    @Nullable
+    @Size(min = 1, max = 100, message = "Building must be in range 1-100")
     private String building;
 
-    @Size(min = 1, max = 5, message = "Apartment must be in range 1-5")
+    @Nullable
+    @Size(min = 1, max = 100, message = "Apartment must be in range 1-100")
     private String apartment;
 
+    @Nullable
     @Min(value = -90, message = "Latitude must be in range -90 and 90")
     @Max(value = 90, message = "Latitude must be in range -90 and 90")
     private Long latitude;
 
+    @Nullable
     @Min(value = -180, message = "Longitude must be in range -180 and 180")
     @Max(value = 180, message = "Longitude must be in range -180 and 180")
     private Long longitude;

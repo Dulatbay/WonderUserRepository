@@ -6,7 +6,7 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  mode: ${APP_MODE:DEV}
+  mode: ${APP_MODE:PROD}
   kaspi-token: 1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=
   admin-keycloak-id: 99d66d43-e8a1-4fe6-a854-8ce686c73ed6
 spring:

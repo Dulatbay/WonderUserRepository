@@ -34,16 +34,19 @@ public class SellerServiceImpl implements SellerService {
             throw new IllegalArgumentException("Phone number must be unique");
         if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
             throw new IllegalArgumentException("Seller id must be unique");
+    if (kaspiTokenRepository.existsByToken(sellerRegistrationRequest.getTokenKaspi()))
+            throw new IllegalArgumentException("Token must be unique");
 
         WonderUser wonderUser = sellerMapper.toCreateWonderUser(sellerRegistrationRequest);
         KaspiToken kaspiToken = sellerMapper.toCreateKaspiToken(sellerRegistrationRequest, wonderUser);
 
         userRepository.save(wonderUser);
 
-        log.info("Created User with id {}\nCreated Kaspi token with id {}", wonderUser.getId(), kaspiToken.getId());
+        wonderUser.setKaspiToken(kaspiToken);
 
-        // todo: возвращает 401 если token is null
-        kaspiTokenRepository.save(kaspiToken);
+        userRepository.save(wonderUser);
+
+        log.info("Created User with id {}\tCreated Kaspi token with id {}", wonderUser.getId(), kaspiToken.getId());
     }
 
     @Override

@@ -55,6 +55,7 @@ public class Utils {
     }
 
     public static LocalDateTime getLocalDateTimeFromTimestamp(Long timestamp) {
+        if (timestamp == null) return null;
         return Instant.ofEpochMilli(timestamp).atZone(ZONE_ID).toLocalDateTime();
     }
 }

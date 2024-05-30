@@ -14,7 +14,6 @@ public class ProductPriceChangeRequest {
     public static class MainPrice {
         private Long productId;
         private Long mainCityId;
-        private boolean selected;
     }
 
 

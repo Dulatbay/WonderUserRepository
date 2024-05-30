@@ -23,7 +23,7 @@ public class Scheduler {
     private final CityService cityService;
     private final UserService userService;
 
-    @Scheduled(fixedRate = CITIES_INIT_DURATION)
+    @Scheduled(fixedDelay  = CITIES_INIT_DURATION)
     public void updateCitiesFromKaspiApi() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(SYNC_CITIES_PROPERTY_NAME);
 
@@ -34,7 +34,7 @@ public class Scheduler {
         }
     }
 
-    @Scheduled(fixedRate = SYNC_USERS_DURATION)
+    @Scheduled(fixedDelay  = SYNC_USERS_DURATION)
     public void syncUsers() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(SYNC_USERS_PROPERTY_NAME);
 
@@ -45,7 +45,7 @@ public class Scheduler {
         }
     }
 
-    @Scheduled(fixedRate = ORDERS_INIT_DURATION)
+    @Scheduled(fixedDelay  = ORDERS_INIT_DURATION)
     public void updateOrders() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(UPDATE_ORDERS_PROPERTY_NAME);
 

@@ -33,6 +33,8 @@ public class ProductPriceResponse {
         private Long count;
         private boolean isPublished;
         private List<ProductPrice> prices;
+        private Long mainPriceCityId;
+        // todo: remake
     }
 
     @Data
@@ -40,7 +42,6 @@ public class ProductPriceResponse {
         private Long cityId;
         private String cityName;
         private Double price;
-        private boolean isMainPrice;
         private Long count;
     }
 }

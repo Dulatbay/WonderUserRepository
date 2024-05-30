@@ -37,11 +37,11 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
-        List<ProductResponse> result = productService.processExcelFile(file, userId);
+        productService.processExcelFile(file, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(result);
+                .build();
     }
 
     @GetMapping()
@@ -49,7 +49,7 @@ public class ProductController {
                                                                           @RequestParam(defaultValue = "10") int size,
                                                                           @RequestParam(name = "searchValue", required = false) String searchValue,
                                                                           @RequestParam(name = "isPublished", required = false) Boolean isPublished,
-                                                                          @RequestParam(name = "sortBy", required = false) String sortBy) {
+                                                                          @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         Page<ProductResponse> productPage = productService.findAllByKeycloakId(Utils.extractIdFromToken(token), pageable, isPublished, searchValue);
@@ -62,7 +62,7 @@ public class ProductController {
                                                                                     @RequestParam(defaultValue = "10") int size,
                                                                                     @RequestParam(name = "searchValue", required = false) String searchValue,
                                                                                     @RequestParam(name = "isPublished", required = false) Boolean isPublished,
-                                                                                    @RequestParam(name = "sortBy", required = false) String sortBy) {
+                                                                                    @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
