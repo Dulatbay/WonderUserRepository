@@ -7,11 +7,13 @@ import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -30,12 +32,10 @@ public class OrderAssembleMapper {
         return orderAssemble;
     }
 
-    public AssembleProcessResponse toProcessResponse(KaspiOrder kaspiOrder, String starterName, OrderAssemble orderAssemble) {
+    public AssembleProcessResponse toProcessResponse(KaspiOrder kaspiOrder, String starterName, OrderAssemble orderAssemble, List<AssembleProcessResponse.Product> productsToProcess, List<AssembleProcessResponse.ProcessedProduct> processedProducts) {
         AssembleProcessResponse assembleProcessResponse = new AssembleProcessResponse();
         assembleProcessResponse.setSellerName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName());
         assembleProcessResponse.setDeadline(Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
-        assembleProcessResponse.setProcessedProducts(new ArrayList<>());
-        assembleProcessResponse.setProductsToProcess(new ArrayList<>());
         assembleProcessResponse.setDeliveryMode(kaspiOrder.getDeliveryMode());
         assembleProcessResponse.setStartedEmployeeName(starterName);
         assembleProcessResponse.setAssembleId(orderAssemble.getId());
@@ -43,6 +43,15 @@ public class OrderAssembleMapper {
         assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState());
 
 
+        assembleProcessResponse.setProductsToProcess(productsToProcess);
+        assembleProcessResponse.setProcessedProducts(processedProducts);
+
+        return assembleProcessResponse;
+    }
+
+    public Pair<List<AssembleProcessResponse.Product>, List<AssembleProcessResponse.ProcessedProduct>> divideProducts(KaspiOrder kaspiOrder) {
+        List<AssembleProcessResponse.Product> productsToProcess = new ArrayList<>();
+        List<AssembleProcessResponse.ProcessedProduct> processedProducts = new ArrayList<>();
         kaspiOrder.getProducts()
                 .forEach(kaspiOrderProduct -> {
 
@@ -57,7 +66,7 @@ public class OrderAssembleMapper {
                         productResponse.setName(product.getName());
                         productResponse.setArticle(supplyBoxProduct.getArticle());
                         productResponse.setCellCode(storeCellProduct.getStoreCell().getCode());
-                        assembleProcessResponse.getProductsToProcess().add(productResponse);
+                        productsToProcess.add(productResponse);
                     } else {
                         var processedProduct = new AssembleProcessResponse.ProcessedProduct();
                         var assembleProcess = storeCellProduct.getAssembleProcess();
@@ -69,13 +78,11 @@ public class OrderAssembleMapper {
                         processedProduct.setProcessedDate(LocalDateTime.now());
                         processedProduct.setProcessedEmployeeName(assembleProcess != null ? assembleProcess.getStoreEmployee().getWonderUser().getUsername() : "N\\A");
                         processedProduct.setWaybill(kaspiOrder.getWaybill());
-                        assembleProcessResponse.getProcessedProducts().add(processedProduct);
+                        processedProducts.add(processedProduct);
                     }
                 });
 
-
-
-        return assembleProcessResponse;
+        return Pair.of(productsToProcess, processedProducts);
     }
 
     public OrderAssembleProcess toOrderAssembleProcessEntity(KaspiOrder kaspiOrder, StoreEmployee storeEmployee, StoreCellProduct storeCellProduct) {
