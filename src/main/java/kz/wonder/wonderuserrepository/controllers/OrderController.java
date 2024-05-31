@@ -1,6 +1,8 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
@@ -28,7 +30,10 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/seller")
-    @Operation(summary = "Get seller's order", description = "Retrieves the list of orders for the seller within the specified date range.")
+    @Operation(summary = "Get seller orders", description = "Retrieves the list of orders for the seller within the specified date range.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller orders")
+    })
     public ResponseEntity<PaginatedResponse<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
                                                                             @RequestParam("end-date") LocalDate endDate,
                                                                             @RequestParam(defaultValue = "0") int page,
@@ -44,7 +49,10 @@ public class OrderController {
     }
 
     @GetMapping("/admin")
-    @Operation(summary = "Get admin order", description = "Retrieves the list of orders for the admin within the specified date range.")
+    @Operation(summary = "Get admin orders", description = "Retrieves the list of orders for the admin within the specified date range.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the admin orders")
+    })
     public ResponseEntity<PaginatedResponse<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
                                                               @RequestParam("end-date") LocalDate endDate,
                                                               @RequestParam(defaultValue = "0") int page,
@@ -61,6 +69,9 @@ public class OrderController {
 
     @GetMapping("/employee")
     @Operation(summary = "Get employee orders", description = "Retrieves the list of employee orders within the specified date range.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee orders")
+    })
     public ResponseEntity<List<EmployeeOrderResponse>> getEmployeeOrders(@RequestParam("start-date") LocalDate startDate,
                                                                          @RequestParam("end-date") LocalDate endDate) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -72,6 +83,10 @@ public class OrderController {
     }
 
     @GetMapping("/admin/details/{orderCode}")
+    @Operation(summary = "Get order details for admin", description = "Retrieves any order data by Order Code")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for admin")
+    })
     public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -81,6 +96,9 @@ public class OrderController {
 
     @GetMapping("/seller/details/{orderCode}")
     @Operation(summary = "Get order details for seller", description = "Retrieves the order data for the seller by Order Code")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for seller")
+    })
     public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -92,6 +110,9 @@ public class OrderController {
 
     @GetMapping("/employee/details/{orderCode}")
     @Operation(summary = "Get order details for employee", description = "Retrieves the order data for the employee by Order Code")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for employee")
+    })
     public ResponseEntity<OrderEmployeeDetailResponse> getEmployeeOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);

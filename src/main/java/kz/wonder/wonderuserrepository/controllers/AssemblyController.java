@@ -33,7 +33,7 @@ public class AssemblyController {
 
 
     @GetMapping
-    @Operation(summary = "Get Current Assemblies", description = "Returns a paginated list of current assemblies based on the provided search parameters")
+    @Operation(summary = "Get current assemblies", description = "Returns a paginated list of current assemblies based on the provided search parameters")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved assemblies",
                     content = @Content(schema = @Schema(implementation = PaginatedResponse.class))),
@@ -56,6 +56,16 @@ public class AssemblyController {
         return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
     }
 
+    @PatchMapping("/finish-assemble/{orderCode}")
+    public ResponseEntity<Void> finishAssembly(@PathVariable("orderCode") String orderCode) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        assemblyService.finishAssemble(orderCode, keycloakId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/start-assemble/{orderCode}")
     public ResponseEntity<AssembleProcessResponse> startAssemble(@PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -66,6 +76,10 @@ public class AssemblyController {
     }
 
     @GetMapping("/{orderCode}")
+    @Operation(summary = "Get assembly by order code", description = "This endpoint returns the assemblies based on the provided order code")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved assemblies based on the order code")
+    })
     public ResponseEntity<AssembleProcessResponse> getAssembly(@PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 

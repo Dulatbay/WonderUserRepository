@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
+import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,8 +13,8 @@ import java.util.Optional;
 
 public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProduct, Long> {
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.product.id = :productId and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
-    List<SupplyBoxProduct> findAllByStoreIdAndProductId(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId);
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.product.id = :productId and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId and sbp.state = :state")
+    List<SupplyBoxProduct> findAllByStoreIdAndProductIdAndState(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId, @Param("state") ProductStateInStore state);
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 

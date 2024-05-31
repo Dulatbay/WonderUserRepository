@@ -23,6 +23,9 @@ public class KaspiOrderProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "supply_box_product_id")
     private SupplyBoxProduct supplyBoxProduct;
 
-    @Column
+    @Column(name = "kaspi_id", nullable = false, unique = true)
+    private String kaspiId;
+
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
 }

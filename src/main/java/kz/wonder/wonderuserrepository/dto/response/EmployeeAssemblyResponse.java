@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
+import kz.wonder.wonderuserrepository.entities.AssembleState;
 import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ public class EmployeeAssemblyResponse {
     private DeliveryMode deliveryMode;
     private LocalDateTime deliveryDate;
     private LocalDateTime orderDate;
+    private AssembleState assembleState;
     private String shopName;
     private Integer productsCount;
 }

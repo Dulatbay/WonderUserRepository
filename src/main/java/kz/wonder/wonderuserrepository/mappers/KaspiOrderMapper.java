@@ -51,7 +51,6 @@ public class KaspiOrderMapper {
             kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
         } else {
             var pickupPointId = orderAttributes.getPickupPointId();
-            var divided = pickupPointId.split("_");
 
             var kaspiStoreOptional = kaspiStoreRepository.findByPickupPointIdAndWonderUserKeycloakId(pickupPointId, token.getWonderUser().getKeycloakId());
 
