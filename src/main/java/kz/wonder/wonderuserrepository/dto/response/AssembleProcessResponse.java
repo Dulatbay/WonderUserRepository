@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
+import kz.wonder.wonderuserrepository.entities.AssembleState;
 import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,6 +18,7 @@ public class AssembleProcessResponse {
     private String sellerName;
     private String startedEmployeeName;
     private String orderCode;
+    private AssembleState assembleState;
 
     @Data
     public static class Product {

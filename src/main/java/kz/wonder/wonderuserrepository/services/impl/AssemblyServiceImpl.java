@@ -46,9 +46,13 @@ public class AssemblyServiceImpl implements AssemblyService {
         String deliveryMode = assemblySearchParameters.getDeliveryMode() == null ? null : assemblySearchParameters.getDeliveryMode().name();
 
         log.info("Search assemblies, start unix timestamp: {}, endUnixTimeStamp: {}, product state: {}, delivery mode: {}", startUnixTimestamp, endUnixTimestamp, productState, deliveryMode);
-        var products = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, pageRequest);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, pageRequest);
 
-        return products.map(orderAssembleMapper::mapToEmployeeAssemblyResponse);
+
+        return supplyBoxProducts.map(supplyBoxProduct -> {
+            var orderAssemble = orderAssembleRepository.findByKaspiOrderId(supplyBoxProduct.getKaspiOrder().getId());
+            return orderAssembleMapper.mapToEmployeeAssemblyResponse(supplyBoxProduct, orderAssemble.<AssembleState>map(OrderAssemble::getAssembleState).orElse(null));
+        });
     }
 
     @Override
@@ -69,7 +73,7 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         var orderAssemble = orderAssembleRepository.save(orderAssembleMapper.toEntity(storeEmployee, order, AssembleState.STARTED));
 
-        return orderAssembleMapper.toProcessResponse(order, Utils.extractNameFromToken(starterToken), orderAssemble.getId());
+        return orderAssembleMapper.toProcessResponse(order, Utils.extractNameFromToken(starterToken), orderAssemble);
     }
 
 
@@ -85,8 +89,12 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         var assemble = order.getOrderAssemble();
 
-        if (assemble == null || assemble.getAssembleState() != AssembleState.STARTED) {
+        if (assemble == null) {
             throw new IllegalArgumentException("Assembly did not start yet");
+        }
+
+        if (assemble.getAssembleState() == AssembleState.FINISHED) {
+            throw new IllegalArgumentException("Assembly already finished");
         }
 
         var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
@@ -111,8 +119,21 @@ public class AssemblyServiceImpl implements AssemblyService {
             orderAssembleProcessRepository.save(orderAssembleProcess);
         }
 
+        // todo: refactoring
 
-        return new AssembleProductResponse(this.getWaybill(order), orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble.getId()));
+        var response = orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble);
+
+        if (response.getProductsToProcess().isEmpty()) {
+            response.setAssembleState(AssembleState.READY_TO_FINISH);
+            assemble.setAssembleState(AssembleState.READY_TO_FINISH);
+        } else {
+            assemble.setAssembleState(AssembleState.IN_PROGRESS);
+            response.setAssembleState(AssembleState.IN_PROGRESS);
+        }
+
+        orderAssembleRepository.save(assemble);
+
+        return new AssembleProductResponse(this.getWaybill(order), response);
     }
 
     @Override
@@ -128,7 +149,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var orderAssemble = order.getOrderAssemble();
 
 
-        return orderAssembleMapper.toProcessResponse(order, orderAssemble == null ? "N\\A" : orderAssemble.getStartedEmployee().getWonderUser().getUsername(), orderAssemble == null ? null : orderAssemble.getId());
+        return orderAssembleMapper.toProcessResponse(order, orderAssemble == null ? "N\\A" : orderAssemble.getStartedEmployee().getWonderUser().getUsername(), orderAssemble == null ? new OrderAssemble() : orderAssemble);
 
     }
 

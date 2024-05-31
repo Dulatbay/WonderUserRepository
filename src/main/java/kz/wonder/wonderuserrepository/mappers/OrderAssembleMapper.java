@@ -24,22 +24,24 @@ public class OrderAssembleMapper {
 
     public OrderAssemble toEntity(StoreEmployee storeEmployee, KaspiOrder kaspiOrder, AssembleState assembleState) {
         OrderAssemble orderAssemble = new OrderAssemble();
-        orderAssemble.setAssembleState(AssembleState.STARTED);
+        orderAssemble.setAssembleState(assembleState);
         orderAssemble.setStartedEmployee(storeEmployee);
         orderAssemble.setKaspiOrder(kaspiOrder);
         return orderAssemble;
     }
 
-    public AssembleProcessResponse toProcessResponse(KaspiOrder kaspiOrder, String starterName, Long assembleId) {
+    public AssembleProcessResponse toProcessResponse(KaspiOrder kaspiOrder, String starterName, OrderAssemble orderAssemble) {
         AssembleProcessResponse assembleProcessResponse = new AssembleProcessResponse();
-        assembleProcessResponse.setSellerName(kaspiOrder.getKaspiStore().getWonderUser().getKaspiToken().getSellerName());
+        assembleProcessResponse.setSellerName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName());
         assembleProcessResponse.setDeadline(Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
         assembleProcessResponse.setProcessedProducts(new ArrayList<>());
         assembleProcessResponse.setProductsToProcess(new ArrayList<>());
         assembleProcessResponse.setDeliveryMode(kaspiOrder.getDeliveryMode());
         assembleProcessResponse.setStartedEmployeeName(starterName);
-        assembleProcessResponse.setAssembleId(assembleId);
+        assembleProcessResponse.setAssembleId(orderAssemble.getId());
         assembleProcessResponse.setOrderCode(kaspiOrder.getCode());
+        assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState());
+
 
         kaspiOrder.getProducts()
                 .forEach(kaspiOrderProduct -> {
@@ -71,6 +73,8 @@ public class OrderAssembleMapper {
                     }
                 });
 
+
+
         return assembleProcessResponse;
     }
 
@@ -82,11 +86,12 @@ public class OrderAssembleMapper {
         return orderAssembleProcess;
     }
 
-    public EmployeeAssemblyResponse mapToEmployeeAssemblyResponse(SupplyBoxProduct supplyBoxProduct) {
+    public EmployeeAssemblyResponse mapToEmployeeAssemblyResponse(SupplyBoxProduct supplyBoxProduct, AssembleState assembleState) {
         var sellerName = supplyBoxProduct.getSupplyBox().getSupply().getAuthor().getKaspiToken().getSellerName();
         var order = supplyBoxProduct.getKaspiOrder();
         EmployeeAssemblyResponse response = new EmployeeAssemblyResponse();
         response.setShopName(sellerName);
+        response.setAssembleState(assembleState);
         response.setOrderCode(order == null ? "N\\A" : order.getCode());
         response.setDeliveryMode(order == null ? null : order.getDeliveryMode());
         response.setOrderId(order == null ? null : order.getId());
