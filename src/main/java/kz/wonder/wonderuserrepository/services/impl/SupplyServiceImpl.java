@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final StoreCellRepository storeCellRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreCellProductRepository storeCellProductRepository;
+    private final SupplyMapper supplyMapper;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -130,12 +132,7 @@ public class SupplyServiceImpl implements SupplyService {
         }
 
 
-        Supply supply = new Supply();
-        supply.setAuthor(user);
-        supply.setKaspiStore(store);
-        supply.setSupplyState(SupplyState.START);
-        supply.setSupplyBoxes(new ArrayList<>());
-        supply.setSelectedTime(createRequest.getSelectedTime());
+        Supply supply = supplyMapper.toSupply(createRequest, user, store);
 
 
         createRequest.getSelectedBoxes()
@@ -189,15 +186,10 @@ public class SupplyServiceImpl implements SupplyService {
 
         log.info("Supplies size: {}", supplies.size());
 
-        return supplies.stream().map(supply -> {
-            SupplyAdminResponse supplyAdminResponse = new SupplyAdminResponse();
-            supplyAdminResponse.setId(supply.getId());
-            supplyAdminResponse.setSupplyState(supply.getSupplyState());
-            supplyAdminResponse.setSupplyAcceptTime(supply.getAcceptedTime());
-            supplyAdminResponse.setSupplyCreatedTime(supply.getCreatedAt());
-            supplyAdminResponse.setSeller(new SupplyAdminResponse.Seller(userId, fullName));
-            return supplyAdminResponse;
-        }).toList();
+        return supplies
+                .stream()
+                .map(supply -> supplyMapper.toSupplyAdminResponse(supply, userId, fullName))
+                .toList();
     }
 
     @Override
@@ -236,25 +228,12 @@ public class SupplyServiceImpl implements SupplyService {
     private List<SupplyProductResponse> mapSupplyDetailsToResponse(Supply supply) {
         var supplyProductsRes = new ArrayList<SupplyProductResponse>();
 
-        var shopName = supply.getAuthor().getKaspiToken().getSellerName();
+        supply.getSupplyBoxes().forEach(
+                supplyBox -> supplyBox.getSupplyBoxProducts().forEach(
+                        supplyBoxProduct -> supplyProductsRes.add(supplyMapper.toSupplyProductResponse(supply, supplyBox, supplyBoxProduct))
+                )
+        );
 
-        supply.getSupplyBoxes()
-                .forEach(supplyBox ->
-                        supplyBox
-                                .getSupplyBoxProducts()
-                                .forEach(supplyBoxProducts -> {
-                                    var product = supplyBoxProducts.getProduct();
-                                    SupplyProductResponse supplyProductResponse = new SupplyProductResponse();
-                                    supplyProductResponse.setName(product.getName());
-                                    supplyProductResponse.setArticle(supplyBoxProducts.getArticle());
-                                    supplyProductResponse.setVendorCode(product.getVendorCode());
-                                    supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode());
-                                    supplyProductResponse.setStoreAddress(supply.getKaspiStore().getFormattedAddress());
-                                    supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
-                                    supplyProductResponse.setShopName(shopName);
-                                    supplyProductsRes.add(supplyProductResponse);
-                                })
-                );
         return supplyProductsRes;
     }
 

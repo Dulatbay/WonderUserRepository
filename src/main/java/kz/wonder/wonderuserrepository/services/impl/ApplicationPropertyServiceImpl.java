@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.entities.ApplicationMode;
 import kz.wonder.wonderuserrepository.entities.ApplicationProperty;
+import kz.wonder.wonderuserrepository.mappers.ApplicationPropertyMapper;
 import kz.wonder.wonderuserrepository.repositories.ApplicationPropertyRepository;
 import kz.wonder.wonderuserrepository.services.ApplicationPropertyService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ApplicationPropertyServiceImpl implements ApplicationPropertyService {
     private final ApplicationPropertyRepository applicationPropertyRepository;
-
+    private final ApplicationPropertyMapper applicationPropertyMapper;
     @Value("${application.mode}")
     private ApplicationMode appMode;
 
@@ -21,10 +22,7 @@ public class ApplicationPropertyServiceImpl implements ApplicationPropertyServic
         var applicationPropertyOptional = applicationPropertyRepository.findByPropertyNameAndApplicationMode(name, appMode);
 
         if (applicationPropertyOptional.isEmpty()) {
-            ApplicationProperty applicationProperty = new ApplicationProperty();
-            applicationProperty.setPropertyName(name);
-            applicationProperty.setValue("false");
-            applicationProperty.setApplicationMode(appMode);
+            ApplicationProperty applicationProperty = applicationPropertyMapper.mapToGetApplicationPropertyByName(name, appMode);
             return applicationPropertyRepository.save(applicationProperty);
         }
 

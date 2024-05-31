@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.request.SellerUserUpdateRequest;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.SellerMapper;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
 import kz.wonder.wonderuserrepository.services.SellerService;
@@ -22,6 +23,7 @@ public class SellerServiceImpl implements SellerService {
     private final UserRepository userRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
     private final KaspiApi kaspiApi;
+    private final SellerMapper sellerMapper;
 
 
     @Override
@@ -35,17 +37,10 @@ public class SellerServiceImpl implements SellerService {
     if (kaspiTokenRepository.existsByToken(sellerRegistrationRequest.getTokenKaspi()))
             throw new IllegalArgumentException("Token must be unique");
 
-        WonderUser wonderUser = new WonderUser();
-        wonderUser.setPhoneNumber(sellerRegistrationRequest.getPhoneNumber());
-        wonderUser.setKeycloakId(sellerRegistrationRequest.getKeycloakId());
-        wonderUser.setUsername(sellerRegistrationRequest.getFirstName() + " " + sellerRegistrationRequest.getLastName());
+        WonderUser wonderUser = sellerMapper.toCreateWonderUser(sellerRegistrationRequest);
+        KaspiToken kaspiToken = sellerMapper.toCreateKaspiToken(sellerRegistrationRequest, wonderUser);
 
-        KaspiToken kaspiToken = new KaspiToken();
-        kaspiToken.setEnabled(true);
-        kaspiToken.setSellerName(sellerRegistrationRequest.getSellerName());
-        kaspiToken.setSellerId(sellerRegistrationRequest.getSellerId());
-        kaspiToken.setToken(sellerRegistrationRequest.getTokenKaspi());
-        kaspiToken.setWonderUser(wonderUser);
+        userRepository.save(wonderUser);
 
         wonderUser.setKaspiToken(kaspiToken);
 
@@ -59,14 +54,7 @@ public class SellerServiceImpl implements SellerService {
         final var user = userRepository.findById(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "User with id " + id + " not found"));
 
-        final var kaspiToken = user.getKaspiToken();
-
-        user.setUsername(sellerUserUpdateRequest.getFirstName() + " " + sellerUserUpdateRequest.getLastName());
-        user.setPhoneNumber(sellerUserUpdateRequest.getPhoneNumber());
-        user.setPhoneNumber(sellerUserUpdateRequest.getPhoneNumber());
-        kaspiToken.setSellerName(sellerUserUpdateRequest.getSellerName());
-        kaspiToken.setSellerId(sellerUserUpdateRequest.getSellerId());
-        kaspiToken.setToken(sellerUserUpdateRequest.getTokenKaspi());
+        sellerMapper.toUpdateUser(user, sellerUserUpdateRequest);
 
         return userRepository.save(user);
     }

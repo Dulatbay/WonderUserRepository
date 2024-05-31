@@ -122,6 +122,7 @@ public class AssemblyServiceImpl implements AssemblyService {
             orderAssembleProcessRepository.save(orderAssembleProcess);
         }
 
+
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
         if (dividedProducts.getLeft().isEmpty()) {
@@ -150,6 +151,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         validateEmployeeWithStore(storeEmployee, order);
 
         var orderAssemble = order.getOrderAssemble();
+
 
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
@@ -206,6 +208,4 @@ public class AssemblyServiceImpl implements AssemblyService {
         // generate with api
         return "generated(soon)";
     }
-
-
 }
