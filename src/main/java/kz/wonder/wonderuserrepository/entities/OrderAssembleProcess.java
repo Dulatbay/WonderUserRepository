@@ -20,6 +20,6 @@ public class OrderAssembleProcess extends AbstractEntity<Long> {
     private StoreEmployee storeEmployee;
 
     @OneToOne
-    @JoinColumn(name = "store_cell_product_id", nullable = false)
+    @JoinColumn(name = "store_cell_product_id")
     private StoreCellProduct storeCellProduct;
 }

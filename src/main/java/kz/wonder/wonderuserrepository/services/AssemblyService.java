@@ -15,4 +15,6 @@ public interface AssemblyService {
     AssembleProductResponse assembleProduct(JwtAuthenticationToken starterToken, String productArticle, String orderCode);
 
     AssembleProcessResponse getAssemble(JwtAuthenticationToken token, String orderCode);
+
+    void finishAssemble(String orderCode, String keycloakId);
 }

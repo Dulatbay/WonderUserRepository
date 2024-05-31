@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -144,9 +145,11 @@ public class OrderServiceImpl implements OrderService {
                 var pairResult = saveKaspiOrder(order, token);
                 if (pairResult.getValue()) {
                     var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
-                    orderEntries.forEach(orderEntry -> {
-                        processOrderProduct(token, pairResult.getKey(), orderEntry);
-                    });
+                    orderEntries.stream()
+                            .filter(orderEntry -> !kaspiOrderProductRepository.existsByKaspiId(orderEntry.getId()))
+                            .forEach(orderEntry -> {
+                                processOrderProduct(token, pairResult.getKey(), orderEntry);
+                            });
                 }
 
             }
@@ -341,11 +344,11 @@ public class OrderServiceImpl implements OrderService {
             updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
             updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
 
-            return Pair.of(kaspiOrderRepository.save(updatedKaspiOrder), false);
+            return Pair.of(kaspiOrderRepository.save(updatedKaspiOrder), Objects.equals(updatedKaspiOrder.getStatus(), "ACCEPTED_BY_MERCHANT"));
         } else {
             var toCreateKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
             kaspiOrderRepository.save(toCreateKaspiOrder);
-            return Pair.of(kaspiOrderRepository.save(toCreateKaspiOrder), false);
+            return Pair.of(kaspiOrderRepository.save(toCreateKaspiOrder), Objects.equals(toCreateKaspiOrder.getStatus(), "ACCEPTED_BY_MERCHANT"));
         }
     }
 
@@ -365,11 +368,12 @@ public class OrderServiceImpl implements OrderService {
                         token.getWonderUser().getKeycloakId())
                 .orElse(null);
 
+        if (product != null)
+            log.info("product id: {}, keycloak id: {}, store id: {}", product.getId(), token.getWonderUser().getKeycloakId(), kaspiOrder.getKaspiStore().getId());
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
-            log.info("Store id: {}", kaspiOrder.getKaspiStore().getId());
-            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductId(kaspiOrder.getKaspiStore().getId(), product.getId());
+            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductIdAndState(kaspiOrder.getKaspiStore().getId(), product.getId(), ProductStateInStore.ACCEPTED);
 
 
             var sellAt = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
@@ -399,10 +403,10 @@ public class OrderServiceImpl implements OrderService {
 
 
         if (product != null && supplyBoxProductToSave != null) {
-            KaspiOrderProduct kaspiOrderProduct = kaspiOrderProductRepository.findByProductIdAndOrderIdAndSupplyBoxProductId(product.getId(), kaspiOrder.getId(), supplyBoxProductToSave.getId())
-                    .orElse(new KaspiOrderProduct());
+            KaspiOrderProduct kaspiOrderProduct = new KaspiOrderProduct();
             kaspiOrderProduct.setOrder(kaspiOrder);
             kaspiOrderProduct.setProduct(product);
+            kaspiOrderProduct.setKaspiId(orderEntry.getId());
             kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
             kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
             kaspiOrderProductRepository.save(kaspiOrderProduct);
