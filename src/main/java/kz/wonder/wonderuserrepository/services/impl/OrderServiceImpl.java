@@ -373,6 +373,7 @@ public class OrderServiceImpl implements OrderService {
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
+
             var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductIdAndState(kaspiOrder.getKaspiStore().getId(), product.getId(), ProductStateInStore.ACCEPTED);
 
 

@@ -1,6 +1,8 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
@@ -35,6 +37,10 @@ public class SellerController {
     // todo: check in security by role
 
     @GetMapping("/{keycloakId}")
+    @Operation(summary = "Get seller user by ID", description = "This endpoint returns the seller by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by ID")
+    })
     public ResponseEntity<SellerUserResponse> getSellerUserById(@PathVariable String keycloakId) {
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
 
@@ -47,6 +53,10 @@ public class SellerController {
     }
 
     @PatchMapping("/update-password")
+    @Operation(summary = "Update seller's password", description = "This endpoint updates the seller's password")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the seller's password")
+    })
     public ResponseEntity<Void> updateSellerUserById(@RequestBody UpdatePasswordRequest updatePasswordRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -60,6 +70,10 @@ public class SellerController {
     }
 
     @PutMapping("{id}")
+    @Operation(summary = "Update seller information by ID", description = "This endpoint updates the current information about seller by specific ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the seller's account details")
+    })
     public ResponseEntity<SellerUserResponse> updateSellerUserById(@PathVariable Long id, @RequestBody SellerUserUpdateRequest sellerUserUpdateRequest) {
         var keycloakBaseUser = new KeycloakBaseUser();
         keycloakBaseUser.setEmail(sellerUserUpdateRequest.getEmail());
