@@ -56,6 +56,16 @@ public class AssemblyController {
         return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
     }
 
+    @PatchMapping("/finish-assemble/{orderCode}")
+    public ResponseEntity<Void> finishAssembly(@PathVariable("orderCode") String orderCode) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        assemblyService.finishAssemble(orderCode, keycloakId);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/start-assemble/{orderCode}")
     public ResponseEntity<AssembleProcessResponse> startAssemble(@PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();

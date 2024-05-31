@@ -7,11 +7,13 @@ import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -24,23 +26,32 @@ public class OrderAssembleMapper {
 
     public OrderAssemble toEntity(StoreEmployee storeEmployee, KaspiOrder kaspiOrder, AssembleState assembleState) {
         OrderAssemble orderAssemble = new OrderAssemble();
-        orderAssemble.setAssembleState(AssembleState.STARTED);
+        orderAssemble.setAssembleState(assembleState);
         orderAssemble.setStartedEmployee(storeEmployee);
         orderAssemble.setKaspiOrder(kaspiOrder);
         return orderAssemble;
     }
 
-    public AssembleProcessResponse toProcessResponse(KaspiOrder kaspiOrder, String starterName, Long assembleId) {
+    public AssembleProcessResponse toProcessResponse(KaspiOrder kaspiOrder, String starterName, OrderAssemble orderAssemble, List<AssembleProcessResponse.Product> productsToProcess, List<AssembleProcessResponse.ProcessedProduct> processedProducts) {
         AssembleProcessResponse assembleProcessResponse = new AssembleProcessResponse();
-        assembleProcessResponse.setSellerName(kaspiOrder.getKaspiStore().getWonderUser().getKaspiToken().getSellerName());
+        assembleProcessResponse.setSellerName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName());
         assembleProcessResponse.setDeadline(Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
-        assembleProcessResponse.setProcessedProducts(new ArrayList<>());
-        assembleProcessResponse.setProductsToProcess(new ArrayList<>());
         assembleProcessResponse.setDeliveryMode(kaspiOrder.getDeliveryMode());
         assembleProcessResponse.setStartedEmployeeName(starterName);
-        assembleProcessResponse.setAssembleId(assembleId);
+        assembleProcessResponse.setAssembleId(orderAssemble.getId());
         assembleProcessResponse.setOrderCode(kaspiOrder.getCode());
+        assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState());
 
+
+        assembleProcessResponse.setProductsToProcess(productsToProcess);
+        assembleProcessResponse.setProcessedProducts(processedProducts);
+
+        return assembleProcessResponse;
+    }
+
+    public Pair<List<AssembleProcessResponse.Product>, List<AssembleProcessResponse.ProcessedProduct>> divideProducts(KaspiOrder kaspiOrder) {
+        List<AssembleProcessResponse.Product> productsToProcess = new ArrayList<>();
+        List<AssembleProcessResponse.ProcessedProduct> processedProducts = new ArrayList<>();
         kaspiOrder.getProducts()
                 .forEach(kaspiOrderProduct -> {
 
@@ -55,7 +66,7 @@ public class OrderAssembleMapper {
                         productResponse.setName(product.getName());
                         productResponse.setArticle(supplyBoxProduct.getArticle());
                         productResponse.setCellCode(storeCellProduct.getStoreCell().getCode());
-                        assembleProcessResponse.getProductsToProcess().add(productResponse);
+                        productsToProcess.add(productResponse);
                     } else {
                         var processedProduct = new AssembleProcessResponse.ProcessedProduct();
                         var assembleProcess = storeCellProduct.getAssembleProcess();
@@ -67,11 +78,11 @@ public class OrderAssembleMapper {
                         processedProduct.setProcessedDate(LocalDateTime.now());
                         processedProduct.setProcessedEmployeeName(assembleProcess != null ? assembleProcess.getStoreEmployee().getWonderUser().getUsername() : "N\\A");
                         processedProduct.setWaybill(kaspiOrder.getWaybill());
-                        assembleProcessResponse.getProcessedProducts().add(processedProduct);
+                        processedProducts.add(processedProduct);
                     }
                 });
 
-        return assembleProcessResponse;
+        return Pair.of(productsToProcess, processedProducts);
     }
 
     public OrderAssembleProcess toOrderAssembleProcessEntity(KaspiOrder kaspiOrder, StoreEmployee storeEmployee, StoreCellProduct storeCellProduct) {
@@ -82,11 +93,12 @@ public class OrderAssembleMapper {
         return orderAssembleProcess;
     }
 
-    public EmployeeAssemblyResponse mapToEmployeeAssemblyResponse(SupplyBoxProduct supplyBoxProduct) {
+    public EmployeeAssemblyResponse mapToEmployeeAssemblyResponse(SupplyBoxProduct supplyBoxProduct, AssembleState assembleState) {
         var sellerName = supplyBoxProduct.getSupplyBox().getSupply().getAuthor().getKaspiToken().getSellerName();
         var order = supplyBoxProduct.getKaspiOrder();
         EmployeeAssemblyResponse response = new EmployeeAssemblyResponse();
         response.setShopName(sellerName);
+        response.setAssembleState(assembleState);
         response.setOrderCode(order == null ? "N\\A" : order.getCode());
         response.setDeliveryMode(order == null ? null : order.getDeliveryMode());
         response.setOrderId(order == null ? null : order.getId());
