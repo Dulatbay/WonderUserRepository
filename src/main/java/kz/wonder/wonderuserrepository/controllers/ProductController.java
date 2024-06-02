@@ -3,9 +3,11 @@ package kz.wonder.wonderuserrepository.controllers;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
+import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -85,6 +87,7 @@ public class ProductController {
 
         return ResponseEntity.noContent().build();
     }
+
     @PatchMapping("/price")
     public ResponseEntity<Void> updatePrice(@RequestBody ProductPriceChangeRequest productPriceChangeRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -122,6 +125,21 @@ public class ProductController {
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(pathToXml));
+    }
+
+    @GetMapping("/search-by-params")
+    public ResponseEntity<PaginatedResponse<ProductSearchResponse>> searchProducts(@ModelAttribute ProductSearchRequest productSearchRequest,
+                                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                                   @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+
+        Page<ProductSearchResponse> response = productService.searchByParams(productSearchRequest, pageRequest,keycloakId);
+
+        return ResponseEntity.ok(new PaginatedResponse<>(response));
     }
 
 }
