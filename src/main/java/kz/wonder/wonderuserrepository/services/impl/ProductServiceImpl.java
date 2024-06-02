@@ -397,6 +397,9 @@ public class ProductServiceImpl implements ProductService {
         productWithSize.setLength(size.getLength());
         productWithSize.setWidth(size.getWidth());
         productWithSize.setComment(size.getComment());
+        productWithSize.setVendorCode(product.getVendorCode());
+        productWithSize.setState(supplyBoxProduct.getState());
+
 
         return productWithSize;
     }

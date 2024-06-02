@@ -1,5 +1,9 @@
 package kz.wonder.wonderuserrepository.entities;
 
 public enum AssembleState {
-    READY_TO_FINISH, FINISHED, IN_PROGRESS, STARTED
+    STARTED,
+    IN_PROGRESS,
+    READY_TO_FINISH,
+    FINISHED,
+    DELIVERED,
 }

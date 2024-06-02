@@ -183,6 +183,7 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         assemble.setAssembleState(AssembleState.FINISHED);
         orderAssembleRepository.save(assemble);
+
     }
 
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
