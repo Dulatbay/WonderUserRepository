@@ -47,4 +47,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                       @Param("vendorCode") String vendorCode,
                                       @Param("isEnabled") Boolean isEnabled,
                                       Pageable pageable);
+
+    boolean existsByOriginalVendorCode(String originalVendorCode);
 }

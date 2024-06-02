@@ -4,10 +4,8 @@ import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
-import kz.wonder.wonderuserrepository.dto.response.CityResponse;
-import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
-import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
-import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
+import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
+import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -54,6 +52,8 @@ public class ProductServiceImpl implements ProductService {
     private final FileService fileService;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
+    private final UserRepository userRepository;
+    private final ProductSizeRepository productSizeRepository;
 
     @Transactional
     @Override
@@ -336,6 +336,69 @@ public class ProductServiceImpl implements ProductService {
         );
 
         return supplyBoxProducts.map(this::toProductSearchResponse);
+    }
+
+    @Override
+    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId) {
+        final var wonderUser = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
+
+        boolean productExists = productRepository.existsByOriginalVendorCode(originVendorCode);
+
+
+        if (!productExists) {
+            throw new IllegalArgumentException("Product doesn't exist");
+        }
+
+        var productSize = productSizeRepository.findByOriginVendorCode(originVendorCode)
+                .orElse(new ProductSize());
+
+        productSize.setOriginVendorCode(originVendorCode);
+        productSize.setAuthor(wonderUser);
+        productSize.setWidth(productSizeChangeRequest.getWidth());
+        productSize.setHeight(productSizeChangeRequest.getHeight());
+        productSize.setLength(productSizeChangeRequest.getLength());
+        productSize.setWeight(productSizeChangeRequest.getWeight());
+        productSize.setComment(productSizeChangeRequest.getComment());
+
+        productSizeRepository.save(productSize);
+    }
+
+    @Override
+    public Page<ProductWithSize> getProductsSizes(ProductSearchRequest productSearchRequest, String keycloakId, PageRequest pageRequest) {
+        final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
+
+        final var store = storeEmployee.getKaspiStore();
+
+        var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
+                Boolean.TRUE.equals(productSearchRequest.isByArticle()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByProductName()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByShopName()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByCellCode()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByVendorCode()) ? productSearchRequest.getSearchValue() : null,
+                store.getId(),
+                pageRequest
+        );
+
+        return supplyBoxProducts.map(this::toProductsSizesResponse);
+    }
+
+    private ProductWithSize toProductsSizesResponse(SupplyBoxProduct supplyBoxProduct) {
+        final var product = supplyBoxProduct.getProduct();
+        final var size = productSizeRepository.findByOriginVendorCode(product.getOriginalVendorCode())
+                .orElse(new ProductSize());
+
+        ProductWithSize productWithSize = new ProductWithSize();
+        productWithSize.setProductName(product.getName());
+        productWithSize.setProductArticle(supplyBoxProduct.getArticle());
+        productWithSize.setWeight(size.getWeight());
+        productWithSize.setHeight(size.getHeight());
+        productWithSize.setLength(size.getLength());
+        productWithSize.setWidth(size.getWidth());
+        productWithSize.setComment(size.getComment());
+
+        return productWithSize;
     }
 
     private ProductSearchResponse toProductSearchResponse(SupplyBoxProduct supplyBoxProduct) {
