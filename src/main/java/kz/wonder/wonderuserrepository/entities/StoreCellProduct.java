@@ -12,7 +12,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "store_cell_product", schema = schemaName)
 public class StoreCellProduct extends AbstractEntity<Long> {
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "store_cell_id", nullable = false)
     private StoreCell storeCell;
 

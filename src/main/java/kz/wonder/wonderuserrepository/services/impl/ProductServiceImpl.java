@@ -3,16 +3,15 @@ package kz.wonder.wonderuserrepository.services.impl;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
+import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
-import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
-import kz.wonder.wonderuserrepository.repositories.ProductPriceRepository;
-import kz.wonder.wonderuserrepository.repositories.ProductRepository;
+import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.FileService;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +21,13 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.ws.rs.ForbiddenException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -39,18 +40,20 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.JAXB_SCHEMA_LOCATION;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.XML_SCHEMA_INSTANCE;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
-    private static final String XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
-    private static final String JAXB_SCHEMA_LOCATION = "kaspiShopping http://kaspi.kz/kaspishopping.xsd";
     private final ProductRepository productRepository;
     private final ProductPriceRepository productPriceRepository;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
     private final FileService fileService;
+    private final StoreEmployeeRepository storeEmployeeRepository;
+    private final SupplyBoxProductsRepository supplyBoxProductsRepository;
 
     @Transactional
     @Override
@@ -307,10 +310,50 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void changePrice(String keycloakId, ProductPriceChangeRequest productPriceChangeRequest) {
-        if (productPriceChangeRequest.getPriceList() != null && !productPriceChangeRequest.getPriceList().isEmpty())
+        if (productPriceChangeRequest.getPriceList() != null) {
             updatePrice(keycloakId, productPriceChangeRequest.getPriceList());
-        if (productPriceChangeRequest.getMainPriceList() != null && !productPriceChangeRequest.getMainPriceList().isEmpty())
+        }
+        if (productPriceChangeRequest.getMainPriceList() != null) {
             updateMainCities(keycloakId, productPriceChangeRequest.getMainPriceList());
+        }
+    }
+
+    @Override
+    public Page<ProductSearchResponse> searchByParams(ProductSearchRequest productSearchRequest, PageRequest pageRequest, String employeeKeycloakId) {
+        final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(employeeKeycloakId)
+                .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
+
+        final var store = storeEmployee.getKaspiStore();
+
+        var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
+                Boolean.TRUE.equals(productSearchRequest.isByArticle()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByProductName()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByShopName()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByCellCode()) ? productSearchRequest.getSearchValue() : null,
+                Boolean.TRUE.equals(productSearchRequest.isByVendorCode()) ? productSearchRequest.getSearchValue() : null,
+                store.getId(),
+                pageRequest
+        );
+
+        return supplyBoxProducts.map(this::toProductSearchResponse);
+    }
+
+    private ProductSearchResponse toProductSearchResponse(SupplyBoxProduct supplyBoxProduct) {
+        var product = supplyBoxProduct.getProduct();
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(product.getKeycloakId())
+                .orElseThrow(() -> new IllegalArgumentException("User may have been deleted"));
+        var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
+
+        ProductSearchResponse productSearchResponse = new ProductSearchResponse();
+        productSearchResponse.setProductId(product.getId());
+        productSearchResponse.setProductName(product.getName());
+        productSearchResponse.setPrice(product.getTradePrice());
+        productSearchResponse.setVendorCode(product.getVendorCode());
+        productSearchResponse.setShopName(token.getSellerName());
+        productSearchResponse.setCellCode(storeCellProduct.getStoreCell().getCode());
+        productSearchResponse.setArticle(supplyBoxProduct.getArticle());
+
+        return productSearchResponse;
     }
 
     private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {

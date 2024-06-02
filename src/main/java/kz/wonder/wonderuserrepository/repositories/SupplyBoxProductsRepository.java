@@ -22,6 +22,22 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.article = :article and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Optional<SupplyBoxProduct> findByArticleAndStore(@Param("article") String article, @Param("kaspiStoreId") Long kaspiStoreId);
 
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN Product p ON p.id = sbp.product.id " +
+            "WHERE (:article is null or sbp.article = :article) " +
+            "and (:productName is null or p.name = :productName) " +
+            "and (:shopName is null or sbp.supplyBox.supply.author.kaspiToken.sellerName = :shopName) " +
+            "and (:cellCode is null or sbp.storeCellProduct.storeCell.code = :cellCode) " +
+            "and (:vendorCode is null or p.vendorCode = :vendorCode) " +
+            "and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+    Page<SupplyBoxProduct> findByParams(@Param("article") String article,
+                                        @Param("productName") String productName,
+                                        @Param("shopName") String shopName,
+                                        @Param("cellCode") String cellCode,
+                                        @Param("vendorCode") String vendorCode,
+                                        @Param("kaspiStoreId") Long kaspiStoreId,
+                                        Pageable pageable);
+
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +
             "JOIN schema_wonder.kaspi_order_product kop ON kop.supply_box_product_id = sbp.id " +
             "JOIN schema_wonder.kaspi_order ko ON ko.id = kop.kaspi_order_id " +

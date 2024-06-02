@@ -14,6 +14,8 @@ public class ValueConstants {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     public static final String UPLOADED_FOLDER = "upload-dir/";
+    public static final String XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
+    public static final String JAXB_SCHEMA_LOCATION = "kaspiShopping http://kaspi.kz/kaspishopping.xsd";
 
     public static final String USER_ID_CLAIM = "user_id";
     public static final String USER_NAME_CLAIM = "name";
