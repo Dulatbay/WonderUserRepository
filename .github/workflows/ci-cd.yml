@@ -36,7 +36,7 @@ jobs:
       - name: Push to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u qqanly --password-stdin
-          docker push guinnod/wonder-spring-boot:latest
+          docker push qqanly/wonder-spring-boot:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -49,7 +49,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           script: |
-            docker pull guinnod/wonder-spring-boot:latest
+            docker pull qqanly/wonder-spring-boot:latest
             docker stop wonder-spring-boot || true
             docker rm wonder-spring-boot || true
             docker run --rm -d --name wonder-spring-boot -p 8181:8181 guinnod/wonder-spring-boot:latest
