@@ -1,8 +1,13 @@
 package kz.wonder.wonderuserrepository.mappers;
 
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
+import kz.wonder.wonderuserrepository.dto.response.AvailableWorkTime;
+import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
+import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
 import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
+import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableTimes;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.UserService;
@@ -10,6 +15,12 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMATTER;
 
 @Component
 @RequiredArgsConstructor
@@ -77,5 +88,98 @@ public class KaspiStoreMapper {
         kaspiStore.setWonderUser(admin);
         return kaspiStore;
     }
+
+    public KaspiStore mapToCreateStore(KaspiStoreCreateRequest kaspiStoreCreateRequest,
+                                       KaspiCity selectedCity,
+                                       String formattedAddress
+    ) {
+        KaspiStore kaspiStore = new KaspiStore();
+
+        kaspiStore.setWonderUser(kaspiStoreCreateRequest.getWonderUser());
+        kaspiStore.setKaspiCity(selectedCity);
+        kaspiStore.setKaspiId(kaspiStoreCreateRequest.getKaspiId());
+        kaspiStore.setStreetName(kaspiStoreCreateRequest.getStreetName());
+        kaspiStore.setStreetNumber(kaspiStoreCreateRequest.getStreetNumber());
+        kaspiStore.setTown(kaspiStoreCreateRequest.getTown());
+        kaspiStore.setDistrict(kaspiStoreCreateRequest.getDistrict());
+        kaspiStore.setBuilding(kaspiStoreCreateRequest.getBuilding());
+        kaspiStore.setApartment(kaspiStoreCreateRequest.getApartment());
+        kaspiStore.setFormattedAddress(formattedAddress);
+        kaspiStore.setEnabled(true);
+
+        return kaspiStore;
+    }
+
+//    public List<AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
+//
+//        final var awts = new ArrayList<AvailableWorkTime>();
+//
+//        availableTimes.forEach(i -> {
+//            final var awt = AvailableWorkTime.builder()
+//                    .id(i.getId())
+//                    .openTime(i.getOpenTime().format(TIME_FORMATTER).toLowerCase())
+//                    .closeTime(i.getCloseTime().format(TIME_FORMATTER).toLowerCase())
+//                    .dayOfWeek(i.getDayOfWeek().getValue())
+//                    .build();
+//
+//            awts.add(awt);
+//        });
+//
+//        return awts;
+//    }
+//
+//    public StoreDetailResponse mapToDetailResponse(KaspiStore kaspiStore) {
+//        var city = kaspiStore.getKaspiCity();
+//        return StoreDetailResponse.builder()
+//                .id(kaspiStore.getId())
+//                .kaspiId(kaspiStore.getKaspiId())
+//                .city(StoreDetailResponse.City.builder()
+//                        .id(city.getId())
+//                        .name(city.getName())
+//                        .build())
+//                .streetName(kaspiStore.getStreetName())
+//                .streetNumber(kaspiStore.getStreetNumber())
+//                .town(kaspiStore.getTown())
+//                .district(kaspiStore.getDistrict())
+//                .building(kaspiStore.getBuilding())
+//                .apartment(kaspiStore.getApartment())
+//                .address(kaspiStore.getFormattedAddress())
+//                .availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
+//                .availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
+//                        j -> StoreDetailResponse.AvailableBoxType.builder()
+//                                .id(j.getBoxType().getId())
+//                                .name(j.getBoxType().getName())
+//                                .description(j.getBoxType().getDescription())
+//                                .imageUrls(j.getBoxType().getImages().stream().map(k -> k.imageUrl).collect(Collectors.toList()))
+//                                .build()
+//                ).collect(Collectors.toList()))
+//                .enabled(kaspiStore.isEnabled())
+//                .userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
+//                .build();
+//    }
+//
+//    public StoreResponse mapToStoreResponse(KaspiStore kaspiStore) {
+//        var city = kaspiStore.getKaspiCity();
+//
+//        return StoreResponse.builder()
+//                .id(kaspiStore.getId())
+//                .kaspiId(kaspiStore.getKaspiId())
+//                .city(StoreResponse.City.builder()
+//                        .id(city.getId())
+//                        .name(city.getName())
+//                        .build())
+//                .streetName(kaspiStore.getStreetName())
+//                .streetNumber(kaspiStore.getStreetNumber())
+//                .town(kaspiStore.getTown())
+//                .district(kaspiStore.getDistrict())
+//                .building(kaspiStore.getBuilding())
+//                .apartment(kaspiStore.getBuilding())
+//                .apartment(kaspiStore.getApartment())
+//                .formattedAddress(kaspiStore.getFormattedAddress())
+//                .availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
+//                .enabled(kaspiStore.isEnabled())
+//                .userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
+//                .build();
+//    }
 
 }

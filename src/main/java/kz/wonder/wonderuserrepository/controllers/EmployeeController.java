@@ -1,5 +1,8 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeUpdateRequest;
@@ -27,6 +30,10 @@ public class EmployeeController {
     private final KeycloakService keycloakService;
 
     @PostMapping
+    @Operation(summary = "Create employee", description = "This endpoint allows the creation of a new employee. The request must include employee details such as email, password, first name and last name. If successful, it returns the created employee's email and password.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully created employee")
+    })
     public ResponseEntity<EmployeeCreateResponse> createEmployee(@RequestBody EmployeeCreateRequest employeeCreateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -47,6 +54,10 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all employees", description = "Retrieve a list of employees based on the store ID. If a store ID is provided, only employees of that store are returned. If no store ID is provided, and the requester is a Super Admin, all employees are returned.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved a list of employees")
+    })
     public ResponseEntity<List<EmployeeResponse>> getEmployees(@RequestParam(value = "store-id", required = false)
                                                                Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -67,6 +78,10 @@ public class EmployeeController {
 
 
     @GetMapping("/{userId}")
+    @Operation(summary = "Get employee by ID", description = "Fetch details of a specific employee using their ID. The response includes the employee's personal and professional details. This operation ensures the requester has the necessary permissions to view the employee's information.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee")
+    })
     public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable Long userId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -87,6 +102,10 @@ public class EmployeeController {
 
 
     @DeleteMapping("/{userId}")
+    @Operation(summary = "Delete employee by ID", description = "Delete an employee based on the ID. This endpoint checks if the requester has the right to delete the employee. If the employee exists and the requester is authorized, the employee is deleted from the system.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully deleted the employee")
+    })
     public ResponseEntity<Void> deleteEmployeeId(@PathVariable Long userId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -104,6 +123,10 @@ public class EmployeeController {
     }
 
     @PatchMapping("/update-password/{userId}")
+    @Operation(summary = "Update employee's password", description = "This endpoint updates employee's password")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the password")
+    })
     public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody UpdatePasswordRequest updatePassword) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
@@ -125,6 +148,10 @@ public class EmployeeController {
     }
 
     @PutMapping("/{userId}")
+    @Operation(summary = "Update employee", description = "Update the details of an existing employee. The request must include updated employee information such as email, first name, last name and phone number. The operation checks if the requester is authorized to make updates to the employee's details.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the employee")
+    })
     public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, @RequestBody EmployeeUpdateRequest employeeUpdateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);

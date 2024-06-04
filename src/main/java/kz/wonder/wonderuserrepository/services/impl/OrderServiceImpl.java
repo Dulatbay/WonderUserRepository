@@ -11,6 +11,7 @@ import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.KaspiOrderMapper;
+import kz.wonder.wonderuserrepository.mappers.OrderMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
@@ -34,7 +35,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static kz.wonder.wonderuserrepository.constants.Utils.getLocalDateTimeFromTimestamp;
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
@@ -66,37 +66,11 @@ public class OrderServiceImpl implements OrderService {
 
 
     private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
-
-        return OrderResponse.builder()
-                .code(kaspiOrder.getCode())
-                .tradePrice(tradePrice)
-                .kaspiId(kaspiOrder.getKaspiId())
-                .totalPrice(kaspiOrder.getTotalPrice())
-                .paymentMode(kaspiOrder.getPaymentMode())
-                .state(kaspiOrder.getStatus())
-                .plannedDeliveryDate(kaspiOrder.getPlannedDeliveryDate())
-                .creationDate(kaspiOrder.getCreationDate())
-                .deliveryCostForSeller(kaspiOrder.getDeliveryCostForSeller())
-                .isKaspiDelivery(kaspiOrder.getIsKaspiDelivery())
-                .deliveryMode(kaspiOrder.getDeliveryMode())
-                .waybill(kaspiOrder.getWaybill())
-                .courierTransmissionDate(kaspiOrder.getCourierTransmissionDate())
-                .courierTransmissionPlanningDate(kaspiOrder.getCourierTransmissionPlanningDate())
-                .waybillNumber(kaspiOrder.getWaybillNumber())
-                .deliveryCost(kaspiOrder.getDeliveryCost())
-                .sellerName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName())
-                .build();
+        return OrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
     }
 
     private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
-        orderResponse.setOrderCode(kaspiOrder.getCode());
-        orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
-        orderResponse.setOrderStatus(kaspiOrder.getStatus());
-        orderResponse.setOrderToSendTime(getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
-        orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
-
-        return orderResponse;
+        return OrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
     }
 
 
@@ -210,25 +184,9 @@ public class OrderServiceImpl implements OrderService {
 
         var kaspiOrderProducts = order.getProducts();
 
-        return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
-            var product = kaspiOrderProduct.getProduct();
-            var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
-            if (supplyBoxProduct == null)
-                supplyBoxProduct = new SupplyBoxProduct();
-
-            var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
-
-
-            OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
-            orderDetailResponse.setProductName(product == null ? "N\\A" : product.getName());
-            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle() == null ? "N\\A" : supplyBoxProduct.getArticle());
-            orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
-            orderDetailResponse.setProductVendorCode(product == null ? "N\\A" : product.getVendorCode());
-            orderDetailResponse.setProductTradePrice(product == null ? 0 : product.getTradePrice());
-            orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
-            orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
-            return orderDetailResponse;
-        }).toList();
+        return kaspiOrderProducts.stream()
+                .map(kaspiOrderProduct -> OrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
+                .toList();
     }
 
     @Override
@@ -240,21 +198,9 @@ public class OrderServiceImpl implements OrderService {
 
         var kaspiOrderProducts = order.getProducts();
 
-        return kaspiOrderProducts.stream().map(kaspiOrderProduct -> {
-            var product = kaspiOrderProduct.getProduct();
-            var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
-            var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
-
-            OrderDetailResponse orderDetailResponse = new OrderDetailResponse();
-            orderDetailResponse.setProductName(product.getName());
-            orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
-            orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "Not accepted yet");
-            orderDetailResponse.setProductVendorCode(product.getVendorCode());
-            orderDetailResponse.setProductTradePrice(product.getTradePrice());
-            orderDetailResponse.setProductSellPrice(order.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
-            orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
-            return orderDetailResponse;
-        }).toList();
+        return kaspiOrderProducts.stream()
+                .map(kaspiOrderProduct -> OrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
+                .toList();
     }
 
     @Override
@@ -282,21 +228,11 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .toList();
 
-        OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
-        orderEmployeeDetailResponse.setProducts(orderProducts);
-        orderEmployeeDetailResponse.setDeliveryMode(order.getDeliveryMode());
-        orderEmployeeDetailResponse.setDeliveryTime(getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
-
-        return orderEmployeeDetailResponse;
+        return OrderMapper.toOrderEmployeeDetailResponse(order, orderProducts);
     }
 
     private static @NotNull OrderEmployeeDetailResponse.Product getOrderEmployeeProduct(Optional<Product> product, Optional<SupplyBoxProduct> supplyBoxProductOptional, Optional<StoreCellProduct> storeCellProductOptional) {
-        OrderEmployeeDetailResponse.Product orderProduct = new OrderEmployeeDetailResponse.Product();
-        orderProduct.setProductName(product.isEmpty() ? "N\\A" : product.get().getName());
-        orderProduct.setProductArticle(supplyBoxProductOptional.isEmpty() ? "N\\A" : supplyBoxProductOptional.get().getArticle());
-        orderProduct.setProductCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N\\A");
-        orderProduct.setProductVendorCode(product.isEmpty() ? "N\\A" : product.get().getVendorCode());
-        return orderProduct;
+        return OrderMapper.mapToGetOrderEmployeeProduct(product, supplyBoxProductOptional, storeCellProductOptional);
     }
 
     @Override
@@ -356,12 +292,7 @@ public class OrderServiceImpl implements OrderService {
     private void processOrderProduct(KaspiToken token, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
         // todo: замечать отмену заказов в шелудер
 
-        var vendorCode = orderEntry.getAttributes().getOffer().getCode();
-
-
-        if (vendorCode != null && !vendorCode.isBlank()) {
-            vendorCode = vendorCode.split("_")[0];
-        }
+        var vendorCode = OrderMapper.extractVendorCode(orderEntry);
 
         var product = productRepository
                 .findByOriginalVendorCodeAndKeycloakId(vendorCode,
@@ -373,6 +304,7 @@ public class OrderServiceImpl implements OrderService {
 
         SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
+
             var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductIdAndState(kaspiOrder.getKaspiStore().getId(), product.getId(), ProductStateInStore.ACCEPTED);
 
 
