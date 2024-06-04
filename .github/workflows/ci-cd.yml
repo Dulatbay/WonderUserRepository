@@ -5,6 +5,7 @@ on:
     branches:
       - non-existing-branch
 
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
