@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build Docker image
-        run: docker build . --tag guinnod/wonder-spring-boot:latest
+        run: docker build . --tag qqanly/wonder-spring-boot:latest
 
       - name: Run Docker image
-        run: docker run -d --name wonder-spring-boot-test -p 8181:8181 guinnod/wonder-spring-boot:latest
+        run: docker run -d --name wonder-spring-boot-test -p 8181:8181 qqanly/wonder-spring-boot:latest
 
       - name: Wait for Application to Start
         run: |
