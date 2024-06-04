@@ -13,7 +13,7 @@ public interface SupplyService {
 
     long createSupply(SupplyCreateRequest createRequest, String userId);
 
-    List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username);
+    List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username, String id);
 
     List<SupplyProductResponse> getSuppliesDetail(Long id);
 

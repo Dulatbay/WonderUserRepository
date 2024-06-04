@@ -17,5 +17,8 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     Page<KaspiOrder> findAllByWonderUserKeycloakIdAndCreationDateBetween(String keycloakId, Long from, Long to, Pageable pageable);
 
 
+    @Query("select ko from KaspiOrder ko WHERE ko.wonderUser.keycloakId = :keycloakId AND ko.creationDate BETWEEN :from AND :to")
+    List<KaspiOrder> findAllBySeller(String keycloakId, Long from, Long to);
+
 
 }

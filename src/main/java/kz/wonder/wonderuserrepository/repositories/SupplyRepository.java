@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SupplyRepository extends JpaRepository<Supply, Long> {
-    List<Supply> findAllByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    List<Supply> findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(LocalDateTime start, LocalDateTime end, String keycloakId);
 
     List<Supply> findAllByCreatedAtBetweenAndAuthorKeycloakId(LocalDateTime start, LocalDateTime end, String keycloakId);
 

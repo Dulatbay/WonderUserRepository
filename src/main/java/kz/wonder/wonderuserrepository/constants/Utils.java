@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -57,5 +58,10 @@ public class Utils {
     public static LocalDateTime getLocalDateTimeFromTimestamp(Long timestamp) {
         if (timestamp == null) return null;
         return Instant.ofEpochMilli(timestamp).atZone(ZONE_ID).toLocalDateTime();
+    }
+
+    public static long getTimeStampFromLocalDateTime(LocalDateTime localDateTime) {
+        if (localDateTime == null) return 0;
+        return Timestamp.valueOf(localDateTime).getTime();
     }
 }
