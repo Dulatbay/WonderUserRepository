@@ -184,8 +184,8 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName) {
-        var supplies = supplyRepository.findAllByCreatedAtBetween(startDate.atStartOfDay(), endDate.atStartOfDay());
+    public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName, String keycloakId) {
+        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
 
         log.info("Supplies size: {}", supplies.size());
 
@@ -502,7 +502,10 @@ public class SupplyServiceImpl implements SupplyService {
 
     private void updateReportCounts(SupplyBoxProduct supplyBoxProduct, SupplyReportResponse report) {
         switch (supplyBoxProduct.getState()) {
-            case ACCEPTED: case SOLD: case ASSEMBLED: case IN_ASSEMBLY: case WAITING_FOR_ASSEMBLY:
+            case ACCEPTED:
+            case SOLD:
+            case ASSEMBLED:
+            case WAITING_FOR_ASSEMBLY:
                 report.setCountOfProductAccepted(report.getCountOfProductAccepted() + 1);
                 break;
             case DECLINED:

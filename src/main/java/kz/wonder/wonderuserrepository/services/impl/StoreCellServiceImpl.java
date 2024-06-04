@@ -20,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class StoreCellServiceImpl implements StoreCellService {
-    private static final Logger log = LoggerFactory.getLogger(StoreCellServiceImpl.class);
     private final StoreCellRepository storeCellRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;

@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
@@ -12,6 +13,7 @@ import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.AssemblyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -46,12 +48,12 @@ public class AssemblyServiceImpl implements AssemblyService {
         String deliveryMode = assemblySearchParameters.getDeliveryMode() == null ? null : assemblySearchParameters.getDeliveryMode().name();
 
         log.info("Search assemblies, start unix timestamp: {}, endUnixTimeStamp: {}, product state: {}, delivery mode: {}", startUnixTimestamp, endUnixTimestamp, productState, deliveryMode);
-        var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, pageRequest);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, keycloakId, pageRequest);
 
 
         return supplyBoxProducts.map(supplyBoxProduct -> {
             var orderAssemble = orderAssembleRepository.findByKaspiOrderId(supplyBoxProduct.getKaspiOrder().getId());
-            return orderAssembleMapper.mapToEmployeeAssemblyResponse(supplyBoxProduct, orderAssemble.<AssembleState>map(OrderAssemble::getAssembleState).orElse(null));
+            return orderAssembleMapper.mapToEmployeeAssemblyResponse(supplyBoxProduct, orderAssemble.map(OrderAssemble::getAssembleState).orElse(null));
         });
     }
 
@@ -153,13 +155,13 @@ public class AssemblyServiceImpl implements AssemblyService {
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
 
-
         // todo: refactor govno code
         return orderAssembleMapper.toProcessResponse(order, orderAssemble == null ? "N\\A" : orderAssemble.getStartedEmployee().getWonderUser().getUsername(), orderAssemble == null ? new OrderAssemble() : orderAssemble, dividedProducts.getLeft(), dividedProducts.getRight());
 
     }
 
     @Override
+    @Transactional
     public void finishAssemble(String orderCode, String keycloakId) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotAuthorizedException(""));
@@ -167,11 +169,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var order = kaspiOrderRepository.findByCode(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
-        var assemble = order.getOrderAssemble();
-
-        if (assemble == null || assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
-            throw new IllegalArgumentException("Assemble state is not ready to finish");
-        }
+        var assemble = getOrderAssemble(order);
 
         validateEmployeeWithStore(storeEmployee, order);
 
@@ -184,6 +182,27 @@ public class AssemblyServiceImpl implements AssemblyService {
         assemble.setAssembleState(AssembleState.FINISHED);
         orderAssembleRepository.save(assemble);
 
+        order.getProducts()
+                .forEach(kaspiOrderProduct -> {
+                    var sbp = kaspiOrderProduct.getSupplyBoxProduct();
+                    sbp.setState(ProductStateInStore.SOLD);
+                    supplyBoxProductsRepository.save(sbp);
+                });
+    }
+
+    private static @NotNull OrderAssemble getOrderAssemble(KaspiOrder order) {
+        var assemble = order.getOrderAssemble();
+
+        if (assemble == null) {
+            throw new IllegalArgumentException("Assemble state is not ready to finish");
+        }
+
+        if (assemble.getAssembleState() == AssembleState.FINISHED) {
+            throw new IllegalArgumentException("Assemble state is already finished");
+        } else if (assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
+            throw new IllegalArgumentException("Assemble state is not ready to finish");
+        }
+        return assemble;
     }
 
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {

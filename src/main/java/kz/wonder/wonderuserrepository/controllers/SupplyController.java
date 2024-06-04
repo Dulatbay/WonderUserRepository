@@ -61,7 +61,7 @@ public class SupplyController {
         var id = extractIdFromToken(token);
         var userRepresentation = keycloakService.getUserById(id).toRepresentation();
 
-        List<SupplyAdminResponse> result = supplyService.getSuppliesOfAdmin(startDate, endDate, userRepresentation.getId(), userRepresentation.getFirstName() + " " + userRepresentation.getLastName());
+        List<SupplyAdminResponse> result = supplyService.getSuppliesOfAdmin(startDate, endDate, userRepresentation.getId(), userRepresentation.getFirstName() + " " + userRepresentation.getLastName(), id);
         return ResponseEntity.ok(result);
     }
 

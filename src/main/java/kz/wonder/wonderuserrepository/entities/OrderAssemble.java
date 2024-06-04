@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.List;
+
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @EqualsAndHashCode(callSuper = true)
@@ -22,4 +24,7 @@ public class OrderAssemble extends AbstractEntity<Long> {
     @JoinColumn(name = "assemble_state", nullable = false)
     @Enumerated(EnumType.STRING)
     private AssembleState assembleState;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderAssembleProcess> orderAssembleProcesses;
 }

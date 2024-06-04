@@ -1,11 +1,18 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.params.DurationParams;
+import kz.wonder.wonderuserrepository.dto.response.AdminSalesInformation;
 import kz.wonder.wonderuserrepository.dto.response.DailyStats;
+import kz.wonder.wonderuserrepository.dto.response.SellerSalesInformation;
 import kz.wonder.wonderuserrepository.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,13 +24,23 @@ public class StatisticsController {
     private final StatisticsService statisticsService;
 
     @GetMapping("/sales-information/admin-stats")
-    public ResponseEntity<?> getAdminStatistics() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AdminSalesInformation> getAdminStatistics(@RequestParam("duration") DurationParams duration) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        AdminSalesInformation adminSalesInformation = statisticsService.getAdminSalesInformation(keycloakId, duration);
+
+        return ResponseEntity.ok(adminSalesInformation);
     }
 
     @GetMapping("/sales-information/seller-stats")
-    public ResponseEntity<?> getSellerStatistics() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<SellerSalesInformation> getSellerStatistics(@RequestParam("duration") DurationParams duration) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        SellerSalesInformation sellerSalesInformation = statisticsService.getSellerSalesInformation(keycloakId, duration);
+
+        return ResponseEntity.ok(sellerSalesInformation);
     }
 
     @GetMapping("/daily/seller-stats")

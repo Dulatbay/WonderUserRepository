@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -43,11 +42,11 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private StoreCellProduct storeCellProduct;
 
-    @OneToMany(fetch = FetchType.LAZY,
+    @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<KaspiOrderProduct> kaspiOrderProducts;
+    private KaspiOrderProduct kaspiOrderProducts;
 
     @Override
     protected void onCreate() {

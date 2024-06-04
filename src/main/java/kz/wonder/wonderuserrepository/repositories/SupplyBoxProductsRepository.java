@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,12 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD') and sbp.createdAt BETWEEN :start AND :end")
+    List<SupplyBoxProduct> findAllAdminSells(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
+    List<SupplyBoxProduct> findAllSellerProducts(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.article = :article and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Optional<SupplyBoxProduct> findByArticleAndStore(@Param("article") String article, @Param("kaspiStoreId") Long kaspiStoreId);
@@ -41,7 +48,10 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +
             "JOIN schema_wonder.kaspi_order_product kop ON kop.supply_box_product_id = sbp.id " +
             "JOIN schema_wonder.kaspi_order ko ON ko.id = kop.kaspi_order_id " +
-            "WHERE (ko.creation_date BETWEEN :start AND :end) AND (:productState IS NULL OR sbp.product_state = :productState) AND (:deliveryMode IS NULL OR ko.delivery_mode = :deliveryMode)")
-    Page<SupplyBoxProduct> findAllEmployeeResponse(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, Pageable pageable);
+            "JOIN schema_wonder.kaspi_store ks ON ks.id = ko.kaspi_store_id " +
+            "JOIN schema_wonder.store_employee se ON se.kaspi_store_id  = ks.id " +
+            "JOIN schema_wonder.wonder_user wu ON wu.id = se.wonder_user_id " +
+            "WHERE (ko.creation_date BETWEEN :start AND :end) AND (:productState IS NULL OR sbp.product_state = :productState) AND (:deliveryMode IS NULL OR ko.delivery_mode = :deliveryMode) AND wu.keycloak_id = :keycloakId")
+    Page<SupplyBoxProduct> findAllEmployeeResponse(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, @Param("keycloakId") String keycloakId, Pageable pageable);
 
 }
