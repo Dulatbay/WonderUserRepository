@@ -35,7 +35,7 @@ jobs:
 
       - name: Push to Docker Hub
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u guinnod --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u qqanly --password-stdin
           docker push guinnod/wonder-spring-boot:latest
 
   deploy:
