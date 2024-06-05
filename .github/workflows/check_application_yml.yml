@@ -5,13 +5,15 @@ on:
     branches:
       - sensei
     paths:
-      - 'src/main/resources/application.yml'
+      - 'path/to/your/application.yml'
 
 jobs:
-  block_changes:
+  check-author:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for changes in application.yml
+      - name: Reject changes if not authorized
         run: |
-          echo "Changes in application.yml are not allowed."
-          exit 1
+          if [ "${{ github.actor }}" != "Dulatbay" ]; then
+            echo "You are not authorized to modify application.yml."
+            exit 1
+          fi
