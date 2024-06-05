@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.dto.request.StoreCellCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreCellResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.StoreCellMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
 import lombok.RequiredArgsConstructor;
@@ -20,27 +21,20 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class StoreCellServiceImpl implements StoreCellService {
-    private static final Logger log = LoggerFactory.getLogger(StoreCellServiceImpl.class);
     private final StoreCellRepository storeCellRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final StoreCellProductRepository storeCellProductRepository;
     private final UserRepository userRepository;
+    private final StoreCellMapper storeCellMapper;
 
     @Override
     public void create(StoreCellCreateRequest storeCellCreateRequest, String keycloakId) {
         final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakId, storeCellCreateRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
 
-        StoreCell storeCell = new StoreCell();
-        storeCell.setCell(storeCellCreateRequest.getCell());
-        storeCell.setCol(storeCellCreateRequest.getCol());
-        storeCell.setRow(storeCellCreateRequest.getRow());
-        storeCell.setComment(storeCellCreateRequest.getComment());
-        storeCell.setWidth(storeCellCreateRequest.getWidth());
-        storeCell.setDepth(storeCellCreateRequest.getDepth());
-        storeCell.setHeight(storeCellCreateRequest.getHeight());
+        StoreCell storeCell = storeCellMapper.toEntity(storeCellCreateRequest);
         storeCell.setKaspiStore(kaspiStore);
 
         log.info("Created store cell with id: {}", storeCell.getId());
@@ -55,18 +49,7 @@ public class StoreCellServiceImpl implements StoreCellService {
 
         return kaspiStore.getStoreCells()
                 .stream()
-                .map(cell -> {
-                    StoreCellResponse storeCell = new StoreCellResponse();
-                    storeCell.setCell(cell.getCell());
-                    storeCell.setCol(cell.getCol());
-                    storeCell.setRow(cell.getRow());
-                    storeCell.setComment(cell.getComment());
-                    storeCell.setWidth(cell.getWidth());
-                    storeCell.setHeight(cell.getHeight());
-                    storeCell.setDepth(cell.getDepth());
-                    storeCell.setId(cell.getId());
-                    return storeCell;
-                })
+                .map(storeCellMapper::toResponse)
                 .toList();
     }
 
@@ -91,10 +74,8 @@ public class StoreCellServiceImpl implements StoreCellService {
         supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
         supplyBoxProductsRepository.save(supplyBoxProduct);
 
-        StoreCellProduct storeCellProduct = new StoreCellProduct();
-        storeCellProduct.setStoreCell(storeCell);
-        storeCellProduct.setSupplyBoxProduct(supplyBoxProduct);
-        storeCellProduct.setStoreEmployee(employee);
+        StoreCellProduct storeCellProduct = storeCellMapper.toStoreCellProduct(storeCell, supplyBoxProduct, employee);
+
         storeCellProductRepository.save(storeCellProduct);
     }
 
@@ -118,13 +99,7 @@ public class StoreCellServiceImpl implements StoreCellService {
             throw new IllegalArgumentException("The cell doesn't exist");
         }
 
-        storeCell.setRow(storeCellChangeRequest.getRow());
-        storeCell.setCol(storeCellChangeRequest.getCol());
-        storeCell.setCell(storeCellChangeRequest.getCell());
-        storeCell.setComment(storeCellChangeRequest.getComment());
-        storeCell.setWidth(storeCellChangeRequest.getWidth());
-        storeCell.setHeight(storeCellChangeRequest.getHeight());
-        storeCell.setDepth(storeCellChangeRequest.getDepth());
+        storeCellMapper.updateEntity(storeCell, storeCellChangeRequest);
 
         storeCellRepository.save(storeCell);
     }

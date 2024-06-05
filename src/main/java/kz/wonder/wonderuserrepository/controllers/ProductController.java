@@ -3,9 +3,9 @@ package kz.wonder.wonderuserrepository.controllers;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
-import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
-import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
-import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
+import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
+import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +37,11 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
-        List<ProductResponse> result = productService.processExcelFile(file, userId);
+        productService.processExcelFile(file, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(result);
+                .build();
     }
 
     @GetMapping()
@@ -49,7 +49,7 @@ public class ProductController {
                                                                           @RequestParam(defaultValue = "10") int size,
                                                                           @RequestParam(name = "searchValue", required = false) String searchValue,
                                                                           @RequestParam(name = "isPublished", required = false) Boolean isPublished,
-                                                                          @RequestParam(name = "sortBy", required = false) String sortBy) {
+                                                                          @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         Page<ProductResponse> productPage = productService.findAllByKeycloakId(Utils.extractIdFromToken(token), pageable, isPublished, searchValue);
@@ -59,15 +59,18 @@ public class ProductController {
 
     @GetMapping("/prices")
     public ResponseEntity<PaginatedResponse<ProductPriceResponse>> getProductPrices(@RequestParam(defaultValue = "0") int page,
-                                                                                    @RequestParam(defaultValue = "10") int size) {
+                                                                                    @RequestParam(defaultValue = "10") int size,
+                                                                                    @RequestParam(name = "searchValue", required = false) String searchValue,
+                                                                                    @RequestParam(name = "isPublished", required = false) Boolean isPublished,
+                                                                                    @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 
 
-        var productsPrices = productService.getProductsPrices(keycloakId, isSuperAdmin, pageable);
+        var productsPrices = productService.getProductsPrices(keycloakId, isSuperAdmin, pageable, isPublished, searchValue);
         var response = new PaginatedResponse<>(productsPrices);
 
         return ResponseEntity.ok(response);
@@ -82,12 +85,13 @@ public class ProductController {
 
         return ResponseEntity.noContent().build();
     }
+
     @PatchMapping("/price")
-    public ResponseEntity<Void> updatePrice(@RequestParam Long productId, @RequestBody ProductPriceChangeRequest productPriceChangeRequest) {
+    public ResponseEntity<Void> updatePrice(@RequestBody ProductPriceChangeRequest productPriceChangeRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        productService.changePrice(keycloakId, productId, productPriceChangeRequest);
+        productService.changePrice(keycloakId, productPriceChangeRequest);
 
         return ResponseEntity.noContent().build();
     }
@@ -120,5 +124,46 @@ public class ProductController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(pathToXml));
     }
+
+    @GetMapping("/search-by-params")
+    public ResponseEntity<PaginatedResponse<ProductSearchResponse>> searchProducts(@ModelAttribute ProductSearchRequest productSearchRequest,
+                                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                                   @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+
+        Page<ProductSearchResponse> response = productService.searchByParams(productSearchRequest, pageRequest, keycloakId);
+
+        return ResponseEntity.ok(new PaginatedResponse<>(response));
+    }
+
+    @PatchMapping("/change-size/{originVendorCode}")
+    public ResponseEntity<Void> changeSize(@PathVariable String originVendorCode, @RequestBody ProductSizeChangeRequest productSizeChangeRequest) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        productService.changeSize(originVendorCode, productSizeChangeRequest, keycloakId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/get-with-sizes")
+    public ResponseEntity<PaginatedResponse<ProductWithSize>> getWithSizes(
+            @ModelAttribute ProductSearchRequest productSearchRequest,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        Page<ProductWithSize> response = productService.getProductsSizes(productSearchRequest, keycloakId, pageRequest);
+
+        return ResponseEntity.ok(new PaginatedResponse<>(response));
+    }
+
 
 }

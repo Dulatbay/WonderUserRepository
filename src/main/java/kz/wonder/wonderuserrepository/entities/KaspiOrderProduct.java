@@ -19,10 +19,13 @@ public class KaspiOrderProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @ManyToOne
-    @JoinColumn(name = "supply_box_product")
+    @OneToOne
+    @JoinColumn(name = "supply_box_product_id")
     private SupplyBoxProduct supplyBoxProduct;
 
-    @Column
+    @Column(name = "kaspi_id", nullable = false, unique = true)
+    private String kaspiId;
+
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
 }

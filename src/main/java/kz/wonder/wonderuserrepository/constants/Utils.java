@@ -8,11 +8,14 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.USER_ID_CLAIM;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
@@ -22,6 +25,10 @@ public class Utils {
 
     public static String extractIdFromToken(JwtAuthenticationToken token) {
         return token.getToken().getClaim(USER_ID_CLAIM);
+    }
+
+    public static String extractNameFromToken(JwtAuthenticationToken token) {
+        return token.getToken().getClaim(USER_NAME_CLAIM);
     }
 
     public static String getStringFromExcelCell(Cell vendorCodeCell) {
@@ -46,5 +53,15 @@ public class Utils {
             randomNumber.append(random.nextInt(10));
         }
         return randomNumber.toString();
+    }
+
+    public static LocalDateTime getLocalDateTimeFromTimestamp(Long timestamp) {
+        if (timestamp == null) return null;
+        return Instant.ofEpochMilli(timestamp).atZone(ZONE_ID).toLocalDateTime();
+    }
+
+    public static long getTimeStampFromLocalDateTime(LocalDateTime localDateTime) {
+        if (localDateTime == null) return 0;
+        return Timestamp.valueOf(localDateTime).getTime();
     }
 }

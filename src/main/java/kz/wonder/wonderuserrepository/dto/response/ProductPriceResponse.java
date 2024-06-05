@@ -8,19 +8,6 @@ import java.util.List;
 
 @Data
 public class ProductPriceResponse {
-    // cities
-
-    // products[i] -> {
-    //      productInfo
-    // }
-
-    // prices[i] -> {
-    //      productId,
-    //      cityId,
-    //      cityName
-    //      price
-    // }
-
     private List<CityResponse> cities;
     private List<ProductInfo> products;
 
@@ -31,7 +18,9 @@ public class ProductPriceResponse {
         private String vendorCode;
         private String name;
         private Long count;
+        private boolean isPublished;
         private List<ProductPrice> prices;
+        private Long mainPriceCityId;
     }
 
     @Data

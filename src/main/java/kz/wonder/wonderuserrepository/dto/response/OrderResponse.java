@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
 import kz.wonder.kaspi.client.model.PaymentMode;
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,7 +16,7 @@ public class OrderResponse {
     private Long creationDate;
     private Double deliveryCostForSeller;
     private Boolean isKaspiDelivery;
-    private String deliveryMode;
+    private DeliveryMode deliveryMode;
     private Double tradePrice;
     private String state;
     private String waybill;

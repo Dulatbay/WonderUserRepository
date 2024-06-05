@@ -23,7 +23,7 @@ public class KaspiCity extends AbstractEntity<Long> {
     @Column(name = "code", unique = true)
     private String code;
 
-    @Column
+    @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
     @OneToMany(fetch = FetchType.LAZY,

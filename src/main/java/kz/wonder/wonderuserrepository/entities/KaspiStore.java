@@ -24,7 +24,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "origin_address_id")
     private String originAddressId;
 
-    @Column(name = "streetNumber")
+    @Column(name = "street_number")
     private String streetNumber;
 
     @Column(name = "town")
@@ -39,7 +39,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "apartment")
     private String apartment;
 
-    @Column(name = "formattedAddress")
+    @Column(name = "formatted_address")
     private String formattedAddress;
 
     @Column(name = "latitude")
@@ -51,7 +51,10 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "kaspi_id", nullable = false)
     private String kaspiId;
 
-    @Column
+    @Column(name = "pickup_point_id")
+    private String pickupPointId;
+
+    @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)

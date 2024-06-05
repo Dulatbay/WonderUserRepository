@@ -30,7 +30,6 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     private final FileService fileService;
     private final BoxTypeMapper boxTypeMapper;
 
-
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
         var boxType = new BoxType();

@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final StoreCellRepository storeCellRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreCellProductRepository storeCellProductRepository;
+    private final SupplyMapper supplyMapper;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -130,12 +132,7 @@ public class SupplyServiceImpl implements SupplyService {
         }
 
 
-        Supply supply = new Supply();
-        supply.setAuthor(user);
-        supply.setKaspiStore(store);
-        supply.setSupplyState(SupplyState.START);
-        supply.setSupplyBoxes(new ArrayList<>());
-        supply.setSelectedTime(createRequest.getSelectedTime());
+        Supply supply = supplyMapper.toSupply(createRequest, user, store);
 
 
         createRequest.getSelectedBoxes()
@@ -184,20 +181,15 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName) {
-        var supplies = supplyRepository.findAllByCreatedAtBetween(startDate.atStartOfDay(), endDate.atStartOfDay());
+    public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName, String keycloakId) {
+        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
 
         log.info("Supplies size: {}", supplies.size());
 
-        return supplies.stream().map(supply -> {
-            SupplyAdminResponse supplyAdminResponse = new SupplyAdminResponse();
-            supplyAdminResponse.setId(supply.getId());
-            supplyAdminResponse.setSupplyState(supply.getSupplyState());
-            supplyAdminResponse.setSupplyAcceptTime(supply.getAcceptedTime());
-            supplyAdminResponse.setSupplyCreatedTime(supply.getCreatedAt());
-            supplyAdminResponse.setSeller(new SupplyAdminResponse.Seller(userId, fullName));
-            return supplyAdminResponse;
-        }).toList();
+        return supplies
+                .stream()
+                .map(supply -> supplyMapper.toSupplyAdminResponse(supply, userId, fullName))
+                .toList();
     }
 
     @Override
@@ -236,25 +228,12 @@ public class SupplyServiceImpl implements SupplyService {
     private List<SupplyProductResponse> mapSupplyDetailsToResponse(Supply supply) {
         var supplyProductsRes = new ArrayList<SupplyProductResponse>();
 
-        var shopName = supply.getAuthor().getKaspiToken().getSellerName();
+        supply.getSupplyBoxes().forEach(
+                supplyBox -> supplyBox.getSupplyBoxProducts().forEach(
+                        supplyBoxProduct -> supplyProductsRes.add(supplyMapper.toSupplyProductResponse(supply, supplyBox, supplyBoxProduct))
+                )
+        );
 
-        supply.getSupplyBoxes()
-                .forEach(supplyBox ->
-                        supplyBox
-                                .getSupplyBoxProducts()
-                                .forEach(supplyBoxProducts -> {
-                                    var product = supplyBoxProducts.getProduct();
-                                    SupplyProductResponse supplyProductResponse = new SupplyProductResponse();
-                                    supplyProductResponse.setName(product.getName());
-                                    supplyProductResponse.setArticle(supplyBoxProducts.getArticle());
-                                    supplyProductResponse.setVendorCode(product.getVendorCode());
-                                    supplyProductResponse.setBoxBarCode(supplyBox.getVendorCode());
-                                    supplyProductResponse.setStoreAddress(supply.getKaspiStore().getFormattedAddress());
-                                    supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
-                                    supplyProductResponse.setShopName(shopName);
-                                    supplyProductsRes.add(supplyProductResponse);
-                                })
-                );
         return supplyProductsRes;
     }
 
@@ -279,6 +258,7 @@ public class SupplyServiceImpl implements SupplyService {
                                 .supplyAcceptTime(supply.getAcceptedTime())
                                 .supplyState(supply.getSupplyState())
                                 .id(supply.getId())
+                                .formattedAddress(supply.getKaspiStore().getFormattedAddress())
                                 .build()
                 ).collect(Collectors.toList());
     }
@@ -388,24 +368,34 @@ public class SupplyServiceImpl implements SupplyService {
                     List<StoreCellProduct> storeCellProducts = productArticles
                             .stream()
                             .map(article -> {
-                                var sbp = supplyBoxProductsRepository.findByArticle(article)
+                                var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
                                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
 
-                                sbp.setState(ProductStateInStore.ACCEPTED);
-                                sbp.setAcceptedTime(now);
-                                supplyBoxProductsRepository.save(sbp);
+                                supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
+                                supplyBoxProduct.setAcceptedTime(now);
+                                supplyBoxProductsRepository.save(supplyBoxProduct);
 
-                                StoreCellProduct storeCellProduct = new StoreCellProduct();
+                                StoreCellProduct storeCellProduct = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
+                                        .orElse(new StoreCellProduct());
 
                                 storeCellProduct.setStoreEmployee(employee);
                                 storeCellProduct.setStoreCell(storeCell);
-                                storeCellProduct.setSupplyBoxProduct(sbp);
+                                storeCellProduct.setSupplyBoxProduct(supplyBoxProduct);
+                                storeCellProduct.setBusy(true);
 
                                 return storeCellProduct;
                             }).toList();
 
                     storeCellProductRepository.saveAll(storeCellProducts);
                 });
+
+        supply.setAcceptedTime(now);
+        var isAccepted = supply.getSupplyBoxes()
+                .stream()
+                .noneMatch(supplyBox -> supplyBox.getSupplyBoxProducts()
+                        .stream()
+                        .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
+        supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
     }
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
@@ -492,6 +482,9 @@ public class SupplyServiceImpl implements SupplyService {
     private void updateReportCounts(SupplyBoxProduct supplyBoxProduct, SupplyReportResponse report) {
         switch (supplyBoxProduct.getState()) {
             case ACCEPTED:
+            case SOLD:
+            case ASSEMBLED:
+            case WAITING_FOR_ASSEMBLY:
                 report.setCountOfProductAccepted(report.getCountOfProductAccepted() + 1);
                 break;
             case DECLINED:

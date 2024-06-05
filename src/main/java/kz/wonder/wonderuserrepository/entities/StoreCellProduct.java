@@ -12,15 +12,26 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "store_cell_product", schema = schemaName)
 public class StoreCellProduct extends AbstractEntity<Long> {
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "store_cell_id", columnDefinition = "integer", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "store_cell_id", nullable = false)
     private StoreCell storeCell;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "supply_box_product_id", columnDefinition = "integer", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "supply_box_product_id", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
 
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "storeCellProduct",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private OrderAssembleProcess assembleProcess;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "employee_id", columnDefinition = "integer", nullable = false)
+    @JoinColumn(name = "employee_id", nullable = false)
     private StoreEmployee storeEmployee;
+
+    
+    // todo: add not null constraint
+    @Column(name = "is_busy", nullable = false)
+    private boolean isBusy;
 }

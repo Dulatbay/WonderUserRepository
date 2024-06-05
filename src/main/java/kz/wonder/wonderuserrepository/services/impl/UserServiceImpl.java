@@ -32,8 +32,6 @@ public class UserServiceImpl implements UserService {
 	private final KeycloakService keycloakService;
 	private final EntityManager entityManager;
 
-	@Value("${application.kaspi-token}")
-	private String apiToken;
 
 
 	@Override
@@ -128,16 +126,9 @@ public class UserServiceImpl implements UserService {
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
-
-			KaspiToken kaspiToken = new KaspiToken();
-			kaspiToken.setEnabled(true);
-			kaspiToken.setSellerName("Tester");
-			kaspiToken.setSellerId(testerUserId.get());
-			kaspiToken.setToken(apiToken);
-			kaspiToken.setWonderUser(wonderUser);
+			wonderUser.setUsername("Tester");
 
 			userRepository.save(wonderUser);
-			kaspiTokenRepository.save(kaspiToken);
 			log.info("New tester created");
 		}
     }

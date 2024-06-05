@@ -17,7 +17,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndKeycloakId(Long id, String keycloakId);
 
-    Page<Product> findAllBy(Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE " +
+            "((:name IS NULL OR p.name LIKE %:name%) OR (:vendorCode IS NULL OR p.vendorCode LIKE %:vendorCode%)) AND " +
+            "(:isEnabled IS NULL OR p.enabled = :isEnabled)")
+    Page<Product> findAllBy(@Param("name") String name,
+                            @Param("vendorCode") String vendorCode,
+                            @Param("isEnabled") Boolean isEnabled,
+                            Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE " +
             "p.keycloakId = :keycloakUserId AND " +
@@ -31,5 +37,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             Pageable pageable);
 
     List<Product> findAllByKeycloakId(String keycloakUserId);
-    Page<Product> findAllByKeycloakId(String keycloakUserId, Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE " +
+            "p.keycloakId = :keycloakUserId AND " +
+            "((:name IS NULL OR p.name LIKE %:name%) OR (:vendorCode IS NULL OR p.vendorCode LIKE %:vendorCode%)) AND " +
+            "(:isEnabled IS NULL OR p.enabled = :isEnabled)")
+    Page<Product> findAllByKeycloakId(@Param("keycloakUserId") String keycloakUserId,
+                                      @Param("name") String name,
+                                      @Param("vendorCode") String vendorCode,
+                                      @Param("isEnabled") Boolean isEnabled,
+                                      Pageable pageable);
+
+    boolean existsByOriginalVendorCode(String originalVendorCode);
 }

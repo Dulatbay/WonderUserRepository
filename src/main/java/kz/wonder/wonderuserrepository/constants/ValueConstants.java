@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.constants;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -14,11 +15,21 @@ public class ValueConstants {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     public static final String UPLOADED_FOLDER = "upload-dir/";
+    public static final String XML_SCHEMA_INSTANCE = "http://www.w3.org/2001/XMLSchema-instance";
+    public static final String JAXB_SCHEMA_LOCATION = "kaspiShopping http://kaspi.kz/kaspishopping.xsd";
 
     public static final String USER_ID_CLAIM = "user_id";
+    public static final String USER_NAME_CLAIM = "name";
 
     public static final LocalDateTime SERVER_INIT_TIME = LocalDateTime.parse("01.04.2024 00:00", DATE_TIME_FORMATTER);
+    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
+
+
 
     public static final long ORDERS_INIT_DURATION = 300000L; // five minutes
     public static final long CITIES_INIT_DURATION = 604800000L; // one week
+    public static final long SYNC_USERS_DURATION = 300000L; // five minutes
+    public static final String UPDATE_ORDERS_PROPERTY_NAME = "update_orders";
+    public static final String SYNC_CITIES_PROPERTY_NAME = "sync_cities";
+    public static final String SYNC_USERS_PROPERTY_NAME = "sync_users";
 }

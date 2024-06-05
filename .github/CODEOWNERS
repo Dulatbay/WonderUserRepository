@@ -1,0 +1,16 @@
+##########################################
+#             code ownership
+##########################################
+
+# default ownership: default owners for everything in the repo (Unless a later match takes precedence)
+*       @Wonder/developers
+
+
+
+# only @devops team can review and approve this change related to .yml configuration
+src/main/resources/application.yml @Wonder/devops
+
+
+# any change inside the `` directory
+# will require approval from "ninja" or "cto" users.
+/src @Dulatbay
