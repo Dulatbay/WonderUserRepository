@@ -6,17 +6,14 @@ application:
   client-id: wonder
   username: admin_qit
   password: admin_password
-  sync-users: true
-  sync-cities: false
-  init-users: false
-  kaspi-token: 1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=
-  admin-keycloak-id: 91b78e85-459c-47d2-9b7b-e3abe57b482e
+  mode: ${APP_MODE:PROD}
+  admin-keycloak-id: 99d66d43-e8a1-4fe6-a854-8ce686c73ed6
 spring:
   codec:
     max-in-memory-size: 500KB
   datasource:
     url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.87.2}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
-#    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
+    #    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
     username: ${DATABASE_USERNAME:user_qit}
     password: ${DATABASE_PASSWORD:123}
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
@@ -47,7 +44,7 @@ server:
     context-path: '/api/'
   error:
     include-message: always
-  port: ${PORT:8080}
+  port: ${PORT:8081}
   address: 0.0.0.0
 
 
