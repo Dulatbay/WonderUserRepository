@@ -212,6 +212,8 @@ public class ProductServiceImpl implements ProductService {
         log.info("keycloakId: {}, kaspiCatalog: {}", keycloakId, kaspiCatalog);
         Marshaller marshaller = initJAXBContextAndProperties();
         String xmlContent = marshalObjectToXML(kaspiCatalog, marshaller);
+
+
         return fileService.save(xmlContent.getBytes(), "xml");
     }
 

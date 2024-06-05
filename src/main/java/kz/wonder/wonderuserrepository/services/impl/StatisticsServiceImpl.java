@@ -3,24 +3,28 @@ package kz.wonder.wonderuserrepository.services.impl;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.params.DurationParams;
 import kz.wonder.wonderuserrepository.dto.response.AdminSalesInformation;
+import kz.wonder.wonderuserrepository.dto.response.ProductWithCount;
 import kz.wonder.wonderuserrepository.dto.response.SellerSalesInformation;
 import kz.wonder.wonderuserrepository.dto.response.StateInfo;
 import kz.wonder.wonderuserrepository.entities.KaspiOrder;
 import kz.wonder.wonderuserrepository.entities.Supply;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
+import kz.wonder.wonderuserrepository.repositories.ProductRepository;
 import kz.wonder.wonderuserrepository.repositories.SupplyBoxProductsRepository;
 import kz.wonder.wonderuserrepository.repositories.SupplyRepository;
 import kz.wonder.wonderuserrepository.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.DECIMAL_FORMAT;
@@ -32,6 +36,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final SupplyRepository supplyRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public AdminSalesInformation getAdminSalesInformation(String keycloakId, DurationParams durationParams) {
@@ -74,7 +79,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         // todo: too long
         var orders = kaspiOrderRepository.findAllBySeller(keycloakId, Utils.getTimeStampFromLocalDateTime(startPast.minusDays(1)), Utils.getTimeStampFromLocalDateTime(end.plusDays(1)));
         var supplies = supplyRepository.findAllByCreatedAtBetweenAndAuthorKeycloakId(startPast, end, keycloakId);
-        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProducts(keycloakId, startPast, end);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, startPast, end);
 
         log.info("startPast: {}, startCurrent: {}, end: {}, supplyBoxProducts size: {}, supplies size: {}, orders size: {}",
                 startPast, startCurrent, end, supplyBoxProducts.size(), supplies.size(), orders.size());
@@ -89,6 +94,36 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         return sellerSalesInformation;
     }
+
+    @Override
+    public Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId, Pageable pageable) {
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, pageable);
+
+        // pair of store id and product id as key of the map
+        Map<Pair<Long, Long>, ProductWithCount> productWithCountMap = new HashMap<>();
+
+        supplyBoxProducts.forEach(supplyBoxProduct -> {
+            var product = supplyBoxProduct.getProduct();
+            var store = supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore();
+
+            var key = Pair.of(store.getId(), product.getId());
+
+            if (!productWithCountMap.containsKey(key)) {
+                ProductWithCount productWithCount = new ProductWithCount();
+                productWithCount.setName(product.getName());
+                productWithCount.setArticle(product.getVendorCode());
+                productWithCount.setStoreId(store.getId());
+                productWithCount.setStoreFormattedAddress(store.getFormattedAddress());
+                productWithCount.setCount(1L);
+                productWithCountMap.put(key, productWithCount);
+            } else {
+                productWithCountMap.get(key).setCount(productWithCountMap.get(key).getCount() + 1);
+            }
+        });
+
+        return new PageImpl<>(new ArrayList<>(productWithCountMap.values()), pageable, supplyBoxProducts.getTotalElements());
+    }
+
 
     private StateInfo<Double> getSellerIncomeInfo(List<SupplyBoxProduct> supplyBoxProducts, LocalDateTime startCurrent, LocalDateTime end, LocalDateTime startPast) {
         StateInfo<Double> incomeInfo = new StateInfo<>();
