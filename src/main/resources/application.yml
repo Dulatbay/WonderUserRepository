@@ -12,10 +12,10 @@ spring:
   codec:
     max-in-memory-size: 500KB
   datasource:
-    url: jdbc:postgresql://${DATABASE_DOMAIN}:${DATABASE_PORT}/${DATABASE_NAME}
+    url: jdbc:postgresql://${INSTANCE_HOST}:${DB_PORT}/${DB_NAME}
     #    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
     hibernate:
