@@ -52,4 +52,4 @@ jobs:
             docker pull qqanly/wonder-spring-boot:latest
             docker stop wonder-spring-boot || true
             docker rm wonder-spring-boot || true
-            docker run --rm -d --name wonder-spring-boot -p 8181:8181 qqanly/wonder-spring-boot:latest
+            docker run --rm -d --name wonder-spring-boot -p 8181:8080 qqanly/wonder-spring-boot:latest
