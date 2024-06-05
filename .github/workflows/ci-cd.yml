@@ -17,7 +17,7 @@ jobs:
         run: docker build . --tag qqanly/wonder-spring-boot:latest
 
       - name: Run Docker image
-        run: docker run -d --name wonder-spring-boot-test -p 8181:8181 qqanly/wonder-spring-boot:latest
+        run: docker run -d --name wonder-spring-boot-test -p 8080:8181 qqanly/wonder-spring-boot:latest
 
       - name: Wait for Application to Start
         run: |
