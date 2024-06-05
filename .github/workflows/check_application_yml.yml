@@ -1,0 +1,17 @@
+name: Protect application.yml
+
+on:
+  pull_request:
+    branches:
+      - sensei
+    paths:
+      - 'src/main/resources/application.yml'
+
+jobs:
+  block_changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for changes in application.yml
+        run: |
+          echo "Changes in application.yml are not allowed."
+          exit 1
