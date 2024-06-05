@@ -18,6 +18,7 @@ public class KaspiToken extends AbstractEntity<Long> {
     private String token;
     @Column(name = "seller_name", nullable = false)
     private String sellerName;
+
     @Column(name = "seller_id", unique = true, nullable = false)
     private String sellerId;
     @Column(name = "enabled", nullable = false)

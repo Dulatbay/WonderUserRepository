@@ -1,12 +1,17 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.params.DurationParams;
 import kz.wonder.wonderuserrepository.dto.response.AdminSalesInformation;
 import kz.wonder.wonderuserrepository.dto.response.DailyStats;
+import kz.wonder.wonderuserrepository.dto.response.ProductWithCount;
 import kz.wonder.wonderuserrepository.dto.response.SellerSalesInformation;
 import kz.wonder.wonderuserrepository.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -54,8 +59,17 @@ public class StatisticsController {
     }
 
     @GetMapping("/products-count/seller-stats")
-    public ResponseEntity<?> getSellerProductsCount() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<PaginatedResponse<ProductWithCount>> getSellerProductsCount(@RequestParam(defaultValue = "0") int page,
+                                                                                      @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ProductWithCount> products = statisticsService.getSellerProductsCountInformation(keycloakId, pageable);
+
+
+        return ResponseEntity.ok(new PaginatedResponse<>(products));
     }
 
     @GetMapping("/last-orders/admin-stats")
