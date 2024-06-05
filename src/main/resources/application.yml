@@ -44,7 +44,7 @@ server:
     context-path: '/api/'
   error:
     include-message: always
-  port: ${PORT:8080}
+  port: ${PORT:8081}
   address: 0.0.0.0
 
 

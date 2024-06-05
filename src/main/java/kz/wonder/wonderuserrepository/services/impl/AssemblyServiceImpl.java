@@ -51,6 +51,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, keycloakId, pageRequest);
 
 
+
         return supplyBoxProducts.map(supplyBoxProduct -> {
             var orderAssemble = orderAssembleRepository.findByKaspiOrderId(supplyBoxProduct.getKaspiOrder().getId());
             return orderAssembleMapper.mapToEmployeeAssemblyResponse(supplyBoxProduct, orderAssemble.map(OrderAssemble::getAssembleState).orElse(null));
@@ -123,6 +124,7 @@ public class AssemblyServiceImpl implements AssemblyService {
             orderAssembleProcessRepository.save(orderAssembleProcess);
         }
 
+
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
         if (dividedProducts.getLeft().isEmpty()) {
@@ -151,6 +153,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         validateEmployeeWithStore(storeEmployee, order);
 
         var orderAssemble = order.getOrderAssemble();
+
 
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
@@ -225,6 +228,4 @@ public class AssemblyServiceImpl implements AssemblyService {
         // generate with api
         return "generated(soon)";
     }
-
-
 }
