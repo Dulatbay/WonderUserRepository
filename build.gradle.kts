@@ -43,8 +43,9 @@ dependencies {
 
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
+
+    compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.h2database:h2:2.2.220")
