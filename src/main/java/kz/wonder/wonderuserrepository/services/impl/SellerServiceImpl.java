@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.request.SellerUserUpdateRequest;
+import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import javax.xml.bind.Marshaller;
 
 
 @Slf4j
@@ -67,5 +70,22 @@ public class SellerServiceImpl implements SellerService {
             log.info("Exception: ", e);
             return false;
         }
+    }
+
+    @Override
+    public String generateOfSellersXmlByKeycloakId(String userId) {
+        final var listOfProducts = productRepository.findAllByKeycloakId(keycloakId);
+        final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
+                        "Kaspi token doesn't exists",
+                        "Create your kaspi token before request"));
+        KaspiCatalog kaspiCatalog = buildKaspiCatalog(listOfProducts, kaspiToken);
+
+        log.info("keycloakId: {}, kaspiCatalog: {}", keycloakId, kaspiCatalog);
+        Marshaller marshaller = initJAXBContextAndProperties();
+        String xmlContent = marshalObjectToXML(kaspiCatalog, marshaller);
+
+
+        return fileService.save(xmlContent.getBytes(), "xml");
     }
 }
