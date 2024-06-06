@@ -1,9 +1,7 @@
 package kz.wonder.wonderuserrepository.services;
 
 import kz.wonder.wonderuserrepository.dto.params.DurationParams;
-import kz.wonder.wonderuserrepository.dto.response.AdminSalesInformation;
-import kz.wonder.wonderuserrepository.dto.response.ProductWithCount;
-import kz.wonder.wonderuserrepository.dto.response.SellerSalesInformation;
+import kz.wonder.wonderuserrepository.dto.response.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,4 +11,10 @@ public interface StatisticsService {
     SellerSalesInformation getSellerSalesInformation(String keycloakId, DurationParams duration);
 
     Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId,  Pageable pageable);
+
+    Page<AdminLastOrdersInformation> getAdminLastOrders(String keycloakId, Pageable pageable);
+
+    Page<SellerTopProductInformation> getSellerTopProductsInformation(String keycloakId, Pageable pageable);
+
+    Page<AdminTopSellerInformation> getAdminTopSellersInformation(String keycloakId, Pageable pageable);
 }
