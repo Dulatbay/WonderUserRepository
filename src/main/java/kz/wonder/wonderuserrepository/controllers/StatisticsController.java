@@ -46,13 +46,23 @@ public class StatisticsController {
     }
 
     @GetMapping("/daily/seller-stats")
-    public ResponseEntity<List<DailyStats>> getSellerDailyStats() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<DailyStats>> getSellerDailyStats(@RequestParam("duration") DurationParams durationParams) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        List<DailyStats> dailyStats = statisticsService.getSellerDailyStats(keycloakId, durationParams);
+
+        return ResponseEntity.ok(dailyStats);
     }
 
     @GetMapping("/daily/admin-stats")
-    public ResponseEntity<List<DailyStats>> getAdminDailyStats() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<DailyStats>> getAdminDailyStats(@RequestParam("duration") DurationParams durationParams) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        List<DailyStats> dailyStats = statisticsService.getAdminDailyStats(keycloakId, durationParams);
+
+        return ResponseEntity.ok(dailyStats);
     }
 
     @GetMapping("/products-count/seller-stats")

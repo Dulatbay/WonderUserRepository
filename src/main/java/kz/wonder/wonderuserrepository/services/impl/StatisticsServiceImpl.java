@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -205,6 +206,84 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .sorted((a, b) -> (int) (a.getTotalIncome() - b.getTotalIncome()));
 
         return new PageImpl<>(values.toList(), pageable, orders.size());
+    }
+
+    @Override
+    public List<DailyStats> getSellerDailyStats(String keycloakId, DurationParams durationParams) {
+        var duration = durationParams.getDuration();
+
+        var end = LocalDate.now().atStartOfDay();
+        var start = end.minus(duration);
+
+        var orders = kaspiOrderRepository.findAllBySeller(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+
+        Map<String, DailyStats> dailyStatsMap = new TreeMap<>();
+        LocalDateTime stepDate = start;
+
+        while (!stepDate.isAfter(end) && !stepDate.isEqual(end)) {
+            dailyStatsMap.put(stepDate.toString(), new DailyStats(stepDate.toString()));
+            stepDate = nextStepDate(stepDate, durationParams);
+        }
+
+        orders.stream()
+                .filter(order -> order.getProducts() != null && !order.getProducts().isEmpty())
+                .forEach(order -> {
+                    String orderDate = getOrderDateForDuration(Utils.getLocalDateTimeFromTimestamp(order.getCreationDate()), durationParams);
+                    dailyStatsMap.computeIfPresent(orderDate, (k, v) -> {
+                        v.addOrder(order);
+                        return v;
+                    });
+                });
+
+        return new ArrayList<>(dailyStatsMap.values());
+    }
+
+    @Override
+    public List<DailyStats> getAdminDailyStats(String keycloakId, DurationParams durationParams) {
+        var duration = durationParams.getDuration();
+
+        var end = LocalDate.now().atStartOfDay();
+        var start = end.minus(duration);
+
+        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+
+        Map<String, DailyStats> dailyStatsMap = new TreeMap<>();
+        LocalDateTime stepDate = start;
+
+        while (!stepDate.isAfter(end) && !stepDate.isEqual(end)) {
+            dailyStatsMap.put(stepDate.toString(), new DailyStats(stepDate.toString()));
+            stepDate = nextStepDate(stepDate, durationParams);
+        }
+
+        orders.stream()
+                .filter(order -> order.getProducts() != null && !order.getProducts().isEmpty())
+                .forEach(order -> {
+                    String orderDate = getOrderDateForDuration(Utils.getLocalDateTimeFromTimestamp(order.getCreationDate()), durationParams);
+                    dailyStatsMap.computeIfPresent(orderDate, (k, v) -> {
+                        v.addOrder(order);
+                        return v;
+                    });
+                });
+
+        return new ArrayList<>(dailyStatsMap.values());
+    }
+
+    private LocalDateTime nextStepDate(LocalDateTime currentDate, DurationParams duration) {
+        return switch (duration) {
+            case DAY -> currentDate.plusHours(2);
+            case WEEK -> currentDate.plusDays(1);
+            case MONTH -> currentDate.plusDays(3);
+            case YEAR -> currentDate.plusMonths(1);
+        };
+    }
+
+    private String getOrderDateForDuration(LocalDateTime orderDate, DurationParams duration) {
+        return switch (duration) {
+            case DAY -> String.valueOf(orderDate.getHour() - (orderDate.getHour() % 2));
+            case WEEK -> orderDate.getDayOfWeek().toString();
+            case MONTH -> Month.of(orderDate.getDayOfMonth()).toString();
+            case YEAR -> orderDate.withDayOfYear(1).toLocalDate().toString();
+        };
     }
 
     private StateInfo<Double> getSellerIncomeInfo(List<SupplyBoxProduct> supplyBoxProducts, LocalDateTime startCurrent, LocalDateTime end, LocalDateTime startPast) {
