@@ -3,10 +3,7 @@ package kz.wonder.wonderuserrepository.controllers;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.params.DurationParams;
-import kz.wonder.wonderuserrepository.dto.response.AdminSalesInformation;
-import kz.wonder.wonderuserrepository.dto.response.DailyStats;
-import kz.wonder.wonderuserrepository.dto.response.ProductWithCount;
-import kz.wonder.wonderuserrepository.dto.response.SellerSalesInformation;
+import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,13 +46,23 @@ public class StatisticsController {
     }
 
     @GetMapping("/daily/seller-stats")
-    public ResponseEntity<List<DailyStats>> getSellerDailyStats() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<DailyStats>> getSellerDailyStats(@RequestParam("duration") DurationParams durationParams) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        List<DailyStats> dailyStats = statisticsService.getSellerDailyStats(keycloakId, durationParams);
+
+        return ResponseEntity.ok(dailyStats);
     }
 
     @GetMapping("/daily/admin-stats")
-    public ResponseEntity<List<DailyStats>> getAdminDailyStats() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<DailyStats>> getAdminDailyStats(@RequestParam("duration") DurationParams durationParams) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        List<DailyStats> dailyStats = statisticsService.getAdminDailyStats(keycloakId, durationParams);
+
+        return ResponseEntity.ok(dailyStats);
     }
 
     @GetMapping("/products-count/seller-stats")
@@ -73,17 +80,41 @@ public class StatisticsController {
     }
 
     @GetMapping("/last-orders/admin-stats")
-    public ResponseEntity<?> getAdminLastOrders() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<PaginatedResponse<AdminLastOrdersInformation>> getAdminLastOrders(@RequestParam(defaultValue = "0") int page,
+                                                                                            @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<AdminLastOrdersInformation> ordersInformation = statisticsService.getAdminLastOrders(keycloakId, pageable);
+
+        return ResponseEntity.ok(new PaginatedResponse<>(ordersInformation));
     }
 
     @GetMapping("/top-products/seller-stats")
-    public ResponseEntity<?> getSellerTopProducts() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<PaginatedResponse<SellerTopProductInformation>> getSellerTopProducts(@RequestParam(defaultValue = "0") int page,
+                                                                                               @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<SellerTopProductInformation> sellerTopProductInformation = statisticsService.getSellerTopProductsInformation(keycloakId, pageable);
+
+        return ResponseEntity.ok(new PaginatedResponse<>(sellerTopProductInformation));
     }
 
     @GetMapping("/top-sellers/admin-stats")
-    public ResponseEntity<?> getAdminTopSellers() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<PaginatedResponse<AdminTopSellerInformation>> getAdminTopSellers(@RequestParam(defaultValue = "0") int page,
+                                                                                           @RequestParam(defaultValue = "10") int size) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<AdminTopSellerInformation> adminTopSellerInformation = statisticsService.getAdminTopSellersInformation(keycloakId, pageable);
+
+        return ResponseEntity.ok(new PaginatedResponse<>(adminTopSellerInformation));
     }
 }
