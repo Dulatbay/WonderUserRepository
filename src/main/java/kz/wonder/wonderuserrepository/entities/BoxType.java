@@ -13,7 +13,6 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "box_type", schema = schemaName)
 public class BoxType extends AbstractEntity<Long> {
-
     @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL, mappedBy = "boxType")
     List<BoxTypeImages> images;
 
