@@ -10,6 +10,7 @@ public class SellerUserResponse  {
     private String sellerName;
     private String sellerId;
     private String tokenKaspi;
+    private String pathToXml;
 
     private String firstName;
     private String lastName;

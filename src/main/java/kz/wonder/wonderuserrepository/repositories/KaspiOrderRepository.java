@@ -15,9 +15,10 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     Optional<KaspiOrder> findByCode(String code);
 
     @Query("select ko from KaspiOrder ko " +
+            "FULL JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
-            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode)")
+            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) ")
     Page<KaspiOrder> findAllSellerOrders(String keycloakId, Long from, Long to, DeliveryMode deliveryMode, Pageable pageable);
 
     @Query("select ko from KaspiOrder ko WHERE ko.wonderUser.keycloakId = :keycloakId AND ko.creationDate BETWEEN :from AND :to")

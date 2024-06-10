@@ -38,10 +38,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findAllByKeycloakId(String keycloakUserId);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.keycloakId = :keycloakUserId AND " +
-            "((:name IS NULL OR p.name LIKE %:name%) OR (:vendorCode IS NULL OR p.vendorCode LIKE %:vendorCode%)) AND " +
-            "(:isEnabled IS NULL OR p.enabled = :isEnabled)")
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.keycloakId = :keycloakUserId " +
+            "AND ((:name IS NULL OR p.name LIKE %:name%) OR (:vendorCode IS NULL OR p.vendorCode LIKE %:vendorCode%)) " +
+            "AND (:isEnabled IS NULL OR p.enabled = :isEnabled)")
     Page<Product> findAllByKeycloakId(@Param("keycloakUserId") String keycloakUserId,
                                       @Param("name") String name,
                                       @Param("vendorCode") String vendorCode,
