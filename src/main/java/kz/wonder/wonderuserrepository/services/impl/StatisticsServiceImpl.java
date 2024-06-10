@@ -76,7 +76,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         var startPast = startCurrent.minus(duration);
 
         // todo: too long
-        var orders = kaspiOrderRepository.findAllBySeller(keycloakId, getTimeStampFromLocalDateTime(startPast.minusDays(1)), getTimeStampFromLocalDateTime(end.plusDays(1)));
+        var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(startPast.minusDays(1)), getTimeStampFromLocalDateTime(end.plusDays(1)));
         var supplies = supplyRepository.findAllByCreatedAtBetweenAndAuthorKeycloakId(startPast, end, keycloakId);
         var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, startPast, end);
 
@@ -128,7 +128,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         var end = LocalDateTime.now();
         var start = end.minusDays(7);
 
-        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end), pageable);
+        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end), null, pageable);
 
         return orders.map(order -> {
             AdminLastOrdersInformation adminLastOrdersInformation = new AdminLastOrdersInformation();
@@ -215,7 +215,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         var end = LocalDate.now().atStartOfDay();
         var start = end.minus(duration);
 
-        var orders = kaspiOrderRepository.findAllBySeller(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+        var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
 
         Map<String, DailyStats> dailyStatsMap = new TreeMap<>();
         LocalDateTime stepDate = start;
