@@ -7,6 +7,8 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
+
 @Data
 @MappedSuperclass
 public abstract class AbstractEntity<T extends Serializable> {
@@ -25,11 +27,11 @@ public abstract class AbstractEntity<T extends Serializable> {
 
     @PrePersist
     protected void onCreate() {
-        this.updatedAt = this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt = LocalDateTime.now(ZONE_ID);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(ZONE_ID);
     }
 }

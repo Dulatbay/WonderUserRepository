@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,13 +38,14 @@ public class OrderController {
     public ResponseEntity<PaginatedResponse<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
                                                                             @RequestParam("end-date") LocalDate endDate,
                                                                             @RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "10") int size) {
+                                                                            @RequestParam(defaultValue = "10") int size,
+                                                                            @RequestParam(required = false) DeliveryMode deliveryMode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate, pageRequest);
+        Page<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate, deliveryMode, pageRequest);
 
         return ResponseEntity.ok().body(new PaginatedResponse<>(sellerOrderResponseList));
     }
@@ -54,15 +56,16 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the admin orders")
     })
     public ResponseEntity<PaginatedResponse<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
-                                                              @RequestParam("end-date") LocalDate endDate,
-                                                              @RequestParam(defaultValue = "0") int page,
-                                                              @RequestParam(defaultValue = "10") int size) {
+                                                                           @RequestParam("end-date") LocalDate endDate,
+                                                                           @RequestParam(defaultValue = "0") int page,
+                                                                           @RequestParam(defaultValue = "10") int size,
+                                                                           @RequestParam(required = false) DeliveryMode deliveryMode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate, pageRequest);
+        Page<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate, deliveryMode, pageRequest);
 
         return ResponseEntity.ok().body(new PaginatedResponse<>(orderResponseList));
     }
@@ -73,11 +76,12 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee orders")
     })
     public ResponseEntity<List<EmployeeOrderResponse>> getEmployeeOrders(@RequestParam("start-date") LocalDate startDate,
-                                                                         @RequestParam("end-date") LocalDate endDate) {
+                                                                         @RequestParam("end-date") LocalDate endDate,
+                                                                         @RequestParam(required = false) DeliveryMode deliveryMode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        List<EmployeeOrderResponse> orders = orderService.getEmployeeOrders(keycloakId, startDate, endDate);
+        List<EmployeeOrderResponse> orders = orderService.getEmployeeOrders(keycloakId, startDate, endDate, deliveryMode);
 
         return ResponseEntity.ok().body(orders);
     }

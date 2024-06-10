@@ -1,5 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
+import jakarta.persistence.Convert;
+import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -8,10 +10,12 @@ import java.util.List;
 @Data
 public class SellerSupplyReport {
     private Long supplyId;
+
     private LocalDateTime supplyCreationDate;
     private LocalDateTime supplySelectedDate;
     private LocalDateTime supplyDeliveredDate;
     private LocalDateTime supplyAcceptanceDate;
+
     private String formattedAddress;
     private List<SupplyBoxInfo> supplyBoxInfo;
 
