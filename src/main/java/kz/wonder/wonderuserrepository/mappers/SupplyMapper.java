@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.mappers;
 
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
+import kz.wonder.wonderuserrepository.dto.response.SellerSupplyReport;
 import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
 import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
 import kz.wonder.wonderuserrepository.entities.*;
@@ -46,4 +47,5 @@ public class SupplyMapper {
 
         return supplyProductResponse;
     }
+
 }
