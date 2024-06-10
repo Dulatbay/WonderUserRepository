@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
+import kz.wonder.filemanager.client.api.FileManagerApi;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
 import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
@@ -11,6 +12,7 @@ import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.FileService;
+import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +32,6 @@ import javax.ws.rs.ForbiddenException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +56,8 @@ public class ProductServiceImpl implements ProductService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final UserRepository userRepository;
     private final ProductSizeRepository productSizeRepository;
+    private final FileManagerApi fileManagerApi;
+    private final KeycloakService keycloakService;
 
     @Transactional
     @Override
@@ -201,20 +205,30 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public String generateOfProductsXmlByKeycloakId(String keycloakId) throws IOException, JAXBException {
-        final var listOfProducts = productRepository.findAllByKeycloakId(keycloakId);
+    public String generateOfProductsXmlByKeycloakId(String keycloakId) throws JAXBException {
+        final var listOfProducts = productRepository.findAllByKeycloakId(keycloakId)
+                .subList(0, 10);
         final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-                        "Kaspi token doesn't exists",
+                        "Kaspi token doesn't exist",
                         "Create your kaspi token before request"));
+        final var wonderUser = kaspiToken.getWonderUser();
+
         KaspiCatalog kaspiCatalog = buildKaspiCatalog(listOfProducts, kaspiToken);
 
-        log.info("keycloakId: {}, kaspiCatalog: {}", keycloakId, kaspiCatalog);
         Marshaller marshaller = initJAXBContextAndProperties();
         String xmlContent = marshalObjectToXML(kaspiCatalog, marshaller);
 
+        var fileName = wonderUser.getKeycloakId() + ".xml";
 
-        return fileService.save(xmlContent.getBytes(), "xml");
+        MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
+
+        var resultOfUploading = fileManagerApi.uploadFiles("xml", List.of(multipartFile)).getBody();
+
+        kaspiToken.setPathToXml(fileName);
+        kaspiTokenRepository.save(kaspiToken);
+
+        return resultOfUploading;
     }
 
     @Override
