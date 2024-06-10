@@ -65,7 +65,7 @@ public class ProductServiceImpl implements ProductService {
             log.info("{} sheets loaded", workbook.getNumberOfSheets());
 
             if (workbook.getNumberOfSheets() == 0) {
-                throw new IllegalArgumentException("File must have at least one page!");
+                throw new IllegalArgumentException("В файле должна быть хотя бы одна страница!");
             }
 
             // get products page
@@ -78,7 +78,7 @@ public class ProductServiceImpl implements ProductService {
             }
 
             if (!rowIterator.hasNext()) {
-                throw new IllegalArgumentException("Send file by requirements!!");
+                throw new IllegalArgumentException("Отправить файл по требованиям!!");
             }
 
             List<Row> rows = StreamSupport.stream(
@@ -103,10 +103,10 @@ public class ProductServiceImpl implements ProductService {
         } catch (ExecutionException | InterruptedException e) {
             log.error("Parallel processing error: ", e);
             Thread.currentThread().interrupt();
-            throw new IllegalArgumentException("File process failed");
+            throw new IllegalArgumentException("Обработка файла не удалась");
         } catch (Exception e) {
             log.error("Exception: ", e);
-            throw new IllegalArgumentException("File process failed");
+            throw new IllegalArgumentException("Обработка файла не удалась");
         }
     }
 
@@ -180,7 +180,7 @@ public class ProductServiceImpl implements ProductService {
 
     private KaspiCity getCityByName(String cityName) {
         return kaspiCityRepository.findByName(cityName)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
     }
 
     private ProductPrice processProductPrice(Product product, KaspiCity city, Double priceValue) {
@@ -205,8 +205,8 @@ public class ProductServiceImpl implements ProductService {
         final var listOfProducts = productRepository.findAllByKeycloakId(keycloakId);
         final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-                        "Kaspi token doesn't exists",
-                        "Create your kaspi token before request"));
+                        "Kaspi токен не существует",
+                        "Создай свой kaspi токен перед запросом"));
         KaspiCatalog kaspiCatalog = buildKaspiCatalog(listOfProducts, kaspiToken);
 
         log.info("keycloakId: {}, kaspiCatalog: {}", keycloakId, kaspiCatalog);
@@ -221,7 +221,7 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProductById(String keycloakId, Long productId) {
 
         final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Product doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Товар не существует"));
         log.info("Product with id {} was deleted", productId);
         productRepository.delete(product);
     }
@@ -298,10 +298,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void changePublish(String keycloakId, Long productId, Boolean isPublished) {
         var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
         if (product.isEnabled() == isPublished) {
-            throw new IllegalArgumentException("The product is already has same publish state");
+            throw new IllegalArgumentException("Товар уже имеет такое же состояние публикации");
         }
 
         product.setEnabled(isPublished);
@@ -349,7 +349,7 @@ public class ProductServiceImpl implements ProductService {
 
 
         if (!productExists) {
-            throw new IllegalArgumentException("Product doesn't exist");
+            throw new IllegalArgumentException("Товар не существует");
         }
 
         var productSize = productSizeRepository.findByOriginVendorCode(originVendorCode)
@@ -409,7 +409,7 @@ public class ProductServiceImpl implements ProductService {
     private ProductSearchResponse toProductSearchResponse(SupplyBoxProduct supplyBoxProduct) {
         var product = supplyBoxProduct.getProduct();
         var token = kaspiTokenRepository.findByWonderUserKeycloakId(product.getKeycloakId())
-                .orElseThrow(() -> new IllegalArgumentException("User may have been deleted"));
+                .orElseThrow(() -> new IllegalArgumentException("Возможно, пользователь был удален"));
         var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
 
         ProductSearchResponse productSearchResponse = new ProductSearchResponse();
@@ -429,13 +429,13 @@ public class ProductServiceImpl implements ProductService {
                 .forEach(price -> {
 
                     var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
 
                     if (price.getMainCityId() == -1) {
                         var priceToDelete = product.getMainCityPrice();
                         if (priceToDelete == null)
-                            throw new IllegalArgumentException("Price already unselected");
+                            throw new IllegalArgumentException("Цена уже не выбрана");
 
                         product.setMainCityPrice(null);
                         productRepository.save(product);
@@ -444,10 +444,10 @@ public class ProductServiceImpl implements ProductService {
                     }
 
                     var city = kaspiCityRepository.findById(price.getMainCityId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
                     product.setMainCityPrice(productPrice);
                     productRepository.save(product);
@@ -458,13 +458,13 @@ public class ProductServiceImpl implements ProductService {
         prices
                 .forEach(price -> {
                     var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
                     var city = kaspiCityRepository.findById(price.getCityId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
                     productPrice.setPrice(price.getPrice());
                     productPriceRepository.save(productPrice);

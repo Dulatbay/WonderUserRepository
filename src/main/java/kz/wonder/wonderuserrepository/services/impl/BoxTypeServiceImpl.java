@@ -72,7 +72,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     @Override
     public void deleteById(Long id) {
         var boxTypeToDelete = boxTypeRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Тип коробки не существует"));
 
         boxTypeToDelete.getImages()
                 .forEach(i -> fileService.deleteByName(i.imageUrl));

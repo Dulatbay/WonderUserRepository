@@ -157,7 +157,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate) {
         var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store employee user not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Пользователь-сотрудник магазина не найден"));
 
         var store = employee.getKaspiStore();
 
@@ -178,7 +178,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderDetailResponse> getAdminOrderDetails(String keycloakId, String orderCode) {
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
 
         // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
 
@@ -192,7 +192,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderDetailResponse> getSellerOrderDetails(String keycloakId, String orderCode) {
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
 
         // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
 
@@ -206,15 +206,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderEmployeeDetailResponse getEmployeeOrderDetails(String keycloakId, String orderCode) {
         var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "You are not employee user"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Вы не являетесь сотрудником пользователя"));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
 
         var isEmployeeWorkInThisStore = order.getKaspiStore().getId().equals(employee.getKaspiStore().getId());
 
         if (!isEmployeeWorkInThisStore) {
-            throw new IllegalArgumentException("Order not found");
+            throw new IllegalArgumentException("Заказ не найден");
         }
 
         var orderProducts = order.getProducts()

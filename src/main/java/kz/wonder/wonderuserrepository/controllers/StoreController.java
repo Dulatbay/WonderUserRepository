@@ -45,7 +45,7 @@ public class StoreController {
         kaspiStoreCreateRequest.getDayOfWeekWorks()
                 .forEach(i -> {
                     if (i.numericDayOfWeek() < 1 || i.numericDayOfWeek() > 7)
-                        throw new IllegalArgumentException("Number of week must be in range 1-7");
+                        throw new IllegalArgumentException("Номер недели должен находиться в диапазоне от 1 до 7.");
                 });
 
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();

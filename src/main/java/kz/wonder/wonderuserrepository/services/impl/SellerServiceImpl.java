@@ -29,13 +29,13 @@ public class SellerServiceImpl implements SellerService {
     @Override
     public void createSellerUser(SellerRegistrationRequest sellerRegistrationRequest) {
         if (!isTokenValid(sellerRegistrationRequest.getTokenKaspi()))
-            throw new IllegalArgumentException("Token is invalid");
+            throw new IllegalArgumentException("Токен недействителен");
         if (userRepository.existsByPhoneNumber(sellerRegistrationRequest.getPhoneNumber()))
-            throw new IllegalArgumentException("Phone number must be unique");
+            throw new IllegalArgumentException("Номер телефона должен быть уникальным");
         if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
-            throw new IllegalArgumentException("Seller id must be unique");
+            throw new IllegalArgumentException("ID продавца должен быть уникальным.");
     if (kaspiTokenRepository.existsByToken(sellerRegistrationRequest.getTokenKaspi()))
-            throw new IllegalArgumentException("Token must be unique");
+            throw new IllegalArgumentException("Токен должен быть уникальным");
 
         WonderUser wonderUser = sellerMapper.toCreateWonderUser(sellerRegistrationRequest);
         KaspiToken kaspiToken = sellerMapper.toCreateKaspiToken(sellerRegistrationRequest, wonderUser);
@@ -52,7 +52,7 @@ public class SellerServiceImpl implements SellerService {
     @Override
     public WonderUser updateUser(Long id, SellerUserUpdateRequest sellerUserUpdateRequest) {
         final var user = userRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "User with id " + id + " not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Пользователь с id " + id + " не был найден"));
 
         sellerMapper.toUpdateUser(user, sellerUserUpdateRequest);
 

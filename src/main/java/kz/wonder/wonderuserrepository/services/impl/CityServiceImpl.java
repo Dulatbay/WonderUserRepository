@@ -57,6 +57,6 @@ public class CityServiceImpl implements CityService {
     @Override
     public KaspiCity getKaspiCityByName(String name) {
         return cityRepository.findByName(name)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
     }
 }

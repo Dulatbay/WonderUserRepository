@@ -64,7 +64,7 @@ public class SupplyServiceImpl implements SupplyService {
 
                 var product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, userId)
                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                                String.format("Product by id %s doesn't exist: ", vendorCode)));
+                                String.format("Товар с id %s не существует: ", vendorCode)));
 
                 response.add(
                         SupplyProcessFileResponse.builder()
@@ -82,7 +82,7 @@ public class SupplyServiceImpl implements SupplyService {
             return response;
         } catch (IllegalStateException e) {
             log.error("IllegalStateException :", e);
-            throw new IllegalArgumentException("File process failed");
+            throw new IllegalArgumentException("Обработка файла не удалась");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -98,13 +98,13 @@ public class SupplyServiceImpl implements SupplyService {
         //  4) Есть ли в поставке товары
 
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
         if (!store.isEnabled())
             throw new IllegalArgumentException("Store is not enabled");
 
         final var user = userRepository.findByKeycloakId(userId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 
         log.info("Found store id: {}", store.getId());
 
@@ -128,7 +128,7 @@ public class SupplyServiceImpl implements SupplyService {
 
 
         if (!isAvailableToSupply) {
-            throw new IllegalArgumentException("Store don't work in this period");
+            throw new IllegalArgumentException("Магазин не работает в этот период");
         }
 
 
@@ -138,7 +138,7 @@ public class SupplyServiceImpl implements SupplyService {
         createRequest.getSelectedBoxes()
                 .forEach(selectedBox -> {
                     final var boxType = boxTypeRepository.findByIdInStore(selectedBox.getSelectedBoxId(), store.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Box doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Коробка не существует"));
 
                     var supplyBox = new SupplyBox();
                     supplyBox.setBoxType(boxType);
@@ -149,7 +149,7 @@ public class SupplyServiceImpl implements SupplyService {
                     var selectedProducts = selectedBox.getProductQuantities();
                     selectedProducts.forEach(selectedProduct -> {
                         var product = productRepository.findByIdAndKeycloakId(selectedProduct.getProductId(), userId)
-                                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
 
                         for (int i = 0; i < selectedProduct.getQuantity(); i++) {
@@ -161,7 +161,7 @@ public class SupplyServiceImpl implements SupplyService {
                         }
 
                         if (supplyBox.getSupplyBoxProducts().isEmpty()) {
-                            throw new IllegalArgumentException("Supply boxes are empty");
+                            throw new IllegalArgumentException("Коробки с припасами пусты");
                         }
 
                         supply.getSupplyBoxes().add(supplyBox);
@@ -169,7 +169,7 @@ public class SupplyServiceImpl implements SupplyService {
                 });
 
         if (supply.getSupplyBoxes().isEmpty()) {
-            throw new IllegalArgumentException("Supply boxes are empty");
+            throw new IllegalArgumentException("Коробки с припасами пусты");
         }
 
         var created = supplyRepository.save(supply);
@@ -205,7 +205,7 @@ public class SupplyServiceImpl implements SupplyService {
 
         String keycloakIdOfStoreOwner = supply.getKaspiStore().getWonderUser().getKeycloakId();
         if (!isIdentityMatched(keycloakId, keycloakIdOfStoreOwner))
-            throw new IllegalArgumentException("Supply doesn't exist");
+            throw new IllegalArgumentException("Поставки не существует");
 
         log.info("Retrieving supply detail. Id: {}", id);
 
@@ -218,7 +218,7 @@ public class SupplyServiceImpl implements SupplyService {
 
         String keycloakIdOfSupplyOwner = supply.getAuthor().getKeycloakId();
         if (!isIdentityMatched(keycloakId, keycloakIdOfSupplyOwner))
-            throw new IllegalArgumentException("Supply doesn't exist");
+            throw new IllegalArgumentException("Поставки не существует");
 
         log.info("Retrieving supply detail. Id: {}", id);
 
@@ -268,7 +268,7 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
-                        "Supply doesn't exist"
+                        "Поставки не существует"
                 ));
 
         Map<Long, SupplyReportResponse> supplyReportResponseMap = new HashMap<>();
@@ -305,7 +305,7 @@ public class SupplyServiceImpl implements SupplyService {
     public List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-                        "Store employee doesn't exist", "Create store employee"));
+                        "Сотрудник магазина не существует", "Создайте сотрудника магазина"));
         return this.getSuppliesOfStorage(storeEmployee.getId(), startDate, endDate);
     }
 
@@ -326,7 +326,7 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public ProductStorageResponse getSuppliesProducts(String keycloakId, String boxVendorCode, boolean isSuperAdmin) {
         final var supplyBox = supplyBoxRepository.findByVendorCode(boxVendorCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Supply box doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Коробка поставки не существует"));
         final var supply = supplyBox.getSupply();
 
         if (!isSuperAdmin) {
@@ -346,9 +346,9 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest) {
         final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store employee doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Сотрудника магазина не существует"));
         final var supply = supplyRepository.findById(supplyScanRequest.getSupplyId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Supply doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Поставка не существует"));
         final var kaspiStore = employee.getKaspiStore();
 
 
@@ -363,13 +363,13 @@ public class SupplyServiceImpl implements SupplyService {
                     var cellCode = productCell.getCellCode();
                     var productArticles = productCell.getProductArticles();
                     var storeCell = storeCellRepository.findByKaspiStoreIdAndCode(kaspiStore.getId(), cellCode)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store cell doesn't exist"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Ячейка магазина не существует"));
 
                     List<StoreCellProduct> storeCellProducts = productArticles
                             .stream()
                             .map(article -> {
                                 var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
-                                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Product doesn't exist"));
+                                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
                                 supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
                                 supplyBoxProduct.setAcceptedTime(now);
@@ -400,17 +400,17 @@ public class SupplyServiceImpl implements SupplyService {
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
         return storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store employee doesn't exist", "Create store employee"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Сотрудник магазина не существует", "Создайте сотрудника магазина"));
     }
 
     private Supply findSupplyById(Long supplyId) {
         return supplyRepository.findById(supplyId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Supply doesn't exist", "Try with another params"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Предложения не существует", "Попробуйте использовать другие параметры"));
     }
 
     private void validateStoreEmployeeAndSupply(StoreEmployee storeEmployee, Supply supply) {
         if (!Objects.equals(supply.getKaspiStore().getId(), storeEmployee.getKaspiStore().getId())) {
-            throw new IllegalArgumentException("Supply doesn't exist");
+            throw new IllegalArgumentException("Поставки не существует");
         }
     }
 
