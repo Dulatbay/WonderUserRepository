@@ -15,7 +15,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     Optional<KaspiOrder> findByCode(String code);
 
     @Query("select ko from KaspiOrder ko " +
-            "FULL JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
+            "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) ")
@@ -25,6 +25,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     List<KaspiOrder> findAllSellerOrders(String keycloakId, Long from, Long to);
 
     @Query("select ko from KaspiOrder ko " +
+            "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
@@ -35,8 +36,9 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     List<KaspiOrder> findAllAdminOrders(String keycloakId, Long from, Long to);
 
     @Query("select ko from KaspiOrder ko " +
+            "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
-            "WHERE se.wonderUser.id = :keycloakId " +
+            "WHERE se.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
             "ORDER BY ko.creationDate ASC")
