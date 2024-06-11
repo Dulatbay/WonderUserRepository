@@ -36,7 +36,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
 
     @Query("select ko from KaspiOrder ko " +
             "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
-            "WHERE se.wonderUser.id = :keycloakId " +
+            "WHERE se.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
             "ORDER BY ko.creationDate ASC")
