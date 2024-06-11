@@ -4,6 +4,7 @@ import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
@@ -20,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
@@ -54,48 +53,30 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
+    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, DeliveryMode deliveryMode, PageRequest pageRequest) {
         log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
         startDate = startDate.minusDays(1);
-        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime(), pageRequest);
+        var kaspiOrderInDb = kaspiOrderRepository.findAllSellerOrders(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime(), deliveryMode, pageRequest);
         log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
         // todo: переделать оптовую цену
         return kaspiOrderInDb
                 .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0));
     }
 
-
-    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
-        return OrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
-    }
-
-    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        return OrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
-    }
-
-
     @Override
-    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
+    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, DeliveryMode deliveryMode, PageRequest pageRequest) {
         log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
-        var wonderUser = userService.getUserByKeycloakId(keycloakId);
-        var stores = wonderUser.getStores();
 
-        final LocalDate finalStartDate = startDate.minusDays(1);
 
-        var result = stores.stream()
-                .flatMap(store -> store.getOrders().stream()
-                        .filter(kaspiOrder -> {
-                            LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
-                            return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate));
-                        })
-                        .map(order -> getOrderResponse(order, 0.0))
-                )
-                .collect(Collectors.toList());
-
+        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId,
+                Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
+                Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
+                deliveryMode,
+                pageRequest);
 
         log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
 
-        return new PageImpl<>(result, pageRequest, result.size());
+        return orders.map(order -> getOrderResponse(order, 0.0));
     }
 
 
@@ -155,24 +136,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate) {
+    public List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate, DeliveryMode deliveryMode) {
         var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Пользователь-сотрудник магазина не найден"));
 
-        var store = employee.getKaspiStore();
 
-        final LocalDate finalStartDate = startDate.minusDays(1);
+        var orders = kaspiOrderRepository.findAllEmployeeOrders(employee.getWonderUser().getKeycloakId(),
+                Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
+                Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
+                deliveryMode);
 
-        // todo: переделать запрос на уровень репозитория
-
-        return store.getOrders().stream()
-                .filter(kaspiOrder -> {
-                    LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
-                    var products = kaspiOrder.getProducts();
-                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate) && !products.isEmpty() && products.stream().noneMatch(kp -> kp.getProduct() == null || kp.getSupplyBoxProduct() == null));
-                })
-                .map(OrderServiceImpl::getEmployeeOrderResponse)
-                .toList();
+        return orders.stream().map(OrderServiceImpl::getEmployeeOrderResponse).toList();
     }
 
     @Override
@@ -269,6 +243,15 @@ public class OrderServiceImpl implements OrderService {
             log.error("Error updating orders", ex);
         }
     }
+
+    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
+        return OrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
+    }
+
+    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
+        return OrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
+    }
+
 
     private Pair<KaspiOrder, Boolean> saveKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
         var orderAttributes = order.getAttributes();

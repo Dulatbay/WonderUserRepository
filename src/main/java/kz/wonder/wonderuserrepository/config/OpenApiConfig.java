@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
         servers = {
                 @Server(
                         description = "Local ENV",
-                        url = "/api"
+                        url = "/kz/wonder/filemanager/client/api"
                 ),
                 @Server(
                         description = "PROD ENV",

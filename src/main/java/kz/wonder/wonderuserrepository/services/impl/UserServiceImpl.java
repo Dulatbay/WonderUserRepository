@@ -27,8 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-	private final KaspiTokenRepository kaspiTokenRepository;
-	private final UserRepository userRepository;
+    private final UserRepository userRepository;
 	private final KeycloakService keycloakService;
 	private final EntityManager entityManager;
 

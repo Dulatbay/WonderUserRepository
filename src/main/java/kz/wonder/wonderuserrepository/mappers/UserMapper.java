@@ -18,6 +18,7 @@ public class UserMapper {
         sellerUserResponse.setLastName(userRepresentation.getLastName());
         sellerUserResponse.setPhoneNumber(wonderUser.getPhoneNumber());
         sellerUserResponse.setTokenKaspi(kaspiToken.getToken());
+        sellerUserResponse.setPathToXml(kaspiToken.getPathToXml());
 
         return sellerUserResponse;
     }

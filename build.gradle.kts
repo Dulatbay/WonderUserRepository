@@ -55,8 +55,12 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 
     implementation(project(mapOf("path" to ":client-libs:kaspi")))
+    implementation(project(mapOf("path" to ":client-libs:wonder-file-manager")))
+
+
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework:spring-test")
 
 
     implementation("org.apache.poi:poi:5.2.0")
@@ -65,6 +69,7 @@ dependencies {
 
     implementation("net.sourceforge.barbecue:barbecue:1.5-beta1")
 
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher") {
         because("Only needed to run tests in a version of IntelliJ IDEA that bundles older versions")

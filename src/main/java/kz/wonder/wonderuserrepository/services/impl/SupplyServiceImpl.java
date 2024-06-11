@@ -264,14 +264,14 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public List<SupplyReportResponse> getSupplyReport(Long supplyId, String keycloakId) {
+    public List<SupplyStateResponse> getSupplySellerState(Long supplyId, String keycloakId) {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
                         "Поставки не существует"
                 ));
 
-        Map<Long, SupplyReportResponse> supplyReportResponseMap = new HashMap<>();
+        Map<Long, SupplyStateResponse> supplyReportResponseMap = new HashMap<>();
         processSupplyBoxes(supply, supplyReportResponseMap);
 
         return new ArrayList<>(supplyReportResponseMap.values());
@@ -398,6 +398,64 @@ public class SupplyServiceImpl implements SupplyService {
         supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
     }
 
+    @Override
+    public SellerSupplyReport getSupplySellerReport(Long supplyId, String keycloakId) {
+        var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Supply doesn't exist"));
+
+        var store = supply.getKaspiStore();
+
+        SellerSupplyReport sellerSupplyReport = new SellerSupplyReport();
+        sellerSupplyReport.setSupplyId(supply.getId());
+        sellerSupplyReport.setSupplyCreationDate(supply.getCreatedAt());
+        sellerSupplyReport.setSupplySelectedDate(supply.getSelectedTime());
+        sellerSupplyReport.setSupplyDeliveredDate(sellerSupplyReport.getSupplyDeliveredDate());
+        sellerSupplyReport.setSupplyAcceptanceDate(supply.getAcceptedTime());
+        sellerSupplyReport.setFormattedAddress(store.getFormattedAddress());
+
+        var supplyBoxes = supply.getSupplyBoxes();
+
+
+        List<SellerSupplyReport.SupplyBoxInfo> supplyBoxInfos = supplyBoxes.stream().map(supplyBox -> {
+            var boxType = supplyBox.getBoxType();
+            var supplyBoxProducts = supplyBox.getSupplyBoxProducts();
+
+
+            Map<Long, SellerSupplyReport.SupplyProductInfo> supplyProductsMap = new HashMap<>();
+
+            SellerSupplyReport.SupplyBoxInfo supplyBoxInfo = new SellerSupplyReport.SupplyBoxInfo();
+            supplyBoxInfo.setBoxName(boxType.getName());
+            supplyBoxInfo.setBoxDescription(boxType.getDescription());
+            supplyBoxInfo.setBoxVendorCode(supplyBox.getVendorCode());
+
+            supplyBoxProducts.forEach(supplyBoxProduct -> {
+                var product = supplyBoxProduct.getProduct();
+
+                var supplyProductInfo = supplyProductsMap.get(product.getId());
+
+                if (supplyProductInfo == null) {
+                    supplyProductInfo = new SellerSupplyReport.SupplyProductInfo();
+                    supplyProductInfo.setProductName(product.getName());
+                    supplyProductInfo.setProductCount(1L);
+                } else {
+                    supplyProductInfo.setProductCount(supplyProductInfo.getProductCount() + 1L);
+                }
+
+                supplyProductsMap.put(product.getId(), supplyProductInfo);
+            });
+
+            supplyBoxInfo.setProductInfo(new ArrayList<>(supplyProductsMap.values()));
+
+            return supplyBoxInfo;
+        }).toList();
+
+        sellerSupplyReport.setSupplyBoxInfo(supplyBoxInfos);
+
+
+        return sellerSupplyReport;
+
+    }
+
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
         return storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Сотрудник магазина не существует", "Создайте сотрудника магазина"));
@@ -457,18 +515,18 @@ public class SupplyServiceImpl implements SupplyService {
         return suppliesPerDayOfWeek;
     }
 
-    private void processSupplyBoxes(Supply supply, Map<Long, SupplyReportResponse> reportMap) {
+    private void processSupplyBoxes(Supply supply, Map<Long, SupplyStateResponse> reportMap) {
         supply.getSupplyBoxes().forEach(supplyBox -> {
             var supplyBoxProducts = supplyBox.getSupplyBoxProducts();
             supplyBoxProducts.forEach(product -> processSupplyBoxProduct(product, reportMap));
         });
     }
 
-    private void processSupplyBoxProduct(SupplyBoxProduct supplyBoxProduct, Map<Long, SupplyReportResponse> reportMap) {
+    private void processSupplyBoxProduct(SupplyBoxProduct supplyBoxProduct, Map<Long, SupplyStateResponse> reportMap) {
         var product = supplyBoxProduct.getProduct();
         var productId = product.getId();
 
-        var report = reportMap.computeIfAbsent(productId, id -> SupplyReportResponse.builder()
+        var report = reportMap.computeIfAbsent(productId, id -> SupplyStateResponse.builder()
                 .productName(product.getName())
                 .productBarcode(product.getVendorCode())
                 .countOfProductDeclined(0L)
@@ -479,7 +537,7 @@ public class SupplyServiceImpl implements SupplyService {
         updateReportCounts(supplyBoxProduct, report);
     }
 
-    private void updateReportCounts(SupplyBoxProduct supplyBoxProduct, SupplyReportResponse report) {
+    private void updateReportCounts(SupplyBoxProduct supplyBoxProduct, SupplyStateResponse report) {
         switch (supplyBoxProduct.getState()) {
             case ACCEPTED:
             case SOLD:

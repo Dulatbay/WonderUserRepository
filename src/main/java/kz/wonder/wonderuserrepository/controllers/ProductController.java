@@ -108,7 +108,7 @@ public class ProductController {
     }
 
     @GetMapping("/xml")
-    public ResponseEntity<MessageResponse> getXmlOfProducts() {
+    public ResponseEntity<String> getXmlOfProducts() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
 
@@ -122,7 +122,7 @@ public class ProductController {
             throw new RuntimeException(e);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(pathToXml));
+        return ResponseEntity.status(HttpStatus.CREATED).body(pathToXml);
     }
 
     @GetMapping("/search-by-params")

@@ -120,16 +120,26 @@ public class SupplyController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/seller/report/{supplyId}")
+    @GetMapping("/seller/supply-state/{supplyId}")
     @Operation(summary = "Get supply report for seller", description = "Retrieves the detailed report of a supply by the supply ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the supply report for seller")
     })
-    public ResponseEntity<List<SupplyReportResponse>> getSupplyReportSeller(@PathVariable Long supplyId) {
+    public ResponseEntity<List<SupplyStateResponse>> getSupplySellerState(@PathVariable Long supplyId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
-        List<SupplyReportResponse> response = supplyService.getSupplyReport(supplyId, keycloakId);
+        List<SupplyStateResponse> response = supplyService.getSupplySellerState(supplyId, keycloakId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/seller/report/{supplyId}")
+    public ResponseEntity<SellerSupplyReport> getSupplySellerReport(@PathVariable Long supplyId){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+
+        SellerSupplyReport sellerSupplyReport = supplyService.getSupplySellerReport(supplyId, keycloakId);
+
+        return ResponseEntity.ok(sellerSupplyReport);
     }
 
     @GetMapping("/get-by-box/{boxVendorCode}")
