@@ -84,7 +84,7 @@ public class FileServiceImpl implements FileService {
 				.toAbsolutePath();
 
 		if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
-			throw new StorageException(BAD_REQUEST_REASON_PHRASE, "Cannot store file outside current directory.");
+			throw new StorageException(BAD_REQUEST_REASON_PHRASE, "Невозможно сохранить файл за пределами текущего пути");
 		}
 
 		return destinationFile;
@@ -103,11 +103,11 @@ public class FileServiceImpl implements FileService {
 				return resource;
 			} else {
 				throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),
-						"Could not read file: " + fileName);
+							"Не удалось прочитать файл: " + fileName);
 			}
 		} catch (MalformedURLException e) {
 			throw new StorageException(HttpStatus.NOT_FOUND.getReasonPhrase(),
-					"Could not read file: " + fileName);
+					"Не удалось прочитать файл: " + fileName);
 		}
 	}
 

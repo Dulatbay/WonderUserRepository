@@ -37,14 +37,14 @@ public class UserServiceImpl implements UserService {
 	public WonderUser getUserByKeycloakId(String keycloakId) {
 		log.info("Retrieving user with keycloakId: {}", keycloakId);
 		return userRepository.findByKeycloakId(keycloakId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 
 	}
 
 	@Override
 	public WonderUser getUserById(Long id) {
 		return userRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser doesn't exist"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 	}
 
 

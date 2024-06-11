@@ -55,7 +55,7 @@ public class KeycloakServiceImpl implements KeycloakService {
             try {
                 sendEmail(userId);
             } catch (Exception e) {
-                throw new IllegalArgumentException("Email is incorrect");
+                throw new IllegalArgumentException("Электронная почта неверна");
             }
 
             return userResource.toRepresentation();
@@ -83,7 +83,7 @@ public class KeycloakServiceImpl implements KeycloakService {
                 var object = response.readEntity(KeycloakError.class);
                 throw new IllegalArgumentException(object.getErrorMessage());
             } else {
-                throw new InternalServerErrorException("Unknown error");
+                throw new InternalServerErrorException("Неизвестная ошибка");
             }
         }
     }
@@ -154,7 +154,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 					.refreshToken(refreshToken)
 					.build();
 		} catch (NotAuthorizedException notAuthorizedException) {
-			throw new IllegalArgumentException("Bad credentials");
+			throw new IllegalArgumentException("Неверные учетные данные");
 		} catch (Exception e) {
 			log.error("Error occurred in getting tokens: ", e);
 			throw e;
@@ -193,7 +193,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 		List<UserRepresentation> users = usersResource.search(keycloakBaseUser.getEmail(), 0, 1);
 
 		if (users.isEmpty()) {
-			throw new IllegalArgumentException("User by email not found");
+			throw new IllegalArgumentException("Пользователь по электронной почте не найден");
 		}
 		UserRepresentation userToUpdate = users.get(0);
 		userToUpdate.setFirstName(keycloakBaseUser.getFirstName());
@@ -225,7 +225,7 @@ public class KeycloakServiceImpl implements KeycloakService {
 			userResource.resetPassword(newPassword);
 		} catch (NotAuthorizedException e) {
 			log.error("Old password is incorrect for user with ID: {}", keycloakId);
-			throw new IllegalArgumentException("Old password is incorrect");
+			throw new IllegalArgumentException("Старый пароль неверен");
 		}
 	}
 }

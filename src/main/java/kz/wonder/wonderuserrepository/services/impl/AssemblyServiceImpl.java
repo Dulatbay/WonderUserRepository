@@ -71,7 +71,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var orderAssembleOptional = orderAssembleRepository.findByKaspiOrderId(order.getId());
 
         if (orderAssembleOptional.isPresent()) {
-            throw new IllegalArgumentException("Assembly already started");
+            throw new IllegalArgumentException("Сборка уже началась");
         }
 
         var orderAssemble = orderAssembleRepository.save(orderAssembleMapper.toEntity(storeEmployee, order, AssembleState.STARTED));
@@ -88,18 +88,18 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
 
         var store = validateEmployeeWithStore(storeEmployee, order);
 
         var assemble = order.getOrderAssemble();
 
         if (assemble == null) {
-            throw new IllegalArgumentException("Assembly did not start yet");
+            throw new IllegalArgumentException("Сборка еще не началась");
         }
 
         if (assemble.getAssembleState() == AssembleState.FINISHED) {
-            throw new IllegalArgumentException("Assembly already finished");
+            throw new IllegalArgumentException("Сборка уже закончена");
         }
 
         var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
@@ -148,7 +148,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
 
         validateEmployeeWithStore(storeEmployee, order);
 
@@ -170,7 +170,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
 
         var assemble = getOrderAssemble(order);
 
@@ -179,7 +179,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
         if (!dividedProducts.getLeft().isEmpty()) {
-            throw new IllegalArgumentException(dividedProducts.getLeft().size() + " products left to scan");
+            throw new IllegalArgumentException(dividedProducts.getLeft().size() + " товаров осталось для сканирования");
         }
 
         assemble.setAssembleState(AssembleState.FINISHED);
@@ -197,13 +197,13 @@ public class AssemblyServiceImpl implements AssemblyService {
         var assemble = order.getOrderAssemble();
 
         if (assemble == null) {
-            throw new IllegalArgumentException("Assemble state is not ready to finish");
+            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
         }
 
         if (assemble.getAssembleState() == AssembleState.FINISHED) {
-            throw new IllegalArgumentException("Assemble state is already finished");
+            throw new IllegalArgumentException("Состояние сборки уже завершено");
         } else if (assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
-            throw new IllegalArgumentException("Assemble state is not ready to finish");
+            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
         }
         return assemble;
     }
@@ -213,12 +213,12 @@ public class AssemblyServiceImpl implements AssemblyService {
         var orderStore = order.getKaspiStore();
 
         if (!storeEmployeeKaspiStore.getId().equals(orderStore.getId()))
-            throw new IllegalArgumentException("Order not found");
+            throw new IllegalArgumentException("Заказ не найден");
 
         var orderProducts = order.getProducts();
 
         if (orderProducts == null || orderProducts.isEmpty())
-            throw new IllegalArgumentException("Order not enabled to assemble");
+            throw new IllegalArgumentException("Заказ не может быть собран");
 
         return orderStore;
     }
@@ -226,6 +226,6 @@ public class AssemblyServiceImpl implements AssemblyService {
     private String getWaybill(KaspiOrder kaspiOrder) {
         if (kaspiOrder.getWaybill() != null) return kaspiOrder.getWaybill();
         // generate with api
-        return "generated(soon)";
+        return "Сгениророван(Скоро)";
     }
 }

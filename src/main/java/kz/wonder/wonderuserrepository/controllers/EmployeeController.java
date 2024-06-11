@@ -72,7 +72,7 @@ public class EmployeeController {
         else if (isSuperAdmin)
             result = storeEmployeeService.getAllStoreEmployees(usersInKeycloak);
         else
-            throw new IllegalArgumentException("Invalid store-id");
+            throw new IllegalArgumentException("Неверный id магазина");
         return ResponseEntity.ok(result);
     }
 
@@ -91,7 +91,7 @@ public class EmployeeController {
         var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Employee doesn't exist");
+            throw new IllegalArgumentException("Сотрукдник не существует");
 
         var userResource = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId());
 
@@ -115,7 +115,7 @@ public class EmployeeController {
         var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Employee doesn't exist");
+            throw new IllegalArgumentException("Сотрукдник не существует");
 
         keycloakService.deleteUserById(storeEmployee.getWonderUser().getKeycloakId());
         storeEmployeeService.deleteStoreEmployee(storeEmployee);
@@ -137,7 +137,7 @@ public class EmployeeController {
         var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Employee doesn't exist");
+            throw new IllegalArgumentException("Сотрукдник не существует");
 
 
         var keycloakUser = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId()).toRepresentation();
@@ -161,7 +161,7 @@ public class EmployeeController {
         var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Employee doesn't exist");
+            throw new IllegalArgumentException("Сотрукдник не существует");
 
         var keycloakBaseUser = new KeycloakBaseUser();
         keycloakBaseUser.setEmail(employeeUpdateRequest.getEmail());
