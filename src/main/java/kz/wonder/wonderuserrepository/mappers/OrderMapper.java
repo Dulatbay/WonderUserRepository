@@ -39,6 +39,7 @@ public class OrderMapper {
                 .waybillNumber(kaspiOrder.getWaybillNumber())
                 .deliveryCost(kaspiOrder.getDeliveryCost())
                 .sellerName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName())
+                .storeFormattedAddress(kaspiOrder.getKaspiStore().getFormattedAddress())
                 .build();
     }
 

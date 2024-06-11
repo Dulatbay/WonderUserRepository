@@ -25,4 +25,5 @@ public class OrderResponse {
     private String waybillNumber;
     private Double deliveryCost;
     private String sellerName;
+    private String storeFormattedAddress;
 }
