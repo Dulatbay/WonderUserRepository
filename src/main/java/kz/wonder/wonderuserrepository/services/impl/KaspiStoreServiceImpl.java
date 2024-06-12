@@ -27,7 +27,9 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMATTER;
@@ -37,265 +39,249 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMA
 @Service
 @RequiredArgsConstructor
 public class KaspiStoreServiceImpl implements KaspiStoreService {
-	private final KaspiStoreRepository kaspiStoreRepository;
-	private final KaspiCityRepository kaspiCityRepository;
-	private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
-	private final BoxTypeRepository boxTypeRepository;
-	private final KaspiStoreMapper kaspiStoreMapper;
+    private final KaspiStoreRepository kaspiStoreRepository;
+    private final KaspiCityRepository kaspiCityRepository;
+    private final KaspiStoreAvailableTimesRepository kaspiStoreAvailableTimesRepository;
+    private final BoxTypeRepository boxTypeRepository;
+    private final KaspiStoreMapper kaspiStoreMapper;
 
-	@Override
-	@Transactional(rollbackOn = Exception.class)
-	public void createStore(final KaspiStoreCreateRequest kaspiStoreCreateRequest) {
-		KaspiStore kaspiStore = new KaspiStore();
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public void createStore(final KaspiStoreCreateRequest kaspiStoreCreateRequest) {
+        KaspiStore kaspiStore = new KaspiStore();
 
-		log.info("kaspiStoreCreateRequest.getWonderUser().getKeycloakId(): {}", kaspiStoreCreateRequest.getWonderUser().getKeycloakId());
+        log.info("kaspiStoreCreateRequest.getWonderUser().getKeycloakId(): {}", kaspiStoreCreateRequest.getWonderUser().getKeycloakId());
 
-		var oo = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId());
+        final var selectedCity = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId())
+                .orElseThrow(
+                        () -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует")
+                );
 
-		oo.ifPresent(kaspiCity -> System.out.println(kaspiCity.getName()));
+        final List<KaspiStoreAvailableTimes> availableTimes = mapToEntity(kaspiStoreCreateRequest.getDayOfWeekWorks(), kaspiStore);
 
-		final var selectedCity = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId())
-				.orElseThrow(
-						() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует")
-				);
+        log.info("Available times with size: {}", availableTimes.size());
 
-		final List<KaspiStoreAvailableTimes> availableTimes = mapToEntity(kaspiStoreCreateRequest.getDayOfWeekWorks(), kaspiStore);
+        String formattedAddress = getFormattedAddress(kaspiStore, selectedCity);
 
-		log.info("Available times with size: {}", availableTimes.size());
+        kaspiStore = kaspiStoreMapper.mapToCreateStore(kaspiStoreCreateRequest, selectedCity, formattedAddress);
 
-		String formattedAddress = getFormattedAddress(kaspiStore, selectedCity);
+        log.info("Created Kaspi store with id: {}", kaspiStore.getId());
 
-		kaspiStore = kaspiStoreMapper.mapToCreateStore(kaspiStoreCreateRequest, selectedCity, formattedAddress);
+        kaspiStoreRepository.save(kaspiStore);
+        kaspiStoreAvailableTimesRepository.saveAll(availableTimes);
+    }
 
-		log.info("Created Kaspi store with id: {}", kaspiStore.getId());
+    private static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
+        String name = selectedCity.getName() != null ? selectedCity.getName() + ", " : "";
+        String streetName = kaspiStore.getStreetName() != null ? kaspiStore.getStreetName() + ", " : "";
+        String streetNumber = kaspiStore.getStreetNumber() != null ? kaspiStore.getStreetNumber() : "";
+        return name + streetName + streetNumber;
+    }
 
-		kaspiStoreRepository.save(kaspiStore);
-		kaspiStoreAvailableTimesRepository.saveAll(availableTimes);
-	}
+    @Override
+    public List<StoreResponse> getAllByUser(String keycloakUserId) {
+        final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakUserId);
 
-	private static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
-		String name = selectedCity.getName() != null ? selectedCity.getName() + "," : "";
-		String streetName = kaspiStore.getStreetName() != null ? kaspiStore.getStreetName() + "," : "";
-		String streetNumber = kaspiStore.getStreetNumber() != null ? kaspiStore.getStreetNumber() + "," : "";
-		String town = kaspiStore.getTown() != null ? kaspiStore.getTown() + "," : "";
-		String district = kaspiStore.getDistrict() != null ? kaspiStore.getDistrict() + "," : "";
-		String building = kaspiStore.getBuilding() != null ? kaspiStore.getBuilding() : "";
-		return name + streetName + streetNumber + town + district + building;
-	}
+        log.info("Retrieving kaspi stores with size: {}", kaspiStores.size());
 
-	@Override
-	public List<StoreResponse> getAllByUser(String keycloakUserId) {
-		final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakUserId);
+        return mapToResponses(kaspiStores);
+    }
 
-		log.info("Retrieving kaspi stores with size: {}", kaspiStores.size());
+    @Override
+    public List<StoreResponse> getAll() {
+        final var kaspiStores = kaspiStoreRepository.findAll();
+        return mapToResponses(kaspiStores);
+    }
 
-		return mapToResponses(kaspiStores);
-	}
+    private List<KaspiStoreAvailableTimes> mapToEntity(List<DayOfWeekWork> dayOfWeekWorks, KaspiStore kaspiStore) {
+        final List<KaspiStoreAvailableTimes> availableTimes = new ArrayList<>();
 
-	@Override
-	public List<StoreResponse> getAll() {
-		final var kaspiStores = kaspiStoreRepository.findAll();
-		return mapToResponses(kaspiStores);
-	}
+        dayOfWeekWorks.forEach(i -> {
+            try {
+                final var dayOfWeek = DayOfWeek.of(i.numericDayOfWeek());
 
-	private List<KaspiStoreAvailableTimes> mapToEntity(List<DayOfWeekWork> dayOfWeekWorks, KaspiStore kaspiStore) {
-		final List<KaspiStoreAvailableTimes> availableTimes = new ArrayList<>();
+                final var closeTime = LocalTime.parse(i.closeTime(), TIME_FORMATTER);
+                final var openTime = LocalTime.parse(i.openTime(), TIME_FORMATTER);
 
-		dayOfWeekWorks.forEach(i -> {
-			try {
-				final var dayOfWeek = DayOfWeek.of(i.numericDayOfWeek());
+                final var workTime = new KaspiStoreAvailableTimes();
 
-				final var closeTime = LocalTime.parse(i.closeTime(), TIME_FORMATTER);
-				final var openTime = LocalTime.parse(i.openTime(), TIME_FORMATTER);
+                workTime.setDayOfWeek(dayOfWeek);
+                workTime.setOpenTime(openTime);
+                workTime.setCloseTime(closeTime);
+                workTime.setKaspiStore(kaspiStore);
 
-				final var workTime = new KaspiStoreAvailableTimes();
+                availableTimes.add(workTime);
 
-				workTime.setDayOfWeek(dayOfWeek);
-				workTime.setOpenTime(openTime);
-				workTime.setCloseTime(closeTime);
-				workTime.setKaspiStore(kaspiStore);
+            } catch (DateTimeParseException e) {
+                log.error("DateTimeParseException: ", e);
+                throw new IllegalArgumentException("Неправильный формат рабочего времени");
+            }
+        });
+        return availableTimes;
+    }
 
-				availableTimes.add(workTime);
+    private List<StoreResponse> mapToResponses(List<KaspiStore> kaspiStores) {
+        return kaspiStores.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
 
-			} catch (DateTimeParseException e) {
-				log.error("DateTimeParseException: ", e);
-				throw new IllegalArgumentException("Неправильный формат рабочего времени");
-			}
-		});
-		return availableTimes;
-	}
+    private StoreResponse mapToResponse(KaspiStore kaspiStore) {
+        var city = kaspiStore.getKaspiCity();
 
-	private List<StoreResponse> mapToResponses(List<KaspiStore> kaspiStores) {
-		return kaspiStores.stream().map(this::mapToResponse).collect(Collectors.toList());
-	}
+        return StoreResponse.builder()
+                .id(kaspiStore.getId())
+                .kaspiId(kaspiStore.getKaspiId())
+                .city(StoreResponse.City.builder()
+                        .id(city.getId())
+                        .name(city.getName())
+                        .build())
+                .streetName(kaspiStore.getStreetName())
+                .streetNumber(kaspiStore.getStreetNumber())
+                .formattedAddress(kaspiStore.getFormattedAddress())
+                .availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
+                .enabled(kaspiStore.isEnabled())
+                .userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
+                .build();
+    }
 
-	private StoreResponse mapToResponse(KaspiStore kaspiStore) {
-		var city = kaspiStore.getKaspiCity();
+    private List<StoreDetailResponse> mapToDetailResponse(List<KaspiStore> kaspiStores) {
+        return kaspiStores.stream().map(this::mapToDetailResponse)
+                .collect(Collectors.toList());
+    }
 
-		return StoreResponse.builder()
-				.id(kaspiStore.getId())
-				.kaspiId(kaspiStore.getKaspiId())
-				.city(StoreResponse.City.builder()
-						.id(city.getId())
-						.name(city.getName())
-						.build())
-				.streetName(kaspiStore.getStreetName())
-				.streetNumber(kaspiStore.getStreetNumber())
-				.town(kaspiStore.getTown())
-				.district(kaspiStore.getDistrict())
-				.building(kaspiStore.getBuilding())
-				.apartment(kaspiStore.getBuilding())
-				.apartment(kaspiStore.getApartment())
-				.formattedAddress(kaspiStore.getFormattedAddress())
-				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
-				.enabled(kaspiStore.isEnabled())
-				.userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
-				.build();
-	}
+    private StoreDetailResponse mapToDetailResponse(KaspiStore kaspiStore) {
+        var city = kaspiStore.getKaspiCity();
+        return StoreDetailResponse.builder()
+                .id(kaspiStore.getId())
+                .kaspiId(kaspiStore.getKaspiId())
+                .city(StoreDetailResponse.City.builder()
+                        .id(city.getId())
+                        .name(city.getName())
+                        .build())
+                .streetName(kaspiStore.getStreetName())
+                .streetNumber(kaspiStore.getStreetNumber())
+                .formattedAddress(kaspiStore.getFormattedAddress())
+                .availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
+                .availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
+                        j -> StoreDetailResponse.AvailableBoxType.builder()
+                                .id(j.getBoxType().getId())
+                                .name(j.getBoxType().getName())
+                                .description(j.getBoxType().getDescription())
+                                .imageUrls(j.getBoxType().getImages().stream().map(k -> k.imageUrl).collect(Collectors.toList()))
+                                .build()
+                ).collect(Collectors.toList()))
+                .enabled(kaspiStore.isEnabled())
+                .userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
+                .build();
+    }
 
-	private List<StoreDetailResponse> mapToDetailResponse(List<KaspiStore> kaspiStores) {
-		return kaspiStores.stream().map(this::mapToDetailResponse)
-				.collect(Collectors.toList());
-	}
+    @Override
+    public void deleteById(Long id, String keycloakUserId) {
+        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi магазин не существует"));
 
-	private StoreDetailResponse mapToDetailResponse(KaspiStore kaspiStore) {
-		var city = kaspiStore.getKaspiCity();
-		return StoreDetailResponse.builder()
-				.id(kaspiStore.getId())
-				.kaspiId(kaspiStore.getKaspiId())
-				.city(StoreDetailResponse.City.builder()
-						.id(city.getId())
-						.name(city.getName())
-						.build())
-				.streetName(kaspiStore.getStreetName())
-				.streetNumber(kaspiStore.getStreetNumber())
-				.town(kaspiStore.getTown())
-				.district(kaspiStore.getDistrict())
-				.building(kaspiStore.getBuilding())
-				.apartment(kaspiStore.getApartment())
-				.address(kaspiStore.getFormattedAddress())
-				.availableWorkTimes(getAvailableTimesByStoreId(kaspiStore.getAvailableTimes()))
-				.availableBoxTypes(kaspiStore.getAvailableBoxTypes().stream().map(
-						j -> StoreDetailResponse.AvailableBoxType.builder()
-								.id(j.getBoxType().getId())
-								.name(j.getBoxType().getName())
-								.description(j.getBoxType().getDescription())
-								.imageUrls(j.getBoxType().getImages().stream().map(k -> k.imageUrl).collect(Collectors.toList()))
-								.build()
-				).collect(Collectors.toList()))
-				.enabled(kaspiStore.isEnabled())
-				.userId(kaspiStore.getWonderUser() == null ? -1 : kaspiStore.getWonderUser().getId())
-				.build();
-	}
+        kaspiStoreRepository.delete(kaspiStore);
+        log.info("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
+    }
 
-	@Override
-	public void deleteById(Long id, String keycloakUserId) {
-		final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi магазин не существует"));
+    @Override
+    public void deleteById(Long id) {
+        final var kaspiStore = kaspiStoreRepository.findById(id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
 
-		kaspiStoreRepository.delete(kaspiStore);
-		log.info("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
-	}
+        log.info("Store with id {} was deleted", id);
+        kaspiStoreRepository.delete(kaspiStore);
+    }
 
-	@Override
-	public void deleteById(Long id) {
-		final var kaspiStore = kaspiStoreRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
+    @Override
+    public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
+        final var kaspiStore = kaspiStoreRepository.findById(id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
 
-		log.info("Store with id {} was deleted", id);
-		kaspiStoreRepository.delete(kaspiStore);
-	}
+        log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
 
-	@Override
-	public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
-		final var kaspiStore = kaspiStoreRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
+        var toSave = mapToEntity(changeRequest, kaspiStore);
+        toSave.setFormattedAddress(getFormattedAddress(toSave, kaspiStore.getKaspiCity()));
 
-		log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
+        kaspiStoreRepository.save(toSave);
+    }
 
-		var toSave = mapToEntity(changeRequest, kaspiStore);
-		toSave.setFormattedAddress(getFormattedAddress(toSave, kaspiStore.getKaspiCity()));
+    @Override
+    public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
+        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
 
-		kaspiStoreRepository.save(toSave);
-	}
+        var toSave = mapToEntity(changeRequest, kaspiStore);
+        toSave.setFormattedAddress(getFormattedAddress(toSave, kaspiStore.getKaspiCity()));
 
-	@Override
-	public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
-		final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
+        kaspiStoreRepository.save(toSave);
+    }
 
-		var toSave = mapToEntity(changeRequest, kaspiStore);
-		toSave.setFormattedAddress(getFormattedAddress(toSave, kaspiStore.getKaspiCity()));
+    @Override
+    public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
+        var kaspiStore = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi магазин не существует"));
 
-		kaspiStoreRepository.save(toSave);
-	}
+        addBoxTypeToStore(boxTypeId, kaspiStore);
+    }
 
-	@Override
-	public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
-		var kaspiStore = kaspiStoreRepository.findById(storeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi магазин не существует"));
+    @Override
+    public void addBoxTypeToStore(Long boxTypeId, Long storeId, String keycloakUserId) {
+        var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi магазин не существует"));
 
-		addBoxTypeToStore(boxTypeId, kaspiStore);
-	}
+        addBoxTypeToStore(boxTypeId, kaspiStore);
+    }
 
-	@Override
-	public void addBoxTypeToStore(Long boxTypeId, Long storeId, String keycloakUserId) {
-		var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, storeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi магазин не существует"));
+    private void addBoxTypeToStore(Long boxTypeId, KaspiStore kaspiStore) {
+        var boxType = boxTypeRepository.findById(boxTypeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Тип коробки не существует"));
 
-		addBoxTypeToStore(boxTypeId, kaspiStore);
-	}
+        var availableBoxType = new KaspiStoreAvailableBoxTypes();
 
-	private void addBoxTypeToStore(Long boxTypeId, KaspiStore kaspiStore) {
-		var boxType = boxTypeRepository.findById(boxTypeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Тип коробки не существует"));
+        availableBoxType.setBoxType(boxType);
+        availableBoxType.setKaspiStore(kaspiStore);
+        availableBoxType.setEnabled(true);
 
-		var availableBoxType = new KaspiStoreAvailableBoxTypes();
+        log.info("Available box type with id: {}", availableBoxType.getId());
 
-		availableBoxType.setBoxType(boxType);
-		availableBoxType.setKaspiStore(kaspiStore);
-		availableBoxType.setEnabled(true);
+        kaspiStore.getAvailableBoxTypes().add(availableBoxType);
 
-		log.info("Available box type with id: {}", availableBoxType.getId());
+        kaspiStoreRepository.save(kaspiStore);
+    }
 
-		kaspiStore.getAvailableBoxTypes().add(availableBoxType);
+    @Override
+    public List<StoreDetailResponse> getAllDetail() {
+        return mapToDetailResponse(kaspiStoreRepository.findAll());
+    }
 
-		kaspiStoreRepository.save(kaspiStore);
-	}
+    @Override
+    public List<StoreDetailResponse> getAllDetailByUser(String keycloakId) {
+        return mapToDetailResponse(kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakId));
+    }
 
-	@Override
-	public List<StoreDetailResponse> getAllDetail() {
-		return mapToDetailResponse(kaspiStoreRepository.findAll());
-	}
+    @Override
+    public void removeBoxType(Long boxTypeId, Long storeId) {
+        var store = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
-	@Override
-	public List<StoreDetailResponse> getAllDetailByUser(String keycloakId) {
-		return mapToDetailResponse(kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakId));
-	}
+        var itemsToDelete = store.getAvailableBoxTypes()
+                .stream()
+                .filter(i -> i.getBoxType().getId().equals(boxTypeId))
+                .toList();
 
-	@Override
-	public void removeBoxType(Long boxTypeId, Long storeId) {
-		var store = kaspiStoreRepository.findById(storeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
-
-		var itemsToDelete = store.getAvailableBoxTypes()
-				.stream()
-				.filter(i -> i.getBoxType().getId().equals(boxTypeId))
-				.toList();
-
-		log.info("Items to delete size: {}", itemsToDelete.size());
+        log.info("Items to delete size: {}", itemsToDelete.size());
 
 
-		if (itemsToDelete.isEmpty()) {
-			throw new IllegalArgumentException("Store doesn't contain box type with ID: " + boxTypeId);
-		}
+        if (itemsToDelete.isEmpty()) {
+            throw new IllegalArgumentException("Store doesn't contain box type with ID: " + boxTypeId);
+        }
 
 
-		store.getAvailableBoxTypes()
-				.removeAll(itemsToDelete);
+        store.getAvailableBoxTypes()
+                .removeAll(itemsToDelete);
 
-		kaspiStoreRepository.save(store);
-	}
+        kaspiStoreRepository.save(store);
+    }
 
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
@@ -315,10 +301,10 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
                         "Store doesn't exist"));
 
-		var isHisStore = store
-				.getWonderUser()
-				.getKeycloakId()
-				.equals(keycloakId);
+        var isHisStore = store
+                .getWonderUser()
+                .getKeycloakId()
+                .equals(keycloakId);
 
         if (!isSuperAdmin && (!isHisStore && !store.isEnabled()))
             throw new IllegalStateException("Магазин не существует");
@@ -327,22 +313,22 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     }
 
 
-	@Override
-	public StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId) {
-		var store = kaspiStoreRepository.findById(storeId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-						HttpStatus.BAD_REQUEST.getReasonPhrase(),
-						"Магазин не существует"));
+    @Override
+    public StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId) {
+        var store = kaspiStoreRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
+                        HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                        "Магазин не существует"));
 
-		var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
+        var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
 
-		if (!isSuperAdmin && (!isHisStore && !store.isEnabled()))
-			throw new IllegalArgumentException("Магазин не существует");
+        if (!isSuperAdmin && (!isHisStore && !store.isEnabled()))
+            throw new IllegalArgumentException("Магазин не существует");
 
-		log.info("Retrieving store with id: {}", store.getId());
+        log.info("Retrieving store with id: {}", store.getId());
 
-		return mapToDetailResponse(store);
-	}
+        return mapToDetailResponse(store);
+    }
 
 
     @Override
@@ -357,19 +343,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     }
 
     private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
-		var kaspiCity = kaspiCityRepository.findById(changeRequest.getCityId())
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+        var kaspiCity = kaspiCityRepository.findById(changeRequest.getCityId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
 
-		kaspiStore.setApartment(changeRequest.getApartment());
         kaspiStore.setKaspiId(changeRequest.getKaspiId());
         kaspiStore.setEnabled(changeRequest.isEnabled());
         kaspiStore.setStreetName(changeRequest.getStreetName());
         kaspiStore.setStreetNumber(changeRequest.getStreetNumber());
-        kaspiStore.setTown(changeRequest.getTown());
-        kaspiStore.setDistrict(changeRequest.getDistrict());
-        kaspiStore.setBuilding(changeRequest.getBuilding());
-        kaspiStore.setApartment(changeRequest.getApartment());
-		kaspiStore.setFormattedAddress(getFormattedAddress(kaspiStore, kaspiCity));
+        kaspiStore.setFormattedAddress(getFormattedAddress(kaspiStore, kaspiCity));
 
         kaspiStore.setKaspiCity(kaspiCity);
         kaspiStore.getAvailableTimes().clear();
