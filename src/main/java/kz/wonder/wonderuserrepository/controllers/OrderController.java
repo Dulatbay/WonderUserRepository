@@ -3,11 +3,16 @@ package kz.wonder.wonderuserrepository.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
+import kz.wonder.wonderuserrepository.dto.base.PaginatedResponse;
+import kz.wonder.wonderuserrepository.dto.params.OrderSearchParams;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
+import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
+import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,16 +39,18 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller orders")
     })
+    @SellerAuthorization
     public ResponseEntity<PaginatedResponse<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
                                                                             @RequestParam("end-date") LocalDate endDate,
                                                                             @RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "10") int size) {
+                                                                            @RequestParam(defaultValue = "10") int size,
+                                                                            @ModelAttribute OrderSearchParams orderSearchParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate, pageRequest);
+        Page<OrderResponse> sellerOrderResponseList = orderService.getSellerOrdersByKeycloakId(keycloakId, startDate, endDate, orderSearchParams, pageRequest);
 
         return ResponseEntity.ok().body(new PaginatedResponse<>(sellerOrderResponseList));
     }
@@ -53,16 +60,18 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the admin orders")
     })
+    @AccessForAdmins
     public ResponseEntity<PaginatedResponse<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
-                                                              @RequestParam("end-date") LocalDate endDate,
-                                                              @RequestParam(defaultValue = "0") int page,
-                                                              @RequestParam(defaultValue = "10") int size) {
+                                                                           @RequestParam("end-date") LocalDate endDate,
+                                                                           @RequestParam(defaultValue = "0") int page,
+                                                                           @RequestParam(defaultValue = "10") int size,
+                                                                           @ModelAttribute OrderSearchParams orderSearchParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate, pageRequest);
+        Page<OrderResponse> orderResponseList = orderService.getAdminOrdersByKeycloakId(keycloakId, startDate, endDate, orderSearchParams, pageRequest);
 
         return ResponseEntity.ok().body(new PaginatedResponse<>(orderResponseList));
     }
@@ -72,14 +81,21 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee orders")
     })
-    public ResponseEntity<List<EmployeeOrderResponse>> getEmployeeOrders(@RequestParam("start-date") LocalDate startDate,
-                                                                         @RequestParam("end-date") LocalDate endDate) {
+    @StoreEmployeeAuthorization
+    public ResponseEntity<PaginatedResponse<EmployeeOrderResponse>> getEmployeeOrders(@RequestParam("start-date") LocalDate startDate,
+                                                                                      @RequestParam("end-date") LocalDate endDate,
+                                                                                      @RequestParam(defaultValue = "0") int page,
+                                                                                      @RequestParam(defaultValue = "10") int size,
+                                                                                      @ModelAttribute OrderSearchParams orderSearchParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        List<EmployeeOrderResponse> orders = orderService.getEmployeeOrders(keycloakId, startDate, endDate);
+        PageRequest pageRequest = PageRequest.of(page, size);
 
-        return ResponseEntity.ok().body(orders);
+
+        var orders = orderService.getEmployeeOrders(keycloakId, startDate, endDate, orderSearchParams, pageRequest);
+
+        return ResponseEntity.ok().body(new PaginatedResponse<>(orders));
     }
 
     @GetMapping("/admin/details/{orderCode}")
@@ -87,6 +103,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for admin")
     })
+    @AccessForAdmins
     public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -99,6 +116,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for seller")
     })
+    @SellerAuthorization
     public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -113,6 +131,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for employee")
     })
+    @StoreEmployeeAuthorization
     public ResponseEntity<OrderEmployeeDetailResponse> getEmployeeOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);

@@ -29,5 +29,16 @@
       "name": "application.mode",
       "type": "kz.wonder.wonderuserrepository.entities.ApplicationMode",
       "description": "Description for application.mode."
+    },
+    {
+      "name": "application.kaspi-api.url",
+      "type": "java.lang.String",
+      "description": "Description for application.kaspi-api.url."
+    },
+    {
+      "name": "application.file-api.url",
+      "type": "java.lang.String",
+      "description": "Description for application.file-api.url."
     }
-  ] }
+  ]
+}

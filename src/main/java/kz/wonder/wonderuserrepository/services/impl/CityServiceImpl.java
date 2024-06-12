@@ -34,7 +34,9 @@ public class CityServiceImpl implements CityService {
             final List<KaspiCity> kaspiCities = new ArrayList<>();
 
             for (var city : cities) {
-                if (!cityRepository.existsByName(city.getAttributes().getName()) && !cityRepository.existsByCode(city.getAttributes().getCode())) {
+                var cityExistsByName = cityRepository.existsByName(city.getAttributes().getName());
+                var cityExistsByCode = cityRepository.existsByCode(city.getAttributes().getCode());
+                if (!cityExistsByName && !cityExistsByCode) {
                     kaspiCities.add(cityMapper.toEntity(city));
                 }
             }
@@ -57,6 +59,6 @@ public class CityServiceImpl implements CityService {
     @Override
     public KaspiCity getKaspiCityByName(String name) {
         return cityRepository.findByName(name)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
     }
 }

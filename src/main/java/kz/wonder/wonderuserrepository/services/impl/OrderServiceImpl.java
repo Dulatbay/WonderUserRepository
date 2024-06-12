@@ -4,6 +4,8 @@ import kz.wonder.kaspi.client.api.KaspiApi;
 import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.params.OrderSearchParams;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
@@ -20,22 +22,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @RequiredArgsConstructor
@@ -54,48 +50,50 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
+    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, OrderSearchParams orderSearchParams, PageRequest pageRequest) {
         log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
         startDate = startDate.minusDays(1);
-        var kaspiOrderInDb = kaspiOrderRepository.findAllByWonderUserKeycloakIdAndCreationDateBetween(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime(), pageRequest);
+        var kaspiOrderInDb = kaspiOrderRepository.findAllSellerOrders(
+                keycloakId,
+                Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
+                Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
+                orderSearchParams.getDeliveryMode(),
+                orderSearchParams.getSearchValue().toLowerCase(),
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
+                pageRequest);
         log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
         // todo: переделать оптовую цену
         return kaspiOrderInDb
                 .map(kaspiOrder -> getOrderResponse(kaspiOrder, 0.0));
     }
 
-
-    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
-        return OrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
-    }
-
-    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        return OrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
-    }
-
-
     @Override
-    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, PageRequest pageRequest) {
+    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, OrderSearchParams orderSearchParams, PageRequest pageRequest) {
         log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
-        var wonderUser = userService.getUserByKeycloakId(keycloakId);
-        var stores = wonderUser.getStores();
 
-        final LocalDate finalStartDate = startDate.minusDays(1);
 
-        var result = stores.stream()
-                .flatMap(store -> store.getOrders().stream()
-                        .filter(kaspiOrder -> {
-                            LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
-                            return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate));
-                        })
-                        .map(order -> getOrderResponse(order, 0.0))
-                )
-                .collect(Collectors.toList());
-
+        var orders = kaspiOrderRepository.findAllAdminOrders(
+                keycloakId,
+                Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
+                Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
+                orderSearchParams.getDeliveryMode(),
+                orderSearchParams.getSearchValue().toLowerCase(),
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
+                pageRequest);
 
         log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
 
-        return new PageImpl<>(result, pageRequest, result.size());
+        return orders.map(order -> getOrderResponse(order, 0.0));
     }
 
 
@@ -141,44 +139,40 @@ public class OrderServiceImpl implements OrderService {
                     orders.size());
 
         } catch (Exception e) {
-            log.info("Initializing error, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}",
+            log.error("Initializing error, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}",
                     token.getSellerName(),
                     startDate,
                     currentTime,
                     state,
                     pageNumber);
-
-            log.error("Error processing token orders", e);
         }
 
 
     }
 
     @Override
-    public List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate) {
-        var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Store employee user not found"));
+    public Page<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate, OrderSearchParams orderSearchParams, PageRequest pageRequest) {
+        var orders = kaspiOrderRepository.findAllEmployeeOrders(
+                keycloakId,
+                Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
+                Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
+                orderSearchParams.getDeliveryMode(),
+                orderSearchParams.getSearchValue().toLowerCase(),
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
+                pageRequest);
 
-        var store = employee.getKaspiStore();
-
-        final LocalDate finalStartDate = startDate.minusDays(1);
-
-        // todo: переделать запрос на уровень репозитория
-
-        return store.getOrders().stream()
-                .filter(kaspiOrder -> {
-                    LocalDate kaspiOrderDate = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDate();
-                    var products = kaspiOrder.getProducts();
-                    return (kaspiOrderDate.isAfter(finalStartDate) && kaspiOrderDate.isBefore(endDate) && !products.isEmpty() && products.stream().noneMatch(kp -> kp.getProduct() == null || kp.getSupplyBoxProduct() == null));
-                })
-                .map(OrderServiceImpl::getEmployeeOrderResponse)
-                .toList();
+        return orders.map(OrderServiceImpl::getEmployeeOrderResponse);
     }
 
     @Override
     public List<OrderDetailResponse> getAdminOrderDetails(String keycloakId, String orderCode) {
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
 
         // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
 
@@ -192,7 +186,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderDetailResponse> getSellerOrderDetails(String keycloakId, String orderCode) {
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
 
         // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
 
@@ -206,15 +200,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderEmployeeDetailResponse getEmployeeOrderDetails(String keycloakId, String orderCode) {
         var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "You are not employee user"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Вы не являетесь сотрудником пользователя"));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
 
         var isEmployeeWorkInThisStore = order.getKaspiStore().getId().equals(employee.getKaspiStore().getId());
 
         if (!isEmployeeWorkInThisStore) {
-            throw new IllegalArgumentException("Order not found");
+            throw new IllegalArgumentException("Заказ не найден");
         }
 
         var orderProducts = order.getProducts()
@@ -270,6 +264,15 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
+        return OrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
+    }
+
+    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
+        return OrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
+    }
+
+
     private Pair<KaspiOrder, Boolean> saveKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
@@ -290,8 +293,6 @@ public class OrderServiceImpl implements OrderService {
 
 
     private void processOrderProduct(KaspiToken token, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
-        // todo: замечать отмену заказов в шелудер
-
         var vendorCode = OrderMapper.extractVendorCode(orderEntry);
 
         var product = productRepository
@@ -299,50 +300,45 @@ public class OrderServiceImpl implements OrderService {
                         token.getWonderUser().getKeycloakId())
                 .orElse(null);
 
-        if (product != null)
-            log.info("product id: {}, keycloak id: {}, store id: {}", product.getId(), token.getWonderUser().getKeycloakId(), kaspiOrder.getKaspiStore().getId());
+//        if (product != null)
+//            log.info("product id: {}, keycloak id: {}, store id: {}", product.getId(), token.getWonderUser().getKeycloakId(), kaspiOrder.getKaspiStore().getId());
 
-        SupplyBoxProduct supplyBoxProductToSave = null;
         if (product != null) {
 
-            var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductIdAndState(kaspiOrder.getKaspiStore().getId(), product.getId(), ProductStateInStore.ACCEPTED);
+            var supplyBoxProductOptional = supplyBoxProductsRepository.findFirstByStoreIdAndProductIdAndState(kaspiOrder.getKaspiStore().getId(), product.getId(), ProductStateInStore.ACCEPTED);
 
 
-            var sellAt = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
-            // todo: просто получить сразу один продукт поставки сразу, не перебирая весь цикл
+            if (supplyBoxProductOptional.isPresent()) {
+                var supplyBoxProduct = supplyBoxProductOptional.get();
+                var sellAt = Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCreationDate());
 
-            for (var supplyBoxProduct : supplyBoxProductList) {
-                if (ProductStateInStore.ACCEPTED == supplyBoxProduct.getState()) {
-                    log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
+
+                log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
 //                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
-                    supplyBoxProductToSave = supplyBoxProduct;
-                    log.info("supplyBoxProductToSave: {}", supplyBoxProductToSave.getId());
-                    break;
-//                    }
-                }
-            }
+                log.info("supplyBoxProductToSave: {}", supplyBoxProduct.getId());
+//            }
 
-
-            if (supplyBoxProductToSave != null) {
-                supplyBoxProductToSave.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
-                supplyBoxProductToSave.setKaspiOrder(kaspiOrder);
-                supplyBoxProductsRepository.save(supplyBoxProductToSave);
+                supplyBoxProduct.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
+                supplyBoxProduct.setKaspiOrder(kaspiOrder);
+                supplyBoxProductsRepository.save(supplyBoxProduct);
                 log.info("SOLD MENTIONED, product id: {}, order code: {}", product.getId(), kaspiOrder.getCode());
+
+                KaspiOrderProduct kaspiOrderProduct = new KaspiOrderProduct();
+                kaspiOrderProduct.setOrder(kaspiOrder);
+                kaspiOrderProduct.setProduct(product);
+                kaspiOrderProduct.setKaspiId(orderEntry.getId());
+                kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
+                kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProduct);
+
+
+                kaspiOrder.getProducts().add(kaspiOrderProduct);
             }
+
+
         }
 
         kaspiOrderRepository.save(kaspiOrder);
 
-
-        if (product != null && supplyBoxProductToSave != null) {
-            KaspiOrderProduct kaspiOrderProduct = new KaspiOrderProduct();
-            kaspiOrderProduct.setOrder(kaspiOrder);
-            kaspiOrderProduct.setProduct(product);
-            kaspiOrderProduct.setKaspiId(orderEntry.getId());
-            kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
-            kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
-            kaspiOrderProductRepository.save(kaspiOrderProduct);
-        }
 
     }
 

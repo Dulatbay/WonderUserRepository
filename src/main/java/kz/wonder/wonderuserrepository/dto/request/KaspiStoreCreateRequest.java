@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import lombok.Data;
@@ -27,18 +26,6 @@ public class KaspiStoreCreateRequest {
     @Size(min = 1, max = 5, message = "Street number must be in range 1-5 characters")
     private String streetNumber;
 
-    @Size(min = 2, max = 50, message = "Town must be in range 2-50 characters")
-    private String town;
-
-    @Size(min = 2, max = 50, message = "District must be in range 2-50 characters")
-    private String district;
-
-    @Size(min = 1, max = 5, message = "Building must be in range 1-5 characters")
-    private String building;
-
-    @Size(min = 1, max = 5, message = "Apartment name must be in range 1-5 characters")
-    private String apartment;
-
     @Min(value = -90, message = "latitude must be in range -90 and 90")
     @Max(value = 90, message = "latitude must be in range -90 and 90")
     private Long latitude;
@@ -48,6 +35,8 @@ public class KaspiStoreCreateRequest {
     private Long longitude;
 
     @NotNull(message = "Day of week must be not null")
-    @Size(min = 1, max = 7, message = "Number of days should be between 1 and 7")
-    private List<DayOfWeekWork> dayOfWeekWorks;
+    @Size(min = 1, max = 7, message = "Номер недели должен находиться в диапазоне от 1 до 7.")
+    private List<
+            @Min(value = 1, message = "Номер недели должен находиться в диапазоне от 1 до 7.")
+            @Max(value = 7, message = "Номер недели должен находиться в диапазоне от 1 до 7.") DayOfWeekWork> dayOfWeekWorks;
 }

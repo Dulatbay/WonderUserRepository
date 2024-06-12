@@ -23,7 +23,7 @@ public interface SupplyService {
 
     List<SupplySellerResponse> getSuppliesOfSeller(String id, LocalDate startDate, LocalDate endDate);
 
-    List<SupplyReportResponse> getSupplyReport(Long supplyId, String keycloakId);
+    List<SupplyStateResponse> getSupplySellerState(Long supplyId, String keycloakId);
 
     List<SupplyStorageResponse> getSuppliesOfStorage(Long employeeId, LocalDate startDate, LocalDate endDate);
 
@@ -34,4 +34,6 @@ public interface SupplyService {
     ProductStorageResponse getSuppliesProducts(String keycloakId, String boxVendorCode, boolean isSuperAdmin);
 
     void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest);
+
+    SellerSupplyReport getSupplySellerReport(Long supplyId, String keycloakId);
 }

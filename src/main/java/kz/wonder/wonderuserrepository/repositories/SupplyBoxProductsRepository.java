@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProduct, Long> {
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.product.id = :productId and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId and sbp.state = :state")
-    List<SupplyBoxProduct> findAllByStoreIdAndProductIdAndState(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId, @Param("state") ProductStateInStore state);
+    Optional<SupplyBoxProduct> findFirstByStoreIdAndProductIdAndState(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId, @Param("state") ProductStateInStore state);
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
@@ -34,19 +34,21 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "WHERE (:article is null or sbp.article = :article) " +
-            "and (:productName is null or p.name = :productName) " +
-            "and (:shopName is null or sbp.supplyBox.supply.author.kaspiToken.sellerName = :shopName) " +
-            "and (:cellCode is null or sbp.storeCellProduct.storeCell.code = :cellCode) " +
-            "and (:vendorCode is null or p.vendorCode = :vendorCode) " +
-            "and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
-    Page<SupplyBoxProduct> findByParams(@Param("article") String article,
-                                        @Param("productName") String productName,
-                                        @Param("shopName") String shopName,
-                                        @Param("cellCode") String cellCode,
-                                        @Param("vendorCode") String vendorCode,
-                                        @Param("kaspiStoreId") Long kaspiStoreId,
+            "WHERE ((:byArticle = false OR (lower(sbp.article) LIKE '%'||lower(:searchValue)||'%')) " +
+            "AND (:byProductName = false OR p.name LIKE '%' || lower(:searchValue) || '%') " +
+            "AND (:byShopName = false OR sbp.supplyBox.supply.author.kaspiToken.sellerName LIKE '%' || lower(:searchValue) || '%') " +
+            "AND (:byCellCode = false OR sbp.storeCellProduct.storeCell.code LIKE '%' || lower(:searchValue) || '%') " +
+            "AND (:byVendorCode = false OR p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+    Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
+                                        @Param("searchValue") String searchValue,
+                                        @Param("byArticle") Boolean byArticle,
+                                        @Param("byProductName") Boolean byProductName,
+                                        @Param("byShopName") Boolean byShopName,
+                                        @Param("byCellCode") Boolean byCellCode,
+                                        @Param("byVendorCode") Boolean byVendorCode,
                                         Pageable pageable);
+
 
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +
             "JOIN schema_wonder.kaspi_order_product kop ON kop.supply_box_product_id = sbp.id " +
@@ -55,6 +57,6 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "JOIN schema_wonder.store_employee se ON se.kaspi_store_id  = ks.id " +
             "JOIN schema_wonder.wonder_user wu ON wu.id = se.wonder_user_id " +
             "WHERE (ko.creation_date BETWEEN :start AND :end) AND (:productState IS NULL OR sbp.product_state = :productState) AND (:deliveryMode IS NULL OR ko.delivery_mode = :deliveryMode) AND wu.keycloak_id = :keycloakId")
-    Page<SupplyBoxProduct> findAllEmployeeResponse(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, @Param("keycloakId") String keycloakId, Pageable pageable);
+    Page<SupplyBoxProduct> findAllEmployeeAssemblies(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, @Param("keycloakId") String keycloakId, Pageable pageable);
 
 }

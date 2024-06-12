@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class SupplyReportResponse {
+public class SupplyStateResponse {
     private String productBarcode;
     private String productName;
     private Long countOfProductAccepted;

@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.dto.request.BoxTypeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.BoxTypeResponse;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
+import kz.wonder.wonderuserrepository.security.authorizations.base.AdminAuthorization;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,7 @@ public class BoxTypesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Successfully created a new box type")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> create(@ModelAttribute @Valid BoxTypeCreateRequest boxTypeCreateRequest) {
         boxTypeService.createBoxType(boxTypeCreateRequest);
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -49,6 +52,7 @@ public class BoxTypesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted the box type by ID")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> delete(@Parameter(description = "ID of the box type to be deleted", required = true)
                                            @PathVariable Long id) {
         boxTypeService.deleteById(id);

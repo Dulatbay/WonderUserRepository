@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
+import kz.wonder.filemanager.client.api.FileManagerApi;
 import kz.wonder.wonderuserrepository.dto.request.BoxTypeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.BoxTypeResponse;
 import kz.wonder.wonderuserrepository.entities.BoxType;
@@ -10,7 +11,6 @@ import kz.wonder.wonderuserrepository.mappers.BoxTypeMapper;
 import kz.wonder.wonderuserrepository.repositories.BoxTypeRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
-import kz.wonder.wonderuserrepository.services.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.FILE_MANAGER_IMAGE_DIR;
 
 
 @Service
@@ -27,22 +29,25 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 
     private final BoxTypeRepository boxTypeRepository;
     private final KaspiStoreRepository storeRepository;
-    private final FileService fileService;
     private final BoxTypeMapper boxTypeMapper;
+    private final FileManagerApi fileManagerApi;
 
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
-        var boxType = new BoxType();
         var images = new ArrayList<BoxTypeImages>();
+
+        var boxType = new BoxType();
         boxType.setName(boxTypeCreateRequest.getName());
         boxType.setDescription(boxTypeCreateRequest.getDescription());
+        boxType.setDeleted(false);
 
-
-        if (boxTypeCreateRequest.getImages() != null)
+        if (boxTypeCreateRequest.getImages() != null) {
             boxTypeCreateRequest.getImages()
-                    .forEach(i -> {
-                        images.add(boxTypeMapper.toImage(boxType, fileService.save(i)));
+                    .forEach(image -> {
+                        var fileUrl = fileManagerApi.uploadFiles(FILE_MANAGER_IMAGE_DIR, List.of(image), true).getBody().get(0);
+                        images.add(boxTypeMapper.toImage(boxType, fileUrl));
                     });
+        }
 
         boxType.setImages(images);
 
@@ -51,33 +56,29 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 
     @Override
     public List<BoxTypeResponse> getAll(Long storeId) {
-        if (storeId != null) {
-            final var store = storeRepository.findById(storeId)
-                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), ""));
+        final var store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склада не существует"));
 
-            return store
-                    .getAvailableBoxTypes()
-                    .stream()
-                    .map(KaspiStoreAvailableBoxTypes::getBoxType)
-                    .map(boxTypeMapper::toResponse)
-                    .toList();
-        }
-
-
-        return boxTypeRepository.findAll()
+        return store
+                .getAvailableBoxTypes()
                 .stream()
-                .map(boxTypeMapper::toResponse).toList();
+                .map(KaspiStoreAvailableBoxTypes::getBoxType)
+                .filter(boxType -> !boxType.isDeleted())
+                .map(boxTypeMapper::toResponse)
+                .toList();
     }
 
     @Override
     public void deleteById(Long id) {
         var boxTypeToDelete = boxTypeRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Box type doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Тип коробки не существует"));
 
         boxTypeToDelete.getImages()
-                .forEach(i -> fileService.deleteByName(i.imageUrl));
+                .forEach(image -> fileManagerApi.deleteFile(FILE_MANAGER_IMAGE_DIR, image.imageUrl));
 
-        boxTypeRepository.delete(boxTypeToDelete);
+        boxTypeToDelete.setDeleted(true);
+
+        boxTypeRepository.save(boxTypeToDelete);
         log.info("Box Type with ID {} was deleted", id);
     }
 }

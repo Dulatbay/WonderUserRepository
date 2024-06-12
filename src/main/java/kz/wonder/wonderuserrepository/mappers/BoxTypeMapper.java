@@ -14,6 +14,7 @@ public class BoxTypeMapper {
                 .id(boxType.getId())
                 .name(boxType.getName())
                 .description(boxType.getDescription())
+                .deleted(boxType.isDeleted())
                 .imageUrls(boxType.getImages().stream().map(j -> j.imageUrl).collect(Collectors.toList()))
                 .build();
     }

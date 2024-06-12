@@ -12,9 +12,7 @@ public record ProductResponse(Long id,
                               String name,
                               boolean enabled,
                               Long mainPriceCityId,
-                              List<ProductPriceResponse> prices) {
+                              List<ProductCount> counts) {
     @Builder
-    public record ProductPriceResponse(String cityName, Double price) {
-
-    }
+    public record ProductCount(String cityName, Long count) { }
 }

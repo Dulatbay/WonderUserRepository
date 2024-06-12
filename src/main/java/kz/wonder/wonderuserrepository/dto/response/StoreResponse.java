@@ -13,10 +13,6 @@ public class StoreResponse {
     private City city;
     private String streetName;
     private String streetNumber;
-    private String town;
-    private String district;
-    private String building;
-    private String apartment;
     private String formattedAddress;
     private List<AvailableWorkTime> availableWorkTimes;
     private boolean enabled;

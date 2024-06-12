@@ -3,10 +3,16 @@ package kz.wonder.wonderuserrepository.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndEmployee;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndSellers;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
+import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
@@ -38,13 +44,13 @@ public class SupplyController {
 
     private final SupplyService supplyService;
     private final KeycloakService keycloakService;
-    private final CodecsAutoConfiguration codecsAutoConfiguration;
 
     @PostMapping(value = "/process-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Process supply file", description = "Processes the uploaded file containing supply data. The file is processed based on the user's ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully proceeded the supply file")
     })
+    @SellerAuthorization
     public ResponseEntity<List<SupplyProcessFileResponse>> processFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = extractIdFromToken(token);
@@ -57,7 +63,8 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully created new supply")
     })
-    public ResponseEntity<Map<String, Long>> createSupply(@RequestBody SupplyCreateRequest createRequest) {
+    @SellerAuthorization
+    public ResponseEntity<Map<String, Long>> createSupply(@RequestBody @Valid SupplyCreateRequest createRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = extractIdFromToken(token);
         long id = supplyService.createSupply(createRequest, userId);
@@ -71,6 +78,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved a list of supplies for admin")
     })
+    @AccessForAdmins
     public ResponseEntity<List<SupplyAdminResponse>> getSuppliesAdmin(@RequestParam("start-date") LocalDate startDate,
                                                                       @RequestParam("end-date") LocalDate endDate
     ) {
@@ -88,6 +96,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the details of supply")
     })
+    @AccessForAdminsAndSellers
     public ResponseEntity<List<SupplyProductResponse>> getSuppliesDetail(@PathVariable("id") Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -112,6 +121,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the list of supplies")
     })
+    @SellerAuthorization
     public ResponseEntity<List<SupplySellerResponse>> getSuppliesSeller(@RequestParam("start-date") LocalDate startDate,
                                                                         @RequestParam("end-date") LocalDate endDate) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -120,16 +130,28 @@ public class SupplyController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/seller/report/{supplyId}")
+    @GetMapping("/seller/supply-state/{supplyId}")
     @Operation(summary = "Get supply report for seller", description = "Retrieves the detailed report of a supply by the supply ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the supply report for seller")
     })
-    public ResponseEntity<List<SupplyReportResponse>> getSupplyReportSeller(@PathVariable Long supplyId) {
+    @SellerAuthorization
+    public ResponseEntity<List<SupplyStateResponse>> getSupplySellerState(@PathVariable Long supplyId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
-        List<SupplyReportResponse> response = supplyService.getSupplyReport(supplyId, keycloakId);
+        List<SupplyStateResponse> response = supplyService.getSupplySellerState(supplyId, keycloakId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/seller/report/{supplyId}")
+    @SellerAuthorization
+    public ResponseEntity<SellerSupplyReport> getSupplySellerReport(@PathVariable Long supplyId){
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+
+        SellerSupplyReport sellerSupplyReport = supplyService.getSupplySellerReport(supplyId, keycloakId);
+
+        return ResponseEntity.ok(sellerSupplyReport);
     }
 
     @GetMapping("/get-by-box/{boxVendorCode}")
@@ -137,6 +159,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the supply by the box")
     })
+    @AccessForAdminsAndEmployee
     public ResponseEntity<ProductStorageResponse> getSupplyByBox(@PathVariable String boxVendorCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -151,6 +174,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list of supplies")
     })
+    @StoreEmployeeAuthorization
     public ResponseEntity<List<SupplyStorageResponse>> getSuppliesEmployee(@RequestParam("start-date") LocalDate startDate,
                                                                            @RequestParam("end-date") LocalDate endDate) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -165,6 +189,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee supply products")
     })
+    @StoreEmployeeAuthorization
     public ResponseEntity<ProductStorageResponse> getSuppliesEmployee(@RequestParam("supply-id")
                                                                       Long supplyId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -179,7 +204,8 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully processed the supply scan request")
     })
-    public ResponseEntity<Void> processSupply(@RequestBody SupplyScanRequest supplyScanRequest) {
+    @StoreEmployeeAuthorization
+    public ResponseEntity<Void> processSupply(@RequestBody @Valid SupplyScanRequest supplyScanRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 

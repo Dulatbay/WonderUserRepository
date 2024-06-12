@@ -6,10 +6,8 @@ import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -22,12 +20,14 @@ public class KaspiApi {
     private String token;
 
     private final WebClient webClient;
-    private final String kaspiUrl = "https://kaspi.kz/shop/api/v2";
 
-    public KaspiApi() {
+    public KaspiApi(
+            @Value("${application.kaspi-api.url}")
+            String kaspiUrl
+    ) {
         webClient = WebClient.builder()
                 .codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(500 * 1024 * 1024);
+                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(2000 * 1024 * 1024);
                 })
                 .baseUrl(kaspiUrl)
                 .build();

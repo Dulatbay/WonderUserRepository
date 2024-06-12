@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 @Component
 public class SupplyMapper {
-    public Supply toSupply(SupplyCreateRequest createRequest, WonderUser user, KaspiStore store) {
+    public Supply toSupplyEntity(SupplyCreateRequest createRequest, WonderUser user, KaspiStore store) {
         Supply supply = new Supply();
         supply.setAuthor(user);
         supply.setKaspiStore(store);
@@ -46,4 +46,5 @@ public class SupplyMapper {
 
         return supplyProductResponse;
     }
+
 }

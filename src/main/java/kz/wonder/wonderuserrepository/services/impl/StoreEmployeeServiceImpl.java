@@ -36,7 +36,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
         if (isPhoneNumberUsed)
-            throw new IllegalArgumentException("Phone already used");
+            throw new IllegalArgumentException("Телефон уже использован");
 
         WonderUser wonderUser = new WonderUser();
         wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
@@ -44,15 +44,15 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         wonderUser.setUsername(employeeCreateRequest.getFirstName() + " " + employeeCreateRequest.getLastName());
 
         final var store = kaspiStoreRepository.findById(employeeCreateRequest.getStoreId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please write correct ID of store"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Магазин не существует", "Пожалуйста, укажите правильный id магазина"));
         var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
 
         if (!isSuperAdmin) {
             if (!isHisStore)
-                throw new IllegalArgumentException("Store doesn't exist");
+                throw new IllegalArgumentException("Магазин не существует");
             if (!store.isEnabled())
-                throw new IllegalArgumentException("Store is disabled");
+                throw new IllegalArgumentException("Магазин отключен");
         }
 
 
@@ -71,14 +71,14 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
             final var keycloakUser = userResource.toRepresentation();
             return this.buildEmployeeResponse(keycloakUser, storeEmployee);
         } catch (NotFoundException e) {
-            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Store Employee doesn't exist", "Please write correct ID");
+            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Сотрудник магазина не существует", "Пожалуйста, напишите правильный id");
         }
     }
 
     @Override
     public StoreEmployee getStoreEmployeeById(Long id) {
         return storeEmployeeRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Employee doesn't exist", "Please try one more time with another params"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Сотрудник не существует", "Пожалуйста, попробуйте еще раз с другими параметрами"));
     }
 
     @Override
@@ -119,12 +119,12 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     @Override
     public List<EmployeeResponse> getAllStoreEmployees(Long storeId, List<UserRepresentation> userRepresentations, boolean isSuperAdmin, String keycloakIdOfCreator) {
         var kaspiStore = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new IllegalArgumentException("Store doesn't exist"));
+                .orElseThrow(() -> new IllegalArgumentException("Магазин не существует"));
 
         var isHisStore = kaspiStore.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisStore && !isSuperAdmin)
-            throw new IllegalArgumentException("Store doesn't exist");
+            throw new IllegalArgumentException("Магазин не существует");
 
 
         final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
@@ -162,9 +162,9 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
     private StoreEmployee getStoreEmployeeWithStoreId(Long employeeId, Long storeId) {
         final var storeEmployee = storeEmployeeRepository.findById(employeeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Employee doesn't exist", "Please try one more time with another params"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Сотрудник не существует", "Пожалуйста, попробуйте еще раз с другими параметрами"));
         final var kaspiStore = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Store doesn't exist", "Please try one more time with another params"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Магазин не существует", "Пожалуйста, попробуйте еще раз с другими параметрами"));
 
         log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
 

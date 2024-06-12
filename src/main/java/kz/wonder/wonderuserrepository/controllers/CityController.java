@@ -3,12 +3,10 @@ package kz.wonder.wonderuserrepository.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.response.CityResponse;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SuperAdminAuthorization;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +33,7 @@ public class CityController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Successfully synchronized with Kaspi")
     })
+    @SuperAdminAuthorization
     public ResponseEntity<Void> sync() {
         cityService.syncWithKaspi();
         return ResponseEntity.status(HttpStatus.CREATED).build();

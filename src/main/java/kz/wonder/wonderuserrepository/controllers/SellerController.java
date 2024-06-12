@@ -11,6 +11,7 @@ import kz.wonder.wonderuserrepository.dto.request.UpdatePasswordRequest;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
 import kz.wonder.wonderuserrepository.dto.response.SellerUserResponse;
 import kz.wonder.wonderuserrepository.mappers.UserMapper;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
@@ -34,17 +35,17 @@ public class SellerController {
     private final UserMapper userMapper;
     private final SellerService sellerService;
 
-    // todo: check in security by role
-
-    @GetMapping("/{keycloakId}")
-    @Operation(summary = "Get seller user by ID", description = "This endpoint returns the seller by ID")
+    @GetMapping("/me")
+    @Operation(summary = "Get seller user by session", description = "This endpoint returns the seller by session")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by ID")
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by session")
     })
-    public ResponseEntity<SellerUserResponse> getSellerUserById(@PathVariable String keycloakId) {
+    @SellerAuthorization
+    public ResponseEntity<SellerUserResponse> getSellerUserBySession() {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
-
-
         var keycloakUser = keycloakService.getUserById(wonderUser.getKeycloakId());
 
         var result = userMapper.toUserResponse(wonderUser, keycloakUser.toRepresentation(), wonderUser.getKaspiToken());
@@ -57,7 +58,8 @@ public class SellerController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully updated the seller's password")
     })
-    public ResponseEntity<Void> updateSellerUserById(@RequestBody UpdatePasswordRequest updatePasswordRequest) {
+    @SellerAuthorization
+    public ResponseEntity<Void> updateSellerPasswordById(@RequestBody UpdatePasswordRequest updatePasswordRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
@@ -74,7 +76,8 @@ public class SellerController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully updated the seller's account details")
     })
-    public ResponseEntity<SellerUserResponse> updateSellerUserById(@PathVariable Long id, @RequestBody SellerUserUpdateRequest sellerUserUpdateRequest) {
+    @SellerAuthorization
+    public ResponseEntity<SellerUserResponse> updateSellerUserById(@PathVariable Long id, @RequestBody @Valid SellerUserUpdateRequest sellerUserUpdateRequest) {
         var keycloakBaseUser = new KeycloakBaseUser();
         keycloakBaseUser.setEmail(sellerUserUpdateRequest.getEmail());
         keycloakBaseUser.setFirstName(sellerUserUpdateRequest.getFirstName());
