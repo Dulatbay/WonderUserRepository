@@ -10,8 +10,6 @@ import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.StoreCellService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +29,7 @@ public class StoreCellServiceImpl implements StoreCellService {
 
     @Override
     public void create(StoreCellCreateRequest storeCellCreateRequest, String keycloakId) {
-        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakId, storeCellCreateRequest.getStoreId())
+        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakId, storeCellCreateRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
         StoreCell storeCell = storeCellMapper.toEntity(storeCellCreateRequest);
@@ -44,30 +42,34 @@ public class StoreCellServiceImpl implements StoreCellService {
 
     @Override
     public List<StoreCellResponse> getAllByParams(Long storeId, String keycloakId) {
-        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakId, storeId)
+        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakId, storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
         return kaspiStore.getStoreCells()
                 .stream()
+                .filter(s -> !s.isDeleted())
                 .map(storeCellMapper::toResponse)
                 .toList();
     }
 
     @Override
     public void delete(Long cellId, String keycloakId) {
-        final var storeCell = storeCellRepository.findById(cellId)
+        final var storeCell = storeCellRepository.findByIdAndDeletedIsFalse(cellId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Ячейка не существует"));
 
         if (!storeCell.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakId)) {
             throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Ячейка не существует");
         }
-        storeCellRepository.delete(storeCell);
+
+        storeCell.setDeleted(true);
+        storeCellRepository.save(storeCell);
     }
 
     @Override
     public void addProductToCell(Long cellId, String productArticle, String keycloakId) {
-        final var storeCell = storeCellRepository.findById(cellId)
+        final var storeCell = storeCellRepository.findByIdAndDeletedIsFalse(cellId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Ячейка не существует"));
+
         final var employee = validateEmployee(keycloakId, storeCell.getKaspiStore().getId());
         final var supplyBoxProduct = validateProduct(productArticle, storeCell.getKaspiStore().getId());
 
@@ -91,11 +93,12 @@ public class StoreCellServiceImpl implements StoreCellService {
 
     @Override
     public void changeStoreCell(String keycloakId, Long cellId, StoreCellChangeRequest storeCellChangeRequest) {
-        final var storeCell = storeCellRepository.findById(cellId)
+        final var storeCell = storeCellRepository.findByIdAndDeletedIsFalse(cellId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Ячейка не существует"));
+
         var kaspiStoreOfCell = storeCell.getKaspiStore();
 
-        if(!kaspiStoreOfCell.getWonderUser().getKeycloakId().equals(keycloakId)) {
+        if (!kaspiStoreOfCell.getWonderUser().getKeycloakId().equals(keycloakId)) {
             throw new IllegalArgumentException("The cell doesn't exist");
         }
 

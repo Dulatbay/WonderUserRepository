@@ -39,7 +39,7 @@ public class KaspiStoreMapper {
     private final UserService userService;
 
     public KaspiStore getKaspiStore(OrdersDataResponse.OrderAttributes orderAttributes ,OrdersDataResponse.Address address, KaspiCity kaspiCity) {
-        var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(address.getId());
+        var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressIdAndDeletedIsFalse(address.getId());
 
 
         if (optionalKaspiStore.isEmpty()) {

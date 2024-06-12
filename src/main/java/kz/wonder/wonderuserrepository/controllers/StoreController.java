@@ -10,6 +10,8 @@ import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndSellers;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KaspiStoreService;
 import kz.wonder.wonderuserrepository.services.UserService;
@@ -39,6 +41,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully created new store")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> createStore(@RequestBody
                                             @Valid
                                             KaspiStoreCreateRequest kaspiStoreCreateRequest) {
@@ -65,6 +68,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted the store by ID")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> deleteById(
             @Parameter(description = "ID of the store to be deleted", required = true)
             @PathVariable Long id) {
@@ -84,6 +88,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully updated the details about store by ID")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> changeStore(@RequestBody
                                             @Valid
                                             KaspiStoreChangeRequest changeRequest,
@@ -107,6 +112,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully added new box type for the store")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> addBoxTypeToStore(@Parameter(description = "ID of the box type", required = true)
                                                    @RequestParam("box-type-id") Long boxTypeId,
                                                   @Parameter(description = "ID of the store which will support new box type", required = true)
@@ -128,6 +134,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully deleted the box type of the store")
     })
+    @AccessForAdmins
     public ResponseEntity<Void> removeBoxTypeFromStore(@Parameter(description = "ID of the box type", required = true)
                                                             @RequestParam("box-type-id") Long boxTypeId,
                                                        @Parameter(description = "ID of the store which will stop supporting mentioned box type", required = true)
@@ -147,6 +154,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved all stores")
     })
+    @AccessForAdminsAndSellers
     public ResponseEntity<List<StoreResponse>> getAllOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -176,6 +184,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the store by ID")
     })
+    @AccessForAdmins
     public ResponseEntity<StoreResponse> getByIdOwnStore(@Parameter(description = "ID of the store to get retrieved")
                                                              @PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -192,6 +201,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the store details")
     })
+    @AccessForAdminsAndSellers
     public ResponseEntity<List<StoreDetailResponse>> getAllDetailOwnStores() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var authorities = getAuthorities(token.getAuthorities());
@@ -222,6 +232,7 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the store details by ID")
     })
+    @AccessForAdmins
     public ResponseEntity<StoreDetailResponse> getByIdDetailOwnStores(@Parameter(description = "ID of the store to get information from", required = true)
                                                                           @PathVariable("id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();

@@ -6,7 +6,6 @@ import kz.wonder.wonderuserrepository.dto.request.KaspiStoreChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.KaspiStoreCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.StoreResponse;
-import kz.wonder.wonderuserrepository.entities.KaspiCity;
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableBoxTypes;
 import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableTimes;
@@ -66,7 +65,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public List<StoreResponse> getAllByUser(String keycloakUserId) {
-        final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakUserId);
+        final var kaspiStores = kaspiStoreRepository.findAllByWonderUserKeycloakIdAndDeletedIsFalse(keycloakUserId);
 
         log.info("Retrieving kaspi stores with size: {}", kaspiStores.size());
 
@@ -75,31 +74,35 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public List<StoreResponse> getAll() {
-        final var kaspiStores = kaspiStoreRepository.findAll();
+        final var kaspiStores = kaspiStoreRepository.findAllByDeletedIsFalse();
         return kaspiStoreMapper.mapToResponses(kaspiStores);
     }
 
     @Override
     public void deleteById(Long id, String keycloakUserId) {
-        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, id)
+        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakUserId, id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspi магазин не существует"));
 
-        kaspiStoreRepository.delete(kaspiStore);
+        kaspiStore.setDeleted(true);
+        kaspiStoreRepository.save(kaspiStore);
+
         log.info("Store with id {} and keycloak user id {} were deleted", id, keycloakUserId);
     }
 
     @Override
     public void deleteById(Long id) {
-        final var kaspiStore = kaspiStoreRepository.findById(id)
+        final var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
 
         log.info("Store with id {} was deleted", id);
-        kaspiStoreRepository.delete(kaspiStore);
+
+        kaspiStore.setDeleted(true);
+        kaspiStoreRepository.save(kaspiStore);
     }
 
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
-        final var kaspiStore = kaspiStoreRepository.findById(id)
+        final var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
 
         log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
@@ -112,7 +115,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
-        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(userId, id)
+        final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(userId, id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Магазин не существует"));
 
         var toSave = mapToEntity(changeRequest, kaspiStore);
@@ -123,7 +126,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
-        var kaspiStore = kaspiStoreRepository.findById(storeId)
+        var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi магазин не существует"));
 
         addBoxTypeToStoreWithValidating(boxTypeId, kaspiStore);
@@ -131,14 +134,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void addBoxTypeToStoreWithValidating(Long boxTypeId, Long storeId, String keycloakUserId) {
-        var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakUserId, storeId)
+        var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakUserId, storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspi магазин не существует"));
 
         addBoxTypeToStoreWithValidating(boxTypeId, kaspiStore);
     }
 
     private void addBoxTypeToStoreWithValidating(Long boxTypeId, KaspiStore kaspiStore) {
-        var boxType = boxTypeRepository.findById(boxTypeId)
+        var boxType = boxTypeRepository.findByIdAndDeletedIsFalse(boxTypeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Тип коробки не существует"));
 
         var availableBoxType = new KaspiStoreAvailableBoxTypes();
@@ -156,17 +159,17 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public List<StoreDetailResponse> getAllDetail() {
-        return kaspiStoreMapper.mapToDetailResponse(kaspiStoreRepository.findAll());
+        return kaspiStoreMapper.mapToDetailResponse(kaspiStoreRepository.findAllByDeletedIsFalse());
     }
 
     @Override
     public List<StoreDetailResponse> getAllDetailByUser(String keycloakId) {
-        return kaspiStoreMapper.mapToDetailResponse(kaspiStoreRepository.findAllByWonderUserKeycloakId(keycloakId));
+        return kaspiStoreMapper.mapToDetailResponse(kaspiStoreRepository.findAllByWonderUserKeycloakIdAndDeletedIsFalse(keycloakId));
     }
 
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId) {
-        var store = kaspiStoreRepository.findById(storeId)
+        var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
         var itemsToDelete = store.getAvailableBoxTypes()
@@ -190,7 +193,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
-        var store = kaspiStoreRepository.findByWonderUserKeycloakIdAndId(keycloakId, storeId)
+        var store = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakId, storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
         store.getAvailableBoxTypes()
@@ -201,7 +204,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public StoreResponse getById(Long id, boolean isSuperAdmin, String keycloakId) {
-        var store = kaspiStoreRepository.findById(id)
+        var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
                         "Store doesn't exist"));
@@ -220,14 +223,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     @Override
     public StoreDetailResponse getByIdAndByUserDetail(Long storeId, boolean isSuperAdmin, String keycloakId) {
-        var store = kaspiStoreRepository.findById(storeId)
+        var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
                         HttpStatus.BAD_REQUEST.getReasonPhrase(),
                         "Магазин не существует"));
 
         var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
 
-        if (!isSuperAdmin && (!isHisStore && !store.isEnabled()))
+        if (!isSuperAdmin && !isHisStore)
             throw new IllegalArgumentException("Магазин не существует");
 
         log.info("Retrieving store with id: {}", store.getId());
@@ -239,12 +242,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public List<StoreResponse> getAllForSeller() {
         // todo: в дальнейшем будем возвращать склады на основе его локации и тд
-        return kaspiStoreMapper.mapToResponses(kaspiStoreRepository.findAllByEnabledIsTrue());
+        return kaspiStoreMapper.mapToResponses(kaspiStoreRepository.findAllByEnabledIsTrueAndDeletedIsFalse());
     }
 
     @Override
     public List<StoreDetailResponse> getAllDetailForSeller() {
-        return kaspiStoreMapper.mapToDetailResponse(kaspiStoreRepository.findAllByEnabledIsTrue());
+        return kaspiStoreMapper.mapToDetailResponse(kaspiStoreRepository.findAllByEnabledIsTrueAndDeletedIsFalse());
     }
 
     private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {

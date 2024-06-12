@@ -10,6 +10,9 @@ import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
+import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,6 +39,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller orders")
     })
+    @SellerAuthorization
     public ResponseEntity<PaginatedResponse<OrderResponse>> getSellerOrders(@RequestParam("start-date") LocalDate startDate,
                                                                             @RequestParam("end-date") LocalDate endDate,
                                                                             @RequestParam(defaultValue = "0") int page,
@@ -56,6 +60,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the admin orders")
     })
+    @AccessForAdmins
     public ResponseEntity<PaginatedResponse<OrderResponse>> getAdminOrders(@RequestParam("start-date") LocalDate startDate,
                                                                            @RequestParam("end-date") LocalDate endDate,
                                                                            @RequestParam(defaultValue = "0") int page,
@@ -76,6 +81,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee orders")
     })
+    @StoreEmployeeAuthorization
     public ResponseEntity<PaginatedResponse<EmployeeOrderResponse>> getEmployeeOrders(@RequestParam("start-date") LocalDate startDate,
                                                                                       @RequestParam("end-date") LocalDate endDate,
                                                                                       @RequestParam(defaultValue = "0") int page,
@@ -97,6 +103,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for admin")
     })
+    @AccessForAdmins
     public ResponseEntity<List<OrderDetailResponse>> getAdminOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -109,6 +116,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for seller")
     })
+    @SellerAuthorization
     public ResponseEntity<List<OrderDetailResponse>> getSellerOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
@@ -123,6 +131,7 @@ public class OrderController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the order details for employee")
     })
+    @StoreEmployeeAuthorization
     public ResponseEntity<OrderEmployeeDetailResponse> getEmployeeOrderDetails(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);

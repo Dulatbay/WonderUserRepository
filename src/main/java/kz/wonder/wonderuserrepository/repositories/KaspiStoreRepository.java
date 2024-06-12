@@ -9,19 +9,24 @@ import java.util.List;
 import java.util.Optional;
 
 public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
-    List<KaspiStore> findAllByWonderUserKeycloakId(String id);
+    List<KaspiStore> findAllByWonderUserKeycloakIdAndDeletedIsFalse(String id);
 
-    Optional<KaspiStore> findByWonderUserKeycloakIdAndId(String keycloakId, Long id);
+    Optional<KaspiStore> findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(String keycloakId, Long id);
 
-    Optional<KaspiStore> findByOriginAddressId(String originAddressId);
+    Optional<KaspiStore> findByOriginAddressIdAndDeletedIsFalse(String originAddressId);
 
-    Optional<KaspiStore> findByPickupPointIdAndWonderUserKeycloakId(String pickupPointId, String keycloakId);
+    Optional<KaspiStore> findByPickupPointIdAndWonderUserKeycloakIdAndDeletedIsFalse(String pickupPointId, String keycloakId);
 
-    List<KaspiStore> findAllByEnabledIsTrue();
+    List<KaspiStore> findAllByEnabledIsTrueAndDeletedIsFalse();
+
+    Optional<KaspiStore> findByIdAndDeletedIsFalse(Long id);
+
+    List<KaspiStore> findAllByDeletedIsFalse();
 
     @Query("SELECT ks FROM KaspiStore ks " +
             "WHERE (:streetName is null  or ks.streetName = :streetName) and " +
-            "      (:streetNumber is null or ks.streetNumber = :streetNumber)")
+            "      (:streetNumber is null or ks.streetNumber = :streetNumber) and " +
+            "       ks.isDeleted = false")
     Optional<KaspiStore> findByStoreAddress(
             @Param("streetName") String streetName,
             @Param("streetNumber") String streetNumber);

@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface StoreCellRepository extends JpaRepository<StoreCell, Long> {
     Optional<StoreCell> findByKaspiStoreIdAndCode(Long storeId, String code);
+
+    Optional<StoreCell> findByIdAndDeletedIsFalse(Long storeId);
 }

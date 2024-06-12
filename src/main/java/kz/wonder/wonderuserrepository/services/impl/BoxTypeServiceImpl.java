@@ -63,6 +63,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
                 .getAvailableBoxTypes()
                 .stream()
                 .map(KaspiStoreAvailableBoxTypes::getBoxType)
+                .filter(boxType -> !boxType.isDeleted())
                 .map(boxTypeMapper::toResponse)
                 .toList();
     }
@@ -75,7 +76,9 @@ public class BoxTypeServiceImpl implements BoxTypeService {
         boxTypeToDelete.getImages()
                 .forEach(image -> fileManagerApi.deleteFile(FILE_MANAGER_IMAGE_DIR, image.imageUrl));
 
-        boxTypeRepository.delete(boxTypeToDelete);
+        boxTypeToDelete.setDeleted(true);
+
+        boxTypeRepository.save(boxTypeToDelete);
         log.info("Box Type with ID {} was deleted", id);
     }
 }

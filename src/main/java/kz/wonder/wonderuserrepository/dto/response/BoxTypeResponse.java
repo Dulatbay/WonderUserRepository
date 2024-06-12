@@ -5,5 +5,5 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record BoxTypeResponse(Long id, String name, String description, List<String> imageUrls) {
+public record BoxTypeResponse(Long id, String name, String description, boolean deleted, List<String> imageUrls) {
 }

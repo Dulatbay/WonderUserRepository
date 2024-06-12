@@ -222,7 +222,7 @@ public class ProductServiceImpl implements ProductService {
 
         MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
 
-        var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), true).getBody();
+        var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
 
         kaspiToken.setPathToXml(fileName);
         kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
@@ -327,7 +327,7 @@ public class ProductServiceImpl implements ProductService {
 
         var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
                 store.getId(),
-                productSearchParams.getSearchValue().toLowerCase(),
+                productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase() : "",
                 productSearchParams.isByArticle(),
                 productSearchParams.isByProductName(),
                 productSearchParams.isByShopName(),
@@ -374,7 +374,7 @@ public class ProductServiceImpl implements ProductService {
 
         var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
                 store.getId(),
-                productSearchParams.getSearchValue().toLowerCase(),
+                productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase() : "",
                 productSearchParams.isByArticle(),
                 productSearchParams.isByProductName(),
                 productSearchParams.isByShopName(),

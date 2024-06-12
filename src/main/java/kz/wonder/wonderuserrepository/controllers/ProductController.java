@@ -6,6 +6,9 @@ import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.params.ProductSearchParams;
 import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndEmployee;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
+import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping(name = "/by-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @SellerAuthorization
     public ResponseEntity<List<ProductResponse>> createByFile(@RequestPart("file") MultipartFile file) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
@@ -45,6 +49,7 @@ public class ProductController {
     }
 
     @GetMapping()
+    @SellerAuthorization
     public ResponseEntity<PaginatedResponse<ProductResponse>> getProducts(@RequestParam(defaultValue = "0") int page,
                                                                           @RequestParam(defaultValue = "10") int size,
                                                                           @RequestParam(name = "searchValue", required = false) String searchValue,
@@ -58,6 +63,7 @@ public class ProductController {
     }
 
     @GetMapping("/prices")
+    @SellerAuthorization
     public ResponseEntity<PaginatedResponse<ProductPriceResponse>> getProductPrices(@RequestParam(defaultValue = "0") int page,
                                                                                     @RequestParam(defaultValue = "10") int size,
                                                                                     @RequestParam(name = "searchValue", required = false) String searchValue,
@@ -77,6 +83,7 @@ public class ProductController {
     }
 
     @PatchMapping("/publish")
+    @SellerAuthorization
     public ResponseEntity<Void> updatePublish(@RequestParam Long productId, @RequestParam Boolean isPublished) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -87,6 +94,7 @@ public class ProductController {
     }
 
     @PatchMapping("/price")
+    @SellerAuthorization
     public ResponseEntity<Void> updatePrice(@RequestBody ProductPriceChangeRequest productPriceChangeRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -97,6 +105,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}")
+    @SellerAuthorization
     public ResponseEntity<Void> getProduct(@PathVariable Long productId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         // todo: make also for superAdmin
@@ -108,6 +117,7 @@ public class ProductController {
     }
 
     @GetMapping("/xml")
+    @SellerAuthorization
     public ResponseEntity<String> getXmlOfProducts() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = Utils.extractIdFromToken(token);
@@ -126,6 +136,7 @@ public class ProductController {
     }
 
     @GetMapping("/search-by-params")
+    @StoreEmployeeAuthorization
     public ResponseEntity<PaginatedResponse<ProductSearchResponse>> searchProducts(@ModelAttribute ProductSearchParams productSearchParams,
                                                                                    @RequestParam(defaultValue = "0") int page,
                                                                                    @RequestParam(defaultValue = "10") int size) {
@@ -141,6 +152,7 @@ public class ProductController {
     }
 
     @PatchMapping("/change-size/{originVendorCode}")
+    @AccessForAdminsAndEmployee
     public ResponseEntity<Void> changeSize(@PathVariable String originVendorCode, @RequestBody ProductSizeChangeRequest productSizeChangeRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -151,6 +163,7 @@ public class ProductController {
     }
 
     @GetMapping("/get-with-sizes")
+    @StoreEmployeeAuthorization
     public ResponseEntity<PaginatedResponse<ProductWithSize>> getWithSizes(
             @ModelAttribute ProductSearchParams productSearchParams,
             @RequestParam(defaultValue = "0") int page,

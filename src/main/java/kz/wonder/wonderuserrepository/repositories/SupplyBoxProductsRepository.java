@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.dto.params.ProductSearchParams;
 import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
@@ -35,11 +34,11 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "WHERE (:byArticle = false OR (lower(sbp.article) LIKE '%'||lower(:searchValue)||'%')) " +
-            "AND (:byProductName = false OR p.name LIKE '%' || :searchValue || '%') " +
-            "AND (:byShopName = false OR sbp.supplyBox.supply.author.kaspiToken.sellerName LIKE '%' || :searchValue || '%') " +
-            "AND (:byCellCode = false OR sbp.storeCellProduct.storeCell.code LIKE '%' || :searchValue || '%') " +
-            "AND (:byVendorCode = false OR p.vendorCode LIKE '%' || :searchValue || '%') " +
+            "WHERE ((:byArticle = false OR (lower(sbp.article) LIKE '%'||lower(:searchValue)||'%')) " +
+            "AND (:byProductName = false OR p.name LIKE '%' || lower(:searchValue) || '%') " +
+            "AND (:byShopName = false OR sbp.supplyBox.supply.author.kaspiToken.sellerName LIKE '%' || lower(:searchValue) || '%') " +
+            "AND (:byCellCode = false OR sbp.storeCellProduct.storeCell.code LIKE '%' || lower(:searchValue) || '%') " +
+            "AND (:byVendorCode = false OR p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
             "AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
@@ -58,6 +57,6 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "JOIN schema_wonder.store_employee se ON se.kaspi_store_id  = ks.id " +
             "JOIN schema_wonder.wonder_user wu ON wu.id = se.wonder_user_id " +
             "WHERE (ko.creation_date BETWEEN :start AND :end) AND (:productState IS NULL OR sbp.product_state = :productState) AND (:deliveryMode IS NULL OR ko.delivery_mode = :deliveryMode) AND wu.keycloak_id = :keycloakId")
-    Page<SupplyBoxProduct> findAllEmployeeResponse(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, @Param("keycloakId") String keycloakId, Pageable pageable);
+    Page<SupplyBoxProduct> findAllEmployeeAssemblies(@Param("start") long start, @Param("end") long end, @Param("productState") String productStateInStore, @Param("deliveryMode") String deliveryMode, @Param("keycloakId") String keycloakId, Pageable pageable);
 
 }

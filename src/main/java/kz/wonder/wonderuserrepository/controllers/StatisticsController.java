@@ -4,6 +4,8 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.base.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.params.DurationParams;
 import kz.wonder.wonderuserrepository.dto.response.*;
+import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
+import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
 import kz.wonder.wonderuserrepository.services.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ public class StatisticsController {
     private final StatisticsService statisticsService;
 
     @GetMapping("/sales-information/admin-stats")
+    @AccessForAdmins
     public ResponseEntity<AdminSalesInformation> getAdminStatistics(@RequestParam("duration") DurationParams duration) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -36,6 +39,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/sales-information/seller-stats")
+    @SellerAuthorization
     public ResponseEntity<SellerSalesInformation> getSellerStatistics(@RequestParam("duration") DurationParams duration) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -46,6 +50,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/daily/seller-stats")
+    @SellerAuthorization
     public ResponseEntity<List<DailyStats>> getSellerDailyStats(@RequestParam("duration") DurationParams durationParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -56,6 +61,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/daily/admin-stats")
+    @AccessForAdmins
     public ResponseEntity<List<DailyStats>> getAdminDailyStats(@RequestParam("duration") DurationParams durationParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -66,6 +72,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/products-count/seller-stats")
+    @SellerAuthorization
     public ResponseEntity<PaginatedResponse<ProductWithCount>> getSellerProductsCount(@RequestParam(defaultValue = "0") int page,
                                                                                       @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -80,6 +87,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/last-orders/admin-stats")
+    @AccessForAdmins
     public ResponseEntity<PaginatedResponse<AdminLastOrdersInformation>> getAdminLastOrders(@RequestParam(defaultValue = "0") int page,
                                                                                             @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -93,6 +101,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/top-products/seller-stats")
+    @SellerAuthorization
     public ResponseEntity<PaginatedResponse<SellerTopProductInformation>> getSellerTopProducts(@RequestParam(defaultValue = "0") int page,
                                                                                                @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -106,6 +115,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/top-sellers/admin-stats")
+    @AccessForAdmins
     public ResponseEntity<PaginatedResponse<AdminTopSellerInformation>> getAdminTopSellers(@RequestParam(defaultValue = "0") int page,
                                                                                            @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
