@@ -36,15 +36,16 @@ public class SellerController {
 
     // todo: check in security by role
 
-    @GetMapping("/{keycloakId}")
+    @GetMapping("/me")
     @Operation(summary = "Get seller user by ID", description = "This endpoint returns the seller by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by ID")
     })
-    public ResponseEntity<SellerUserResponse> getSellerUserById(@PathVariable String keycloakId) {
+    public ResponseEntity<SellerUserResponse> getSellerUserById() {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
-
-
         var keycloakUser = keycloakService.getUserById(wonderUser.getKeycloakId());
 
         var result = userMapper.toUserResponse(wonderUser, keycloakUser.toRepresentation(), wonderUser.getKaspiToken());

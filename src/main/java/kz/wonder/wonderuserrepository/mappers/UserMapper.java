@@ -4,10 +4,16 @@ import kz.wonder.wonderuserrepository.dto.response.SellerUserResponse;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
+    @Value("${application.file-api.url}")
+    private String kaspiApiUrl;
+
+    private final String pathToFile = kaspiApiUrl + "/xml/retrieve/files/";
+
     public SellerUserResponse toUserResponse(WonderUser wonderUser, UserRepresentation userRepresentation, KaspiToken kaspiToken) {
         SellerUserResponse sellerUserResponse = new SellerUserResponse();
         sellerUserResponse.setId(wonderUser.getId());
@@ -18,7 +24,8 @@ public class UserMapper {
         sellerUserResponse.setLastName(userRepresentation.getLastName());
         sellerUserResponse.setPhoneNumber(wonderUser.getPhoneNumber());
         sellerUserResponse.setTokenKaspi(kaspiToken.getToken());
-        sellerUserResponse.setPathToXml(kaspiToken.getPathToXml());
+        sellerUserResponse.setPathToXml(pathToFile + kaspiToken.getPathToXml());
+        sellerUserResponse.setXmlUpdatedAt(kaspiToken.getXmlUpdatedAt());
 
         return sellerUserResponse;
     }

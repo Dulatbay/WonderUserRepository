@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.ws.rs.ForbiddenException;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -38,6 +39,7 @@ import java.util.stream.StreamSupport;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.FILE_MANAGER_XML_DIR;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Slf4j
 @Service
@@ -223,6 +225,7 @@ public class ProductServiceImpl implements ProductService {
         var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), true).getBody();
 
         kaspiToken.setPathToXml(fileName);
+        kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
         kaspiTokenRepository.save(kaspiToken);
 
         return resultOfUploading.get(0);
