@@ -1,9 +1,9 @@
-package kz.wonder.wonderuserrepository.dto.request;
+package kz.wonder.wonderuserrepository.dto.params;
 
 import lombok.Data;
 
 @Data
-public class ProductSearchRequest {
+public class ProductSearchParams {
     private String searchValue;
     private boolean byArticle;
     private boolean byVendorCode;

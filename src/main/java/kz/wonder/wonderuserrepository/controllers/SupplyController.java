@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
@@ -57,7 +58,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully created new supply")
     })
-    public ResponseEntity<Map<String, Long>> createSupply(@RequestBody SupplyCreateRequest createRequest) {
+    public ResponseEntity<Map<String, Long>> createSupply(@RequestBody @Valid SupplyCreateRequest createRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = extractIdFromToken(token);
         long id = supplyService.createSupply(createRequest, userId);
@@ -189,7 +190,7 @@ public class SupplyController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully processed the supply scan request")
     })
-    public ResponseEntity<Void> processSupply(@RequestBody SupplyScanRequest supplyScanRequest) {
+    public ResponseEntity<Void> processSupply(@RequestBody @Valid SupplyScanRequest supplyScanRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 

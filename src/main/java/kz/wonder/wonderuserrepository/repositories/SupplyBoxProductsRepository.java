@@ -1,5 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
+import kz.wonder.wonderuserrepository.dto.params.ProductSearchParams;
 import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
@@ -34,19 +35,21 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "WHERE (:article is null or sbp.article = :article) " +
-            "and (:productName is null or p.name = :productName) " +
-            "and (:shopName is null or sbp.supplyBox.supply.author.kaspiToken.sellerName = :shopName) " +
-            "and (:cellCode is null or sbp.storeCellProduct.storeCell.code = :cellCode) " +
-            "and (:vendorCode is null or p.vendorCode = :vendorCode) " +
-            "and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
-    Page<SupplyBoxProduct> findByParams(@Param("article") String article,
-                                        @Param("productName") String productName,
-                                        @Param("shopName") String shopName,
-                                        @Param("cellCode") String cellCode,
-                                        @Param("vendorCode") String vendorCode,
-                                        @Param("kaspiStoreId") Long kaspiStoreId,
+            "WHERE (:byArticle = false OR (lower(sbp.article) LIKE '%'||lower(:searchValue)||'%')) " +
+            "AND (:byProductName = false OR p.name LIKE '%' || :searchValue || '%') " +
+            "AND (:byShopName = false OR sbp.supplyBox.supply.author.kaspiToken.sellerName LIKE '%' || :searchValue || '%') " +
+            "AND (:byCellCode = false OR sbp.storeCellProduct.storeCell.code LIKE '%' || :searchValue || '%') " +
+            "AND (:byVendorCode = false OR p.vendorCode LIKE '%' || :searchValue || '%') " +
+            "AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+    Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
+                                        @Param("searchValue") String searchValue,
+                                        @Param("byArticle") Boolean byArticle,
+                                        @Param("byProductName") Boolean byProductName,
+                                        @Param("byShopName") Boolean byShopName,
+                                        @Param("byCellCode") Boolean byCellCode,
+                                        @Param("byVendorCode") Boolean byVendorCode,
                                         Pageable pageable);
+
 
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +
             "JOIN schema_wonder.kaspi_order_product kop ON kop.supply_box_product_id = sbp.id " +

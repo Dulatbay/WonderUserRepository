@@ -73,7 +73,7 @@ public class SellerController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully updated the seller's account details")
     })
-    public ResponseEntity<SellerUserResponse> updateSellerUserById(@PathVariable Long id, @RequestBody SellerUserUpdateRequest sellerUserUpdateRequest) {
+    public ResponseEntity<SellerUserResponse> updateSellerUserById(@PathVariable Long id, @RequestBody @Valid SellerUserUpdateRequest sellerUserUpdateRequest) {
         var keycloakBaseUser = new KeycloakBaseUser();
         keycloakBaseUser.setEmail(sellerUserUpdateRequest.getEmail());
         keycloakBaseUser.setFirstName(sellerUserUpdateRequest.getFirstName());

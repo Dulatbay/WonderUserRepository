@@ -10,12 +10,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SellerRegistrationRequest extends KeycloakBaseUser {
-    // todo: add validation
     @NotNull(message = "Phone number not found")
     @Size(min = 10, max = 11, message = "Phone number must be in range 10-11")
     private String phoneNumber;
 
-    // in kaspi
     @NotNull(message = "Please provide seller name")
     private String sellerName;
 

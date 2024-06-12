@@ -1,9 +1,9 @@
 package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
-import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
+import kz.wonder.wonderuserrepository.dto.base.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
-import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
+import kz.wonder.wonderuserrepository.dto.params.ProductSearchParams;
 import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
@@ -126,7 +126,7 @@ public class ProductController {
     }
 
     @GetMapping("/search-by-params")
-    public ResponseEntity<PaginatedResponse<ProductSearchResponse>> searchProducts(@ModelAttribute ProductSearchRequest productSearchRequest,
+    public ResponseEntity<PaginatedResponse<ProductSearchResponse>> searchProducts(@ModelAttribute ProductSearchParams productSearchParams,
                                                                                    @RequestParam(defaultValue = "0") int page,
                                                                                    @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -135,7 +135,7 @@ public class ProductController {
         PageRequest pageRequest = PageRequest.of(page, size);
 
 
-        Page<ProductSearchResponse> response = productService.searchByParams(productSearchRequest, pageRequest, keycloakId);
+        Page<ProductSearchResponse> response = productService.searchByParams(productSearchParams, pageRequest, keycloakId);
 
         return ResponseEntity.ok(new PaginatedResponse<>(response));
     }
@@ -152,7 +152,7 @@ public class ProductController {
 
     @GetMapping("/get-with-sizes")
     public ResponseEntity<PaginatedResponse<ProductWithSize>> getWithSizes(
-            @ModelAttribute ProductSearchRequest productSearchRequest,
+            @ModelAttribute ProductSearchParams productSearchParams,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -160,7 +160,7 @@ public class ProductController {
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<ProductWithSize> response = productService.getProductsSizes(productSearchRequest, keycloakId, pageRequest);
+        Page<ProductWithSize> response = productService.getProductsSizes(productSearchParams, keycloakId, pageRequest);
 
         return ResponseEntity.ok(new PaginatedResponse<>(response));
     }

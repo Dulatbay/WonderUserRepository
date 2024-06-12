@@ -5,6 +5,7 @@ import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.dto.params.OrderSearchParams;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
@@ -25,16 +26,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @RequiredArgsConstructor
@@ -53,10 +50,22 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, DeliveryMode deliveryMode, PageRequest pageRequest) {
+    public Page<OrderResponse> getSellerOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, OrderSearchParams orderSearchParams, PageRequest pageRequest) {
         log.info("Retrieving seller orders by keycloak id: {}", keycloakId);
         startDate = startDate.minusDays(1);
-        var kaspiOrderInDb = kaspiOrderRepository.findAllSellerOrders(keycloakId, Timestamp.valueOf(startDate.atStartOfDay()).getTime(), Timestamp.valueOf(endDate.atStartOfDay()).getTime(), deliveryMode, pageRequest);
+        var kaspiOrderInDb = kaspiOrderRepository.findAllSellerOrders(
+                keycloakId,
+                Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
+                Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
+                orderSearchParams.getDeliveryMode(),
+                orderSearchParams.getSearchValue().toLowerCase(),
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
+                pageRequest);
         log.info("Seller orders successfully retrieved. keycloakID: {}", keycloakId);
         // todo: переделать оптовую цену
         return kaspiOrderInDb
@@ -64,14 +73,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, DeliveryMode deliveryMode, PageRequest pageRequest) {
+    public Page<OrderResponse> getAdminOrdersByKeycloakId(String keycloakId, LocalDate startDate, LocalDate endDate, OrderSearchParams orderSearchParams, PageRequest pageRequest) {
         log.info("Retrieving admin orders by keycloak id: {}", keycloakId);
 
 
-        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId,
+        var orders = kaspiOrderRepository.findAllAdminOrders(
+                keycloakId,
                 Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
                 Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
-                deliveryMode,
+                orderSearchParams.getDeliveryMode(),
+                orderSearchParams.getSearchValue().toLowerCase(),
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
                 pageRequest);
 
         log.info("Admin orders successfully retrieved. keycloakID: {}", keycloakId);
@@ -134,17 +151,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate, DeliveryMode deliveryMode) {
-        var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Пользователь-сотрудник магазина не найден"));
-
-
-        var orders = kaspiOrderRepository.findAllEmployeeOrders(employee.getWonderUser().getKeycloakId(),
+    public Page<EmployeeOrderResponse> getEmployeeOrders(String keycloakId, LocalDate startDate, LocalDate endDate, OrderSearchParams orderSearchParams, PageRequest pageRequest) {
+        var orders = kaspiOrderRepository.findAllEmployeeOrders(
+                keycloakId,
                 Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
                 Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
-                deliveryMode);
+                orderSearchParams.getDeliveryMode(),
+                orderSearchParams.getSearchValue().toLowerCase(),
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
+                pageRequest);
 
-        return orders.stream().map(OrderServiceImpl::getEmployeeOrderResponse).toList();
+        return orders.map(OrderServiceImpl::getEmployeeOrderResponse);
     }
 
     @Override
@@ -289,7 +311,7 @@ public class OrderServiceImpl implements OrderService {
             var supplyBoxProductList = supplyBoxProductsRepository.findAllByStoreIdAndProductIdAndState(kaspiOrder.getKaspiStore().getId(), product.getId(), ProductStateInStore.ACCEPTED);
 
 
-            var sellAt = Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime();
+            var sellAt = Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCreationDate());
             // todo: просто получить сразу один продукт поставки сразу, не перебирая весь цикл
 
             for (var supplyBoxProduct : supplyBoxProductList) {

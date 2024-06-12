@@ -18,7 +18,6 @@ public class SupplyScanRequest {
         @NotNull(message = "Cell code must not be null")
         private String cellCode;
 
-        //Не знаю что именно можно добавить сюда
         List<String> productArticles;
     }
 }
