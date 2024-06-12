@@ -15,11 +15,28 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     Optional<KaspiOrder> findByCode(String code);
 
     @Query("select ko from KaspiOrder ko " +
-            "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
+            "FULL JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
-            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) ")
-    Page<KaspiOrder> findAllSellerOrders(String keycloakId, Long from, Long to, DeliveryMode deliveryMode, Pageable pageable);
+            "AND (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
+            "AND (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
+            "AND (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)")
+    Page<KaspiOrder> findAllSellerOrders(String keycloakId,
+                                         Long from,
+                                         Long to,
+                                         DeliveryMode deliveryMode,
+                                         String searchValue,
+                                         boolean byOrderCode,
+                                         boolean byShopName,
+                                         boolean byStoreAddress,
+                                         boolean byProductName,
+                                         boolean byProductArticle,
+                                         boolean byProductVendorCode,
+                                         Pageable pageable);
 
     @Query("select ko from KaspiOrder ko WHERE ko.wonderUser.keycloakId = :keycloakId AND ko.creationDate BETWEEN :from AND :to")
     List<KaspiOrder> findAllSellerOrders(String keycloakId, Long from, Long to);
@@ -29,8 +46,26 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
             "WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
+            "AND (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
+            "AND (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)" +
             "ORDER BY ko.creationDate ASC")
-    Page<KaspiOrder> findAllAdminOrders(String keycloakId, Long from, Long to, DeliveryMode deliveryMode, Pageable pageable);
+    Page<KaspiOrder> findAllAdminOrders(String keycloakId,
+                                        Long from,
+                                        Long to,
+                                        DeliveryMode deliveryMode,
+                                        String searchValue,
+                                        boolean byOrderCode,
+                                        boolean byShopName,
+                                        boolean byStoreAddress,
+                                        boolean byProductName,
+                                        boolean byProductArticle,
+                                        boolean byProductVendorCode,
+                                        Pageable pageable);
 
     @Query("select ko from KaspiOrder ko WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId AND ko.creationDate BETWEEN :from AND :to ORDER BY ko.creationDate ASC")
     List<KaspiOrder> findAllAdminOrders(String keycloakId, Long from, Long to);
@@ -41,7 +76,24 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
             "WHERE se.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
+            "AND (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
+            "AND (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
+            "AND (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)" +
             "ORDER BY ko.creationDate ASC")
-    List<KaspiOrder> findAllEmployeeOrders(String keycloakId, Long from, Long to, DeliveryMode deliveryMode);
+    Page<KaspiOrder> findAllEmployeeOrders(String keycloakId,
+                                           Long from,
+                                           Long to,
+                                           DeliveryMode deliveryMode,
+                                           String searchValue,
+                                           boolean byOrderCode,
+                                           boolean byShopName,
+                                           boolean byStoreAddress,
+                                           boolean byProductName,
+                                           boolean byProductArticle,
+                                           boolean byProductVendorCode,Pageable pageable);
 
 }

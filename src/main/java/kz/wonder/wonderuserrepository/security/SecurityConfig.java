@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private static final String[] WHITE_LIST_URL = {"/kz/wonder/filemanager/client/api/auth/**",
+    private static final String[] WHITE_LIST_URL = {
             "/v2/api-docs",
             "/v3/api-docs",
             "/v3/api-docs/**",
@@ -66,11 +66,11 @@ public class SecurityConfig {
 
         http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);
 
-        authorizeEndpoint(http, HttpMethod.POST, new String[]{"/box-types"}, KeycloakRole.SUPER_ADMIN);
-        authorizeEndpoint(http, HttpMethod.DELETE, new String[]{"/box-types"}, KeycloakRole.SUPER_ADMIN);
-        authorizeEndpoint(http, HttpMethod.POST, new String[]{"/stores", "/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
-        authorizeEndpoint(http, HttpMethod.DELETE, new String[]{"/stores", "/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
-        authorizeEndpoint(http, HttpMethod.PUT, new String[]{"/stores"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.POST, new String[]{"/box-types"}, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.DELETE, new String[]{"/box-types/**"}, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.POST, new String[]{"/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.DELETE, new String[]{"/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
+        authorizeEndpoint(http, HttpMethod.PUT, new String[]{"/stores/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);
         authorizeEndpoint(http, HttpMethod.GET, new String[]{"/cities"}, KeycloakRole.SUPER_ADMIN);
         authorizeEndpoint(http, HttpMethod.POST, new String[]{"/cities/**"}, KeycloakRole.SUPER_ADMIN);
         authorizeEndpoint(http, HttpMethod.POST, new String[]{"/employees", "/employees/**"}, KeycloakRole.SUPER_ADMIN, KeycloakRole.ADMIN);

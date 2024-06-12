@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.EmployeeUpdateRequest;
@@ -34,7 +35,7 @@ public class EmployeeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Successfully created employee")
     })
-    public ResponseEntity<EmployeeCreateResponse> createEmployee(@RequestBody EmployeeCreateRequest employeeCreateRequest) {
+    public ResponseEntity<EmployeeCreateResponse> createEmployee(@RequestBody @Valid EmployeeCreateRequest employeeCreateRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
@@ -127,7 +128,7 @@ public class EmployeeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully updated the password")
     })
-    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody UpdatePasswordRequest updatePassword) {
+    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody @Valid UpdatePasswordRequest updatePassword) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());

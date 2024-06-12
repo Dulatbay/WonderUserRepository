@@ -25,7 +25,7 @@ public interface FileManagerApi {
             value = "/{directory}/remove/files/{filename}",
             produces = "*/*"
     )
-    Mono<String> deleteFile(@PathVariable("directory") String directory, @PathVariable("filename") String filename);
+    ResponseEntity<String> deleteFile(@PathVariable("directory") String directory, @PathVariable("filename") String filename);
 
 
 }

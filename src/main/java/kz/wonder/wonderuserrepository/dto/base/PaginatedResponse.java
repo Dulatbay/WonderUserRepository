@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.dto;
+package kz.wonder.wonderuserrepository.dto.base;
 
 import lombok.Data;
 import org.springframework.data.domain.Page;

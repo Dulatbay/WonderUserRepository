@@ -2,8 +2,8 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import jakarta.transaction.Transactional;
 import kz.wonder.filemanager.client.api.FileManagerApi;
+import kz.wonder.wonderuserrepository.dto.params.ProductSearchParams;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
-import kz.wonder.wonderuserrepository.dto.request.ProductSearchRequest;
 import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
@@ -319,19 +319,20 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSearchResponse> searchByParams(ProductSearchRequest productSearchRequest, PageRequest pageRequest, String employeeKeycloakId) {
+    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest pageRequest, String employeeKeycloakId) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(employeeKeycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
         final var store = storeEmployee.getKaspiStore();
 
         var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
-                Boolean.TRUE.equals(productSearchRequest.isByArticle()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByProductName()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByShopName()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByCellCode()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByVendorCode()) ? productSearchRequest.getSearchValue() : null,
                 store.getId(),
+                productSearchParams.getSearchValue().toLowerCase(),
+                productSearchParams.isByArticle(),
+                productSearchParams.isByProductName(),
+                productSearchParams.isByShopName(),
+                productSearchParams.isByCellCode(),
+                productSearchParams.isByVendorCode(),
                 pageRequest
         );
 
@@ -365,19 +366,20 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductWithSize> getProductsSizes(ProductSearchRequest productSearchRequest, String keycloakId, PageRequest pageRequest) {
+    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, String keycloakId, PageRequest pageRequest) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
         final var store = storeEmployee.getKaspiStore();
 
         var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
-                Boolean.TRUE.equals(productSearchRequest.isByArticle()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByProductName()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByShopName()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByCellCode()) ? productSearchRequest.getSearchValue() : null,
-                Boolean.TRUE.equals(productSearchRequest.isByVendorCode()) ? productSearchRequest.getSearchValue() : null,
                 store.getId(),
+                productSearchParams.getSearchValue().toLowerCase(),
+                productSearchParams.isByArticle(),
+                productSearchParams.isByProductName(),
+                productSearchParams.isByShopName(),
+                productSearchParams.isByCellCode(),
+                productSearchParams.isByVendorCode(),
                 pageRequest
         );
 

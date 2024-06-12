@@ -5,6 +5,7 @@ import kz.wonder.kaspi.client.model.PaymentMode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
@@ -125,7 +126,7 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private WonderUser wonderUser;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
-    private List<KaspiOrderProduct> products;
+    private List<KaspiOrderProduct> products = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "kaspiOrder",

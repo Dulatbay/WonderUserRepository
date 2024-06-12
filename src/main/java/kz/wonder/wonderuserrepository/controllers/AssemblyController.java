@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kz.wonder.wonderuserrepository.constants.Utils;
-import kz.wonder.wonderuserrepository.dto.PaginatedResponse;
+import kz.wonder.wonderuserrepository.dto.base.PaginatedResponse;
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProductResponse;

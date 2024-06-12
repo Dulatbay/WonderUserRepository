@@ -22,6 +22,9 @@ public class BoxType extends AbstractEntity<Long> {
     @Column(name = "description", nullable = false)
     private String description;
 
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted;
+
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "boxType",
             orphanRemoval = true,
