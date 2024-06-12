@@ -122,14 +122,12 @@ public class OrderServiceImpl implements OrderService {
                     orders.size());
 
         } catch (Exception e) {
-            log.info("Initializing error, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}",
+            log.error("Initializing error, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}",
                     token.getSellerName(),
                     startDate,
                     currentTime,
                     state,
                     pageNumber);
-
-            log.error("Error processing token orders", e);
         }
 
 
