@@ -1,8 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,17 +20,9 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     List<KaspiStore> findAllByEnabledIsTrue();
 
     @Query("SELECT ks FROM KaspiStore ks " +
-            "WHERE (:apartment is null or ks.apartment = :apartment) and " +
-            "      (:streetName is null  or ks.streetName = :streetName) and " +
-            "      (:streetNumber is null or ks.streetNumber = :streetNumber) and " +
-            "      (:town is null or ks.town = :town) and " +
-            "      (:building is null or ks.building = :building) and  " +
-            "      (:district is null or ks.district = :district)")
+            "WHERE (:streetName is null  or ks.streetName = :streetName) and " +
+            "      (:streetNumber is null or ks.streetNumber = :streetNumber)")
     Optional<KaspiStore> findByStoreAddress(
-            @Param("apartment") String apartment,
             @Param("streetName") String streetName,
-            @Param("streetNumber") String streetNumber,
-            @Param("town") String town,
-            @Param("building") String building,
-            @Param("district") String district);
+            @Param("streetNumber") String streetNumber);
 }

@@ -34,13 +34,13 @@ public class SellerServiceImpl implements SellerService {
             throw new IllegalArgumentException("Номер телефона должен быть уникальным");
         if (kaspiTokenRepository.existsBySellerId(sellerRegistrationRequest.getSellerId()))
             throw new IllegalArgumentException("ID продавца должен быть уникальным.");
-    if (kaspiTokenRepository.existsByToken(sellerRegistrationRequest.getTokenKaspi()))
+        if (kaspiTokenRepository.existsByToken(sellerRegistrationRequest.getTokenKaspi()))
             throw new IllegalArgumentException("Токен должен быть уникальным");
 
         WonderUser wonderUser = sellerMapper.toCreateWonderUser(sellerRegistrationRequest);
         KaspiToken kaspiToken = sellerMapper.toCreateKaspiToken(sellerRegistrationRequest, wonderUser);
 
-        userRepository.save(wonderUser);
+        kaspiToken = kaspiTokenRepository.save(kaspiToken);
 
         wonderUser.setKaspiToken(kaspiToken);
 
