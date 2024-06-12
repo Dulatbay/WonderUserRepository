@@ -128,7 +128,18 @@ public class StatisticsServiceImpl implements StatisticsService {
         var end = LocalDateTime.now();
         var start = end.minusDays(7);
 
-        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end), null, pageable);
+        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId,
+                getTimeStampFromLocalDateTime(start),
+                getTimeStampFromLocalDateTime(end),
+                null,
+                null,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                pageable);
 
         return orders.map(order -> {
             AdminLastOrdersInformation adminLastOrdersInformation = new AdminLastOrdersInformation();

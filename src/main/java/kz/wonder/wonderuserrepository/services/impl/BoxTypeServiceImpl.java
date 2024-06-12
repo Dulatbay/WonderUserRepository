@@ -39,7 +39,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
         var boxType = new BoxType();
         boxType.setName(boxTypeCreateRequest.getName());
         boxType.setDescription(boxTypeCreateRequest.getDescription());
-
+        boxType.setDeleted(false);
 
         if (boxTypeCreateRequest.getImages() != null) {
             boxTypeCreateRequest.getImages()
