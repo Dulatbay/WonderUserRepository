@@ -346,7 +346,7 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest) {
         final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Сотрудника магазина не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Действия над магазином доступны только сотрудникам склада"));
         final var supply = supplyRepository.findById(supplyScanRequest.getSupplyId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Поставка не существует"));
         final var kaspiStore = employee.getKaspiStore();

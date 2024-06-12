@@ -11,8 +11,6 @@ import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.*;
-import kz.wonder.wonderuserrepository.services.FileService;
-import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.JAXB_SCHEMA_LOCATION;
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.XML_SCHEMA_INSTANCE;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
 
 @Slf4j
 @Service
@@ -51,13 +48,11 @@ public class ProductServiceImpl implements ProductService {
     private final ProductPriceRepository productPriceRepository;
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
-    private final FileService fileService;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final UserRepository userRepository;
     private final ProductSizeRepository productSizeRepository;
     private final FileManagerApi fileManagerApi;
-    private final KeycloakService keycloakService;
 
     @Transactional
     @Override
@@ -212,9 +207,9 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
                         "Kaspi токен не существует",
                         "Создай свой kaspi токен перед запросом"));
-  
+
         final var wonderUser = kaspiToken.getWonderUser();
-  
+
         KaspiCatalog kaspiCatalog = buildKaspiCatalog(listOfProducts, kaspiToken);
 
         Marshaller marshaller = initJAXBContextAndProperties();
@@ -224,12 +219,12 @@ public class ProductServiceImpl implements ProductService {
 
         MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
 
-        var resultOfUploading = fileManagerApi.uploadFiles("xml", List.of(multipartFile)).getBody();
+        var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), true).getBody();
 
         kaspiToken.setPathToXml(fileName);
         kaspiTokenRepository.save(kaspiToken);
 
-        return resultOfUploading;
+        return resultOfUploading.get(0);
     }
 
     @Override
@@ -579,15 +574,18 @@ public class ProductServiceImpl implements ProductService {
                 .vendorCode(product.getVendorCode())
                 .keycloakUserId(product.getKeycloakId())
                 .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
-                .prices(
-                        product.getPrices().stream().map(
-                                productPrice ->
-                                        ProductResponse.ProductPriceResponse.builder()
-                                                .price(productPrice.getPrice())
-                                                .cityName(productPrice.getKaspiCity().getName())
-                                                .build()
-                        ).collect(Collectors.toList())
-                )
+                .counts(product.getPrices().stream().map(price -> {
+                    var city = price.getKaspiCity();
+                    var count = (product.getSupplyBoxes()
+                            .stream()
+                            .filter(p ->
+                                    p.getState() == ProductStateInStore.ACCEPTED
+                                            && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
+                            )
+                            .count());
+
+                    return new ProductResponse.ProductCount(city.getName(), count);
+                }).toList())
 
                 .build();
     }
