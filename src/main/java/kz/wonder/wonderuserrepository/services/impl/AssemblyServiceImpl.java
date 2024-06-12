@@ -48,7 +48,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         String deliveryMode = assemblySearchParameters.getDeliveryMode() == null ? null : assemblySearchParameters.getDeliveryMode().name();
 
         log.info("Search assemblies, start unix timestamp: {}, endUnixTimeStamp: {}, product state: {}, delivery mode: {}", startUnixTimestamp, endUnixTimestamp, productState, deliveryMode);
-        var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeResponse(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, keycloakId, pageRequest);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeAssemblies(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, keycloakId, pageRequest);
 
 
 

@@ -31,6 +31,8 @@ public class StoreCell extends AbstractEntity<Long> {
 
     private String code;
 
+    private boolean deleted;
+
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "storeCell",
             orphanRemoval = true,

@@ -7,6 +7,7 @@ import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -17,8 +18,9 @@ import static kz.wonder.wonderuserrepository.constants.Utils.getLocalDateTimeFro
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Component
+@RequiredArgsConstructor
 public class OrderMapper {
-    private static StoreCellProductRepository storeCellProductRepository;
+    private final StoreCellProductRepository storeCellProductRepository;
 
     public static OrderResponse mapToOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
         return OrderResponse.builder()
@@ -55,7 +57,7 @@ public class OrderMapper {
         return orderResponse;
     }
 
-    public static OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct, KaspiOrder kaspiOrder) {
+    public OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct, KaspiOrder kaspiOrder) {
         var product = kaspiOrderProduct.getProduct();
         var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
         var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());

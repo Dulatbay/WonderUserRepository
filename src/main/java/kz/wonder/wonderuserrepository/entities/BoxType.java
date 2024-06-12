@@ -22,7 +22,7 @@ public class BoxType extends AbstractEntity<Long> {
     @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "deleted", nullable = false)
+    @Column(name = "deleted")
     private boolean deleted;
 
     @OneToMany(fetch = FetchType.LAZY,

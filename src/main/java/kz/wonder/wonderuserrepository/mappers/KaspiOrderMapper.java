@@ -52,7 +52,7 @@ public class KaspiOrderMapper {
         } else {
             var pickupPointId = orderAttributes.getPickupPointId();
 
-            var kaspiStoreOptional = kaspiStoreRepository.findByPickupPointIdAndWonderUserKeycloakId(pickupPointId, token.getWonderUser().getKeycloakId());
+            var kaspiStoreOptional = kaspiStoreRepository.findByPickupPointIdAndWonderUserKeycloakIdAndDeletedIsFalse(pickupPointId, token.getWonderUser().getKeycloakId());
 
             if (kaspiStoreOptional.isPresent()) {
                 kaspiOrder.setKaspiStore(kaspiStoreOptional.get());

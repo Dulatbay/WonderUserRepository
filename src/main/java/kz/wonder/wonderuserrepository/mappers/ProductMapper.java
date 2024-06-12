@@ -7,18 +7,16 @@ import kz.wonder.wonderuserrepository.dto.response.ProductWithSize;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductSizeRepository;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ProductMapper {
     private final ProductSizeRepository productSizeRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
 
-    public ProductMapper(ProductSizeRepository productSizeRepository, KaspiTokenRepository kaspiTokenRepository) {
-        this.productSizeRepository = productSizeRepository;
-        this.kaspiTokenRepository = kaspiTokenRepository;
-    }
 
     public ProductResponse mapToResponse(Product product) {
         return ProductResponse.builder()

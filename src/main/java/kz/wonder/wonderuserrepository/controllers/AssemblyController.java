@@ -13,6 +13,7 @@ import kz.wonder.wonderuserrepository.dto.response.AssembleProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
+import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.AssemblyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import java.time.LocalDate;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@StoreEmployeeAuthorization
 @RequestMapping("/employee/assemblies")
 public class AssemblyController {
     private final AssemblyService assemblyService;

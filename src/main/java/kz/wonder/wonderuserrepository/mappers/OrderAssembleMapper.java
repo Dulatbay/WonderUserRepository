@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
@@ -17,12 +18,9 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class OrderAssembleMapper {
     private final StoreCellProductRepository storeCellProductRepository;
-
-    public OrderAssembleMapper(StoreCellProductRepository storeCellProductRepository) {
-        this.storeCellProductRepository = storeCellProductRepository;
-    }
 
     public OrderAssemble toEntity(StoreEmployee storeEmployee, KaspiOrder kaspiOrder, AssembleState assembleState) {
         OrderAssemble orderAssemble = new OrderAssemble();
