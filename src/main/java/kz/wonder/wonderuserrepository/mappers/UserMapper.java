@@ -9,10 +9,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-    @Value("${application.file-api.url}")
-    private String kaspiApiUrl;
 
-    private final String pathToFile = kaspiApiUrl + "/xml/retrieve/files/";
+    private final String pathToFile;
+
+    public UserMapper(@Value("${application.file-api.url}") String fileApiUrl) {
+        this.pathToFile = fileApiUrl + "/xml/retrieve/files/";
+    }
 
     public SellerUserResponse toUserResponse(WonderUser wonderUser, UserRepresentation userRepresentation, KaspiToken kaspiToken) {
         SellerUserResponse sellerUserResponse = new SellerUserResponse();

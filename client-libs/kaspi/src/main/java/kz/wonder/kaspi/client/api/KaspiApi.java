@@ -16,15 +16,15 @@ import java.util.function.Consumer;
 @Component
 @Slf4j
 public class KaspiApi {
-    @Value("${application.kaspi-api.token:1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=}")
+    @Value("${kaspi-api.token:1tOPbN07ZTNE5CO7XC+foBqdKmRKmHwr4i1Z0tkUT7c=}")
     private String token;
 
     private final WebClient webClient;
 
-    @Value("${application.kaspi-api.url}")
-    private String kaspiUrl;
-
-    public KaspiApi() {
+    public KaspiApi(
+            @Value("${application.kaspi-api.url}")
+            String kaspiUrl
+    ) {
         webClient = WebClient.builder()
                 .codecs(clientCodecConfigurer -> {
                     clientCodecConfigurer.defaultCodecs().maxInMemorySize(2000 * 1024 * 1024);
