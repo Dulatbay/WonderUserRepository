@@ -34,14 +34,12 @@ public class SellerController {
     private final UserMapper userMapper;
     private final SellerService sellerService;
 
-    // todo: check in security by role
-
     @GetMapping("/me")
-    @Operation(summary = "Get seller user by ID", description = "This endpoint returns the seller by ID")
+    @Operation(summary = "Get seller user by session", description = "This endpoint returns the seller by session")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by ID")
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by session")
     })
-    public ResponseEntity<SellerUserResponse> getSellerUserById() {
+    public ResponseEntity<SellerUserResponse> getSellerUserBySession() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 

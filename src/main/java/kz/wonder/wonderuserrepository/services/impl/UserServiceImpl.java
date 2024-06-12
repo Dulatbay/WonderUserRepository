@@ -2,12 +2,8 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import kz.wonder.kaspi.client.api.KaspiApi;
-import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
-import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.WonderUser;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
-import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.UserRepository;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
@@ -15,7 +11,6 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -39,12 +34,6 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findByKeycloakId(keycloakId)
 				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 
-	}
-
-	@Override
-	public WonderUser getUserById(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 	}
 
 
@@ -131,7 +120,4 @@ public class UserServiceImpl implements UserService {
 			log.info("New tester created");
 		}
     }
-
-
-
 }
