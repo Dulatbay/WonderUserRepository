@@ -2,6 +2,9 @@ package kz.wonder.wonderuserrepository.dto.response;
 
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Data
 public class SellerUserResponse  {
     private Long id;
@@ -11,6 +14,7 @@ public class SellerUserResponse  {
     private String sellerId;
     private String tokenKaspi;
     private String pathToXml;
+    private LocalDateTime xmlUpdatedAt;
 
     private String firstName;
     private String lastName;

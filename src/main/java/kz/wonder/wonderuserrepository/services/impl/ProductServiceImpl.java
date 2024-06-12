@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
-import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import jakarta.transaction.Transactional;
 import kz.wonder.filemanager.client.api.FileManagerApi;
 import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
@@ -10,6 +9,8 @@ import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.ProductMapper;
+import kz.wonder.wonderuserrepository.mappers.ProductXmlMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import java.io.StringWriter;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.FILE_MANAGER_XML_DIR;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Slf4j
 @Service
@@ -53,6 +54,8 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final ProductSizeRepository productSizeRepository;
     private final FileManagerApi fileManagerApi;
+    private final ProductMapper productMapper;
+    private final ProductXmlMapper productXmlMapper;
 
     @Transactional
     @Override
@@ -195,7 +198,7 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
         log.info("Retrieving products with keycloak id: {}", keycloakUserId);
         return productRepository.findByParams(keycloakUserId, searchValue, searchValue, isPublished, pageable)
-                .map(this::mapToResponse);
+                .map(productMapper::mapToResponse);
     }
 
 
@@ -210,10 +213,10 @@ public class ProductServiceImpl implements ProductService {
 
         final var wonderUser = kaspiToken.getWonderUser();
 
-        KaspiCatalog kaspiCatalog = buildKaspiCatalog(listOfProducts, kaspiToken);
+        KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
 
-        Marshaller marshaller = initJAXBContextAndProperties();
-        String xmlContent = marshalObjectToXML(kaspiCatalog, marshaller);
+        Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
+        String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
 
         var fileName = wonderUser.getKeycloakId() + ".xml";
 
@@ -222,6 +225,7 @@ public class ProductServiceImpl implements ProductService {
         var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), true).getBody();
 
         kaspiToken.setPathToXml(fileName);
+        kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
         kaspiTokenRepository.save(kaspiToken);
 
         return resultOfUploading.get(0);
@@ -263,28 +267,8 @@ public class ProductServiceImpl implements ProductService {
                             .isPublished(product.isEnabled())
                             // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
-                                var productPrice = new ProductPriceResponse.ProductPrice();
                                 var city = price.getKaspiCity();
 
-                                // todo: сделал поставку в город, где не указана цена
-
-                                productPrice.setCityId(city.getId());
-                                productPrice.setCityName(city.getName());
-                                productPrice.setCount(product.getSupplyBoxes()
-                                        .stream()
-                                        .filter(p ->
-                                                p.getState() == ProductStateInStore.ACCEPTED
-                                                        && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
-                                        )
-                                        .count());
-                                productPrice.setPrice(price.getPrice());
-                                return productPrice;
-                            }).toList())
-                            .build();
-
-                    product.getPrices()
-                            .forEach(price -> {
-                                var city = price.getKaspiCity();
                                 cityResponseMap.computeIfAbsent(city.getId(), k -> {
                                     CityResponse cityResponse = new CityResponse();
                                     cityResponse.setId(city.getId());
@@ -293,7 +277,11 @@ public class ProductServiceImpl implements ProductService {
                                     cityResponse.setEnabled(city.isEnabled());
                                     return cityResponse;
                                 });
-                            });
+
+
+                                return ProductMapper.mapProductPrice(product, price, city);
+                            }).toList())
+                            .build();
 
                     response.add(productInfo);
                 });
@@ -347,7 +335,7 @@ public class ProductServiceImpl implements ProductService {
                 pageRequest
         );
 
-        return supplyBoxProducts.map(this::toProductSearchResponse);
+        return supplyBoxProducts.map(productMapper::mapProductSearchResponse);
     }
 
     @Override
@@ -393,45 +381,7 @@ public class ProductServiceImpl implements ProductService {
                 pageRequest
         );
 
-        return supplyBoxProducts.map(this::toProductsSizesResponse);
-    }
-
-    private ProductWithSize toProductsSizesResponse(SupplyBoxProduct supplyBoxProduct) {
-        final var product = supplyBoxProduct.getProduct();
-        final var size = productSizeRepository.findByOriginVendorCode(product.getOriginalVendorCode())
-                .orElse(new ProductSize());
-
-        ProductWithSize productWithSize = new ProductWithSize();
-        productWithSize.setProductName(product.getName());
-        productWithSize.setProductArticle(supplyBoxProduct.getArticle());
-        productWithSize.setWeight(size.getWeight());
-        productWithSize.setHeight(size.getHeight());
-        productWithSize.setLength(size.getLength());
-        productWithSize.setWidth(size.getWidth());
-        productWithSize.setComment(size.getComment());
-        productWithSize.setVendorCode(product.getVendorCode());
-        productWithSize.setState(supplyBoxProduct.getState());
-
-
-        return productWithSize;
-    }
-
-    private ProductSearchResponse toProductSearchResponse(SupplyBoxProduct supplyBoxProduct) {
-        var product = supplyBoxProduct.getProduct();
-        var token = kaspiTokenRepository.findByWonderUserKeycloakId(product.getKeycloakId())
-                .orElseThrow(() -> new IllegalArgumentException("Возможно, пользователь был удален"));
-        var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
-
-        ProductSearchResponse productSearchResponse = new ProductSearchResponse();
-        productSearchResponse.setProductId(product.getId());
-        productSearchResponse.setProductName(product.getName());
-        productSearchResponse.setPrice(product.getTradePrice());
-        productSearchResponse.setVendorCode(product.getVendorCode());
-        productSearchResponse.setShopName(token.getSellerName());
-        productSearchResponse.setCellCode(storeCellProduct.getStoreCell().getCode());
-        productSearchResponse.setArticle(supplyBoxProduct.getArticle());
-
-        return productSearchResponse;
+        return supplyBoxProducts.map(productMapper::mapProductsSizesResponse);
     }
 
     private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {
@@ -481,112 +431,5 @@ public class ProductServiceImpl implements ProductService {
                 });
     }
 
-    private KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
-        KaspiCatalog kaspiCatalog = new KaspiCatalog();
-        kaspiCatalog.setCompany(kaspiToken.getSellerName());
-        kaspiCatalog.setMerchantid(kaspiToken.getSellerId());
-        kaspiCatalog.setOffers(getOffers(listOfProducts));
-        return kaspiCatalog;
-    }
 
-    private Marshaller initJAXBContextAndProperties() throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance(KaspiCatalog.class);
-        Marshaller marshaller = context.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-        marshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, JAXB_SCHEMA_LOCATION);
-        marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new NamespacePrefixMapper() {
-            @Override
-            public String getPreferredPrefix(String namespaceUri, String suggestion, boolean requirePrefix) {
-                if (XML_SCHEMA_INSTANCE.equals(namespaceUri)) {
-                    return "xsi";
-                }
-                return suggestion;
-            }
-
-            @Override
-            public String[] getPreDeclaredNamespaceUris() {
-                return new String[]{XML_SCHEMA_INSTANCE};
-            }
-        });
-        return marshaller;
-    }
-
-    private List<KaspiCatalog.Offer> getOffers(List<Product> listOfProducts) {
-        return listOfProducts.stream().map(this::mapToOffer).collect(Collectors.toList());
-    }
-
-    private String marshalObjectToXML(KaspiCatalog kaspiCatalog, Marshaller marshaller) throws JAXBException {
-        StringWriter writer = new StringWriter();
-        marshaller.marshal(kaspiCatalog, writer);
-        return writer.toString();
-    }
-
-    private KaspiCatalog.Offer mapToOffer(Product product) {
-        List<KaspiCatalog.Offer.Availability> availabilities = new ArrayList<>();
-        List<KaspiCatalog.Offer.CityPrice> cityPrices = new ArrayList<>();
-        KaspiCatalog.Offer offer = new KaspiCatalog.Offer();
-        offer.setSku(product.getVendorCode());
-        offer.setModel(product.getName());
-
-        var optionalMainPrice = Optional.ofNullable(product.getMainCityPrice());
-
-
-        if (optionalMainPrice.isEmpty()) {
-            product.getPrices()
-                    .forEach(price -> {
-                        KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
-                        availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
-                        availability.setStoreId(price.getKaspiCity().getId().toString());
-                        availabilities.add(availability);
-
-                        KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
-                        cityPrice.setCityId(price.getKaspiCity().getId().toString());
-                        cityPrice.setPrice(price.getPrice().toString());
-                        cityPrices.add(cityPrice);
-                    });
-        } else {
-            var price = optionalMainPrice.get();
-            product.getPrices()
-                    .forEach(p -> {
-                        KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
-                        availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
-                        availability.setStoreId(price.getKaspiCity().getId().toString());
-                        availabilities.add(availability);
-
-                        KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
-                        cityPrice.setCityId(price.getKaspiCity().getId().toString());
-                        cityPrice.setPrice(price.getPrice().toString());
-                        cityPrices.add(cityPrice);
-                    });
-        }
-
-
-        offer.setAvailabilities(availabilities);
-        offer.setCityprices(cityPrices);
-        return offer;
-    }
-
-    private ProductResponse mapToResponse(Product product) {
-        return ProductResponse.builder()
-                .id(product.getId())
-                .enabled(product.isEnabled())
-                .name(product.getName())
-                .vendorCode(product.getVendorCode())
-                .keycloakUserId(product.getKeycloakId())
-                .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
-                .counts(product.getPrices().stream().map(price -> {
-                    var city = price.getKaspiCity();
-                    var count = (product.getSupplyBoxes()
-                            .stream()
-                            .filter(p ->
-                                    p.getState() == ProductStateInStore.ACCEPTED
-                                            && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
-                            )
-                            .count());
-
-                    return new ProductResponse.ProductCount(city.getName(), count);
-                }).toList())
-
-                .build();
-    }
 }

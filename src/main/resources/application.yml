@@ -8,6 +8,11 @@ application:
   password: admin_password
   mode: ${APP_MODE}
   admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:99d66d43-e8a1-4fe6-a854-8ce686c73ed6}
+  file-api:
+    name: file-api
+    url: https://file-manager-of5r5e4d7a-lm.a.run.app
+  kaspi-api:
+    url: https://kaspi.kz/shop/api/v2
 spring:
   codec:
     max-in-memory-size: 500KB

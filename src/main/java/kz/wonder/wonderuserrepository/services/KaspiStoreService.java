@@ -26,7 +26,7 @@ public interface KaspiStoreService {
 
     void addBoxTypeToStore(Long boxTypeId, Long storeId);
 
-    void addBoxTypeToStore(Long boxTypeId, Long storeId, String keycloakUserId);
+    void addBoxTypeToStoreWithValidating(Long boxTypeId, Long storeId, String keycloakUserId);
 
     List<StoreDetailResponse> getAllDetail();
 

@@ -172,7 +172,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var order = kaspiOrderRepository.findByCode(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
 
-        var assemble = getOrderAssemble(order);
+        var assemble = validateAssembleToFinish(order);
 
         validateEmployeeWithStore(storeEmployee, order);
 
@@ -193,7 +193,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 });
     }
 
-    private static @NotNull OrderAssemble getOrderAssemble(KaspiOrder order) {
+    private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order) {
         var assemble = order.getOrderAssemble();
 
         if (assemble == null) {

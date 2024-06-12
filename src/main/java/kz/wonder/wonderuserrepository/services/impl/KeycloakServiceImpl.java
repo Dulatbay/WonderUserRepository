@@ -128,7 +128,7 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     private void sendEmail(String userId) {
-//        getUsersResource().get(userId).sendVerifyEmail();
+        getUsersResource().get(userId).sendVerifyEmail();
 	}
 
 	private Keycloak getKeycloak(String username, String password) {

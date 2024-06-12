@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@FeignClient(name = "${file-api.name:file-api}", url = "${file-api.url:https://file-manager-of5r5e4d7a-lm.a.run.app}", configuration = ClientConfiguration.class)
+@FeignClient(name = "${application.file-api.name}", url = "${application.file-api.url}", configuration = ClientConfiguration.class)
 public interface FileManagerApi {
     @RequestMapping(
             method = RequestMethod.POST,
