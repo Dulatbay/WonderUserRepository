@@ -34,17 +34,20 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
-        var boxType = new BoxType();
         var images = new ArrayList<BoxTypeImages>();
+
+        var boxType = new BoxType();
         boxType.setName(boxTypeCreateRequest.getName());
         boxType.setDescription(boxTypeCreateRequest.getDescription());
 
 
-        if (boxTypeCreateRequest.getImages() != null)
+        if (boxTypeCreateRequest.getImages() != null) {
             boxTypeCreateRequest.getImages()
-                    .forEach(i -> {
-                        images.add(boxTypeMapper.toImage(boxType, fileManagerApi.uploadFiles(FILE_MANAGER_IMAGE_DIR, List.of(i), true).getBody().get(0)));
+                    .forEach(image -> {
+                        var fileUrl = fileManagerApi.uploadFiles(FILE_MANAGER_IMAGE_DIR, List.of(image), true).getBody().get(0);
+                        images.add(boxTypeMapper.toImage(boxType, fileUrl));
                     });
+        }
 
         boxType.setImages(images);
 
@@ -53,22 +56,15 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 
     @Override
     public List<BoxTypeResponse> getAll(Long storeId) {
-        if (storeId != null) {
-            final var store = storeRepository.findById(storeId)
-                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), ""));
+        final var store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склада не существует"));
 
-            return store
-                    .getAvailableBoxTypes()
-                    .stream()
-                    .map(KaspiStoreAvailableBoxTypes::getBoxType)
-                    .map(boxTypeMapper::toResponse)
-                    .toList();
-        }
-
-
-        return boxTypeRepository.findAll()
+        return store
+                .getAvailableBoxTypes()
                 .stream()
-                .map(boxTypeMapper::toResponse).toList();
+                .map(KaspiStoreAvailableBoxTypes::getBoxType)
+                .map(boxTypeMapper::toResponse)
+                .toList();
     }
 
     @Override
@@ -77,7 +73,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Тип коробки не существует"));
 
         boxTypeToDelete.getImages()
-                .forEach(i -> fileManagerApi.deleteFile(FILE_MANAGER_IMAGE_DIR, i.imageUrl));
+                .forEach(image -> fileManagerApi.deleteFile(FILE_MANAGER_IMAGE_DIR, image.imageUrl));
 
         boxTypeRepository.delete(boxTypeToDelete);
         log.info("Box Type with ID {} was deleted", id);

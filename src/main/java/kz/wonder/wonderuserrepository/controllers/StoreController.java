@@ -117,7 +117,7 @@ public class StoreController {
                 .contains(KeycloakRole.SUPER_ADMIN.name())) {
             kaspiStoreService.addBoxTypeToStore(boxTypeId, storeId);
         } else {
-            kaspiStoreService.addBoxTypeToStore(boxTypeId, storeId, Utils.extractIdFromToken(token));
+            kaspiStoreService.addBoxTypeToStoreWithValidating(boxTypeId, storeId, Utils.extractIdFromToken(token));
         }
 
         return ResponseEntity.ok().build();

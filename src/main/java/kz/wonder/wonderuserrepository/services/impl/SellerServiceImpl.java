@@ -61,7 +61,7 @@ public class SellerServiceImpl implements SellerService {
 
     private boolean isTokenValid(String token) {
         try {
-            kaspiApi.getDataCitiesWithToken(token);
+            kaspiApi.getDataCitiesWithToken(token).block();
             return true;
         } catch (Exception e) {
             log.info("Exception: ", e);

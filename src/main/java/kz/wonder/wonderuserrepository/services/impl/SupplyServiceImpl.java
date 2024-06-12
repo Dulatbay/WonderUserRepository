@@ -90,13 +90,6 @@ public class SupplyServiceImpl implements SupplyService {
 
     @Override
     public long createSupply(SupplyCreateRequest createRequest, String userId) {
-
-        // todo: при создании поставки нужно проверить:
-        //  1) время(работает ли в этот день склад)
-        //  2) Есть ли там доступные места(хотя это врядли)
-        //  3) Генерация номера ячейки
-        //  4) Есть ли в поставке товары
-
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
@@ -132,7 +125,7 @@ public class SupplyServiceImpl implements SupplyService {
         }
 
 
-        Supply supply = supplyMapper.toSupply(createRequest, user, store);
+        Supply supply = supplyMapper.toSupplyEntity(createRequest, user, store);
 
 
         createRequest.getSelectedBoxes()
@@ -204,7 +197,7 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = findSupplyById(id);
 
         String keycloakIdOfStoreOwner = supply.getKaspiStore().getWonderUser().getKeycloakId();
-        if (!isIdentityMatched(keycloakId, keycloakIdOfStoreOwner))
+        if (keycloakId.equals(keycloakIdOfStoreOwner))
             throw new IllegalArgumentException("Поставки не существует");
 
         log.info("Retrieving supply detail. Id: {}", id);
@@ -217,7 +210,7 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = findSupplyById(id);
 
         String keycloakIdOfSupplyOwner = supply.getAuthor().getKeycloakId();
-        if (!isIdentityMatched(keycloakId, keycloakIdOfSupplyOwner))
+        if (keycloakId.equals(keycloakIdOfSupplyOwner))
             throw new IllegalArgumentException("Поставки не существует");
 
         log.info("Retrieving supply detail. Id: {}", id);
@@ -235,10 +228,6 @@ public class SupplyServiceImpl implements SupplyService {
         );
 
         return supplyProductsRes;
-    }
-
-    private boolean isIdentityMatched(String requestedIdentity, String entityIdentity) {
-        return requestedIdentity.equals(entityIdentity);
     }
 
     @Override

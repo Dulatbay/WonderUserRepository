@@ -1,7 +1,6 @@
 package kz.wonder.wonderuserrepository.mappers;
 
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
-import kz.wonder.wonderuserrepository.dto.response.SellerSupplyReport;
 import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
 import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
 import kz.wonder.wonderuserrepository.entities.*;
@@ -11,7 +10,7 @@ import java.util.ArrayList;
 
 @Component
 public class SupplyMapper {
-    public Supply toSupply(SupplyCreateRequest createRequest, WonderUser user, KaspiStore store) {
+    public Supply toSupplyEntity(SupplyCreateRequest createRequest, WonderUser user, KaspiStore store) {
         Supply supply = new Supply();
         supply.setAuthor(user);
         supply.setKaspiStore(store);

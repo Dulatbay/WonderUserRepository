@@ -34,7 +34,9 @@ public class CityServiceImpl implements CityService {
             final List<KaspiCity> kaspiCities = new ArrayList<>();
 
             for (var city : cities) {
-                if (!cityRepository.existsByName(city.getAttributes().getName()) && !cityRepository.existsByCode(city.getAttributes().getCode())) {
+                var cityExistsByName = cityRepository.existsByName(city.getAttributes().getName());
+                var cityExistsByCode = cityRepository.existsByCode(city.getAttributes().getCode());
+                if (!cityExistsByName && !cityExistsByCode) {
                     kaspiCities.add(cityMapper.toEntity(city));
                 }
             }
