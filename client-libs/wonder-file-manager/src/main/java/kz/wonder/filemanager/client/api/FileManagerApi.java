@@ -4,11 +4,9 @@ import kz.wonder.filemanager.client.configuration.ClientConfiguration;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -20,5 +18,14 @@ public interface FileManagerApi {
             produces = "*/*",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    ResponseEntity<String> uploadFiles(@PathVariable("directory") String directory, @RequestPart("files") List<MultipartFile> files);
+    ResponseEntity<List<String>> uploadFiles(@PathVariable("directory") String directory, @RequestPart("files") List<MultipartFile> files, @RequestParam("generate-file-name") boolean generateFileName);
+
+    @RequestMapping(
+            method = RequestMethod.DELETE,
+            value = "/{directory}/remove/files/{filename}",
+            produces = "*/*"
+    )
+    Mono<String> deleteFile(@PathVariable("directory") String directory, @PathVariable("filename") String filename);
+
+
 }
