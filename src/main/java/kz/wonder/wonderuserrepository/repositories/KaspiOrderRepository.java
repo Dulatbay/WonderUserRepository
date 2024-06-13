@@ -17,14 +17,14 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     @Query("select ko from KaspiOrder ko " +
             "FULL JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.wonderUser.keycloakId = :keycloakId " +
-            "AND ko.creationDate BETWEEN :from AND :to " +
-            "AND (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
-            "AND (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
-            "AND (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
-            "AND (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)")
+            "OR ko.creationDate BETWEEN :from AND :to " +
+            "OR (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
+            "OR (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
+            "OR (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
+            "OR (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)")
     Page<KaspiOrder> findAllSellerOrders(String keycloakId,
                                          Long from,
                                          Long to,
@@ -44,15 +44,15 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     @Query("select ko from KaspiOrder ko " +
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId " +
-            "AND ko.creationDate BETWEEN :from AND :to " +
-            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
-            "AND (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
-            "AND (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
-            "AND (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
-            "AND (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)" +
+            "OR ko.creationDate BETWEEN :from AND :to " +
+            "OR (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
+            "OR (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
+            "OR (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
+            "OR (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
+            "OR (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)" +
             "ORDER BY ko.creationDate ASC")
     Page<KaspiOrder> findAllAdminOrders(String keycloakId,
                                         Long from,
@@ -74,15 +74,15 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
             "WHERE se.wonderUser.keycloakId = :keycloakId " +
-            "AND ko.creationDate BETWEEN :from AND :to " +
-            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
-            "AND (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
-            "AND (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
-            "AND (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
-            "AND (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
-            "AND (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)" +
+            "OR ko.creationDate BETWEEN :from AND :to " +
+            "OR (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
+            "OR (:deliveryMode is NULL OR ko.deliveryMode = :deliveryMode) " +
+            "OR (:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
+            "OR (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
+            "OR (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
+            "OR (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode)" +
             "ORDER BY ko.creationDate ASC")
     Page<KaspiOrder> findAllEmployeeOrders(String keycloakId,
                                            Long from,
