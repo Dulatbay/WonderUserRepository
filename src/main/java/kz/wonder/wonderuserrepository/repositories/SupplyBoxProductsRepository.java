@@ -14,7 +14,12 @@ import java.util.Optional;
 
 public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProduct, Long> {
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.product.id = :productId and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId and sbp.state = :state")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "where sbp.product.id = :productId " +
+            "and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
+            "and sbp.state = :state " +
+            "ORDER BY sbp.createdAt DESC " +
+            "limit 1")
     Optional<SupplyBoxProduct> findFirstByStoreIdAndProductIdAndState(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId, @Param("state") ProductStateInStore state);
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
