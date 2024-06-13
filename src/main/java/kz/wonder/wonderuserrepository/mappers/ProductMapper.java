@@ -49,7 +49,6 @@ public class ProductMapper {
 
         ProductWithSize productWithSize = new ProductWithSize();
         productWithSize.setProductName(product.getName());
-        productWithSize.setProductArticle(supplyBoxProduct.getArticle());
         productWithSize.setWeight(size.getWeight());
         productWithSize.setHeight(size.getHeight());
         productWithSize.setLength(size.getLength());

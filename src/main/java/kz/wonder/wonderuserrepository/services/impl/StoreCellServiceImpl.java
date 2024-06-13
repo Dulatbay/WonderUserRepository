@@ -24,7 +24,6 @@ public class StoreCellServiceImpl implements StoreCellService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final StoreCellProductRepository storeCellProductRepository;
-    private final UserRepository userRepository;
     private final StoreCellMapper storeCellMapper;
 
     @Override
@@ -34,6 +33,7 @@ public class StoreCellServiceImpl implements StoreCellService {
 
         StoreCell storeCell = storeCellMapper.toEntity(storeCellCreateRequest);
         storeCell.setKaspiStore(kaspiStore);
+        storeCell.setDeleted(false);
 
         log.info("Created store cell with id: {}", storeCell.getId());
 

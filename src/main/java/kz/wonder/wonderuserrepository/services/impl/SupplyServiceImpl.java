@@ -62,7 +62,7 @@ public class SupplyServiceImpl implements SupplyService {
                 String vendorCode = getStringFromExcelCell(row.getCell(0));
                 long quantity = (long) row.getCell(1).getNumericCellValue();
 
-                var product = productRepository.findByVendorCodeAndKeycloakId(vendorCode, userId)
+                var product = productRepository.findByVendorCodeAndKeycloakIdAndDeletedIsFalse(vendorCode, userId)
                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
                                 String.format("Товар с id %s не существует: ", vendorCode)));
 
@@ -141,7 +141,7 @@ public class SupplyServiceImpl implements SupplyService {
 
                     var selectedProducts = selectedBox.getProductQuantities();
                     selectedProducts.forEach(selectedProduct -> {
-                        var product = productRepository.findByIdAndKeycloakId(selectedProduct.getProductId(), userId)
+                        var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(selectedProduct.getProductId(), userId)
                                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
 
@@ -197,7 +197,7 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = findSupplyById(id);
 
         String keycloakIdOfStoreOwner = supply.getKaspiStore().getWonderUser().getKeycloakId();
-        if (keycloakId.equals(keycloakIdOfStoreOwner))
+        if (!keycloakId.equals(keycloakIdOfStoreOwner))
             throw new IllegalArgumentException("Поставки не существует");
 
         log.info("Retrieving supply detail. Id: {}", id);
@@ -210,7 +210,8 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = findSupplyById(id);
 
         String keycloakIdOfSupplyOwner = supply.getAuthor().getKeycloakId();
-        if (keycloakId.equals(keycloakIdOfSupplyOwner))
+
+        if (!keycloakId.equals(keycloakIdOfSupplyOwner))
             throw new IllegalArgumentException("Поставки не существует");
 
         log.info("Retrieving supply detail. Id: {}", id);

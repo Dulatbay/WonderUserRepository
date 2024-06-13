@@ -55,7 +55,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     }
 
     @Override
-    public List<BoxTypeResponse> getAll(Long storeId) {
+    public List<BoxTypeResponse> getAllByStore(Long storeId) {
         final var store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склада не существует"));
 
@@ -80,5 +80,14 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 
         boxTypeRepository.save(boxTypeToDelete);
         log.info("Box Type with ID {} was deleted", id);
+    }
+
+    @Override
+    public List<BoxTypeResponse> getAll() {
+        return boxTypeRepository.findAllByDeletedIsFalse()
+                .stream()
+                .filter(boxType -> !boxType.isDeleted())
+                .map(boxTypeMapper::toResponse)
+                .toList();
     }
 }

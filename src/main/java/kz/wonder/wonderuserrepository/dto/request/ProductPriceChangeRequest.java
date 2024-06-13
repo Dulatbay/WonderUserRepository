@@ -2,12 +2,13 @@ package kz.wonder.wonderuserrepository.dto.request;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class ProductPriceChangeRequest {
-    private List<Price> priceList;
-    private List<MainPrice> mainPriceList;
+    private List<Price> priceList = new ArrayList<>();
+    private List<MainPrice> mainPriceList = new ArrayList<>();
 
 
     @Data

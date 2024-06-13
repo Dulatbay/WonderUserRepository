@@ -31,6 +31,7 @@ public class StoreCell extends AbstractEntity<Long> {
 
     private String code;
 
+    @Column(nullable = false)
     private boolean deleted;
 
     @OneToMany(fetch = FetchType.LAZY,
