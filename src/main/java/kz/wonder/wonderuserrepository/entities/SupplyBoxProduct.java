@@ -22,8 +22,11 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "product_id", columnDefinition = "integer")
     private Product product;
 
-    @Column(name = "article", nullable = false, unique = true)
+    @Column(name = "article", nullable = false, unique = true, updatable = false)
     private String article;
+
+    @Column(name = "path_to_barcode", nullable = false, unique = true, updatable = false)
+    private String pathToBarcode;
 
     @Column(name = "product_state", nullable = false)
     @Enumerated(value = EnumType.STRING)
@@ -53,6 +56,7 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
         super.onCreate();
         if (article == null) {
             article = Utils.generateRandomNumber();
+            pathToBarcode = article + ".xml";
         }
     }
 }

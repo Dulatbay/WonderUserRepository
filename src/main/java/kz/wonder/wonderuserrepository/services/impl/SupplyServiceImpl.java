@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import jakarta.transaction.Transactional;
+import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
@@ -8,6 +9,7 @@ import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
+import kz.wonder.wonderuserrepository.services.BarcodeService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
@@ -44,6 +47,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final StoreCellProductRepository storeCellProductRepository;
     private final SupplyMapper supplyMapper;
+    private final BarcodeService barcodeService;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -99,6 +103,8 @@ public class SupplyServiceImpl implements SupplyService {
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 
+        final List<MultipartFile> multipartFiles = new ArrayList<>();
+
         log.info("Found store id: {}", store.getId());
 
 
@@ -144,12 +150,12 @@ public class SupplyServiceImpl implements SupplyService {
                         var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(selectedProduct.getProductId(), userId)
                                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
-
                         for (int i = 0; i < selectedProduct.getQuantity(); i++) {
                             SupplyBoxProduct boxProducts = new SupplyBoxProduct();
                             boxProducts.setSupplyBox(supplyBox);
                             boxProducts.setProduct(product);
                             boxProducts.setState(ProductStateInStore.PENDING);
+
                             supplyBox.getSupplyBoxProducts().add(boxProducts);
                         }
 
@@ -169,6 +175,13 @@ public class SupplyServiceImpl implements SupplyService {
 
         log.info("Created supply id: {}", created.getId());
         log.info("Products size in create supply: {}", created.getSupplyBoxes().size());
+
+        CompletableFuture.runAsync(() ->
+                created.getSupplyBoxes()
+                        .forEach(box -> {
+
+                        })
+        );
 
         return created.getId();
     }

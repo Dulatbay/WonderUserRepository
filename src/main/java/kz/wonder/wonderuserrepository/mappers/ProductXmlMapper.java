@@ -78,9 +78,11 @@ public class ProductXmlMapper {
                         availability.setStoreId(price.getKaspiCity().getId().toString());
                         availabilities.add(availability);
 
+                        var kaspiCity = price.getKaspiCity();
+
                         KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
-                        cityPrice.setCityId(price.getKaspiCity().getId().toString());
-                        cityPrice.setPrice(price.getPrice().toString());
+                        cityPrice.setCityId(kaspiCity.getId().toString());
+                        cityPrice.setPrice(kaspiCity.isEnabled() ? price.getPrice().toString() : "0");
                         cityPrices.add(cityPrice);
                     });
         } else {
@@ -92,9 +94,10 @@ public class ProductXmlMapper {
                         availability.setStoreId(price.getKaspiCity().getId().toString());
                         availabilities.add(availability);
 
+                        var kaspiCity = price.getKaspiCity();
                         KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();
-                        cityPrice.setCityId(price.getKaspiCity().getId().toString());
-                        cityPrice.setPrice(price.getPrice().toString());
+                        cityPrice.setCityId(kaspiCity.getId().toString());
+                        cityPrice.setPrice(kaspiCity.isEnabled() ? price.getPrice().toString() : "0");
                         cityPrices.add(cityPrice);
                     });
         }
