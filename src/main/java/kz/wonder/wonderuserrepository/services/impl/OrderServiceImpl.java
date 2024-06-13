@@ -118,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
                     var kaspiOrder = saveKaspiOrder(order, token);
                     boolean storeNotFound = (kaspiOrder.getKaspiCity() == null || kaspiOrder.getKaspiStore() == null);
 
-                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId()) && kaspiOrderProductRepository.existsByKaspiId(p.getId())).toList();
+                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId()) && !kaspiOrderProductRepository.existsByKaspiId(p.getId())).toList();
 
                     for (var orderEntry : orderEntries) {
                         processOrderProduct(token, kaspiOrder, orderEntry);
