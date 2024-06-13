@@ -18,8 +18,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByIdAndKeycloakIdAndDeletedIsFalse(Long id, String keycloakId);
 
     @Query("SELECT p FROM Product p WHERE " +
-            "(:name IS NULL OR lower(p.name) LIKE '%' || lower(:name) || '%') OR " +
-            "(:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%') AND " +
+            "((:name IS NULL OR lower(p.name) LIKE '%' || lower(:name) || '%') OR " +
+            "(:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%')) AND " +
             "(:isEnabled IS NULL OR p.enabled = :isEnabled) AND " +
             "p.deleted = false")
     Page<Product> findAllBy(@Param("name") String name,
@@ -29,8 +29,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p " +
             "WHERE p.keycloakId = :keycloakUserId AND " +
-            "(:name IS NULL OR lower(p.name) LIKE '%' || lower(:name) || '%') OR " +
-            "(:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%') AND " +
+            "((:name IS NULL OR lower(p.name) LIKE '%' || lower(:name) || '%') OR " +
+            "(:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%')) AND " +
             "(:isEnabled IS NULL OR p.enabled = :isEnabled) AND " +
             "p.deleted = false")
     Page<Product> findByParams(
