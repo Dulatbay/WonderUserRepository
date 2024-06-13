@@ -19,4 +19,6 @@ public interface KaspiTokenRepository extends JpaRepository<KaspiToken, Long> {
             "LEFT JOIN SupplyBox sb ON sb.supply.id = s.id " +
             "LEFT JOIN SupplyBoxProduct sbp ON sbp.supplyBox.id = sb.id AND (sbp.state != 'SOLD' OR sbp.state != 'DECLINED')")
     List<KaspiToken> findAllSellersInStoreWithProducts(Long storeId);
+
+    List<KaspiToken> findAllByXmlUpdatedIsFalse();
 }

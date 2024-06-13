@@ -211,37 +211,49 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    public String generateOfProductsXmlByKeycloakId(String keycloakId) throws JAXBException {
-        final var listOfProducts = productRepository.findAllByKeycloakIdAndDeletedIsFalse(keycloakId);
+    public String generateOfProductsXmlByKeycloakId(String keycloakId) {
         final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
                         "Kaspi токен не существует",
                         "Создай свой kaspi токен перед запросом"));
 
-        final var wonderUser = kaspiToken.getWonderUser();
 
 
         if (kaspiToken.isXmlUpdated())
-            return wonderUser.getKeycloakId() + ".xml";
+            return kaspiToken.getPathToXml();
 
 
-        KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
+        return generateAndUpload(kaspiToken);
+    }
 
-        Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
-        String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
+    private String generateAndUpload(KaspiToken kaspiToken) {
+        try {
+            final var wonderUser = kaspiToken.getWonderUser();
+            final var listOfProducts = productRepository.findAllByKeycloakIdAndDeletedIsFalse(wonderUser.getKeycloakId());
 
-        var fileName = wonderUser.getKeycloakId() + ".xml";
+            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
 
-        MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
+            Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
+            String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
 
-        var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
+            var fileName = wonderUser.getKeycloakId() + ".xml";
 
-        kaspiToken.setPathToXml(fileName);
-        kaspiToken.setXmlUpdated(true);
-        kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
-        kaspiTokenRepository.save(kaspiToken);
+            MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
 
-        return resultOfUploading.get(0);
+            var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
+
+            kaspiToken.setPathToXml(fileName);
+            kaspiToken.setXmlUpdated(true);
+            kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
+            kaspiTokenRepository.save(kaspiToken);
+
+            return resultOfUploading.get(0);
+        }
+        catch (JAXBException e) {
+            log.error("JAXBException: ", e);
+            throw new IllegalStateException("Error when generating xml");
+        }
+
     }
 
     @Override
@@ -408,6 +420,14 @@ public class ProductServiceImpl implements ProductService {
         );
 
         return supplyBoxProducts.map(productMapper::mapProductsSizesResponse);
+    }
+
+    @Override
+    public void generateXmls() {
+        var tokens = kaspiTokenRepository.findAllByXmlUpdatedIsFalse();
+
+        tokens.parallelStream()
+                .forEach(this::generateAndUpload);
     }
 
     private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {

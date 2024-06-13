@@ -18,6 +18,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
             "FULL JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "WHERE ko.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
+            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
             "AND (" +
             "(:byOrderCode = FALSE AND :byShopName = FALSE AND :byStoreAddress = FALSE AND :byProductName = FALSE AND :byProductArticle = FALSE AND :byProductVendorCode = FALSE) " +
             "OR " +
