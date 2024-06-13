@@ -358,6 +358,7 @@ public class ProductServiceImpl implements ProductService {
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
                 productSearchParams.isByVendorCode(),
+                null,
                 pageRequest
         );
 
@@ -391,7 +392,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, String keycloakId, PageRequest pageRequest) {
+    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -402,6 +403,7 @@ public class ProductServiceImpl implements ProductService {
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
                 productSearchParams.isByVendorCode(),
+                isSizeScanned,
                 pageRequest
         );
 

@@ -33,5 +33,5 @@ public interface ProductService {
 
     void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId);
 
-    Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, String keycloakId, PageRequest pageRequest);
+    Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest);
 }

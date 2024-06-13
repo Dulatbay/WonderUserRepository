@@ -3,6 +3,7 @@ package kz.wonder.kaspi.client.api;
 import kz.wonder.kaspi.client.model.CitiesDataResponse;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.kaspi.client.model.PointOfServiceResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -47,6 +48,15 @@ public class KaspiApi {
                 .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(CitiesDataResponse.class)
+                .timeout(Duration.ofSeconds(100));
+    }
+
+    public Mono<PointOfServiceResponse> getStoreById(String orderEntryId, String token) {
+        return webClient.get()
+                .uri(String.format("orderentries/%s/deliveryPointOfService", orderEntryId))
+                .headers(httpHeaders(token))
+                .retrieve()
+                .bodyToMono(PointOfServiceResponse.class)
                 .timeout(Duration.ofSeconds(100));
     }
 

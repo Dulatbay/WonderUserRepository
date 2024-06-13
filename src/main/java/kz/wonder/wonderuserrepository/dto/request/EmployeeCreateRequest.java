@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,7 @@ public class EmployeeCreateRequest extends KeycloakBaseUser {
     @Email(message = "Please provide a valid email address")
     private String email;
 
-    @Digits(integer = 10, fraction = 0, message = "Phone number must have 10 integers")
+    @Size(min = 10, max = 11, message = "Phone number must be in range 10-11")
     private String phoneNumber;
 
     @NotNull(message = "Please provide a store id")

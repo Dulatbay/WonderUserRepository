@@ -21,7 +21,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "streetName")
     private String streetName;
 
-    @Column(name = "origin_address_id")
+    @Column(name = "origin_address_id", unique = true, nullable = false)
     private String originAddressId;
 
     @Column(name = "street_number")

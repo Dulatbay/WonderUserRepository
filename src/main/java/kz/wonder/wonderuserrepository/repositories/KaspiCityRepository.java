@@ -10,6 +10,8 @@ public interface KaspiCityRepository extends JpaRepository<KaspiCity, Long> {
 
     boolean existsByCode(String code);
 
+    Optional<KaspiCity> findByKaspiId(String code);
+
     Optional<KaspiCity> findByName(String name);
 
     Optional<KaspiCity> findByCode(String code);

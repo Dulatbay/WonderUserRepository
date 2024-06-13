@@ -167,13 +167,14 @@ public class ProductController {
     public ResponseEntity<PaginatedResponse<ProductWithSize>> getWithSizes(
             @ModelAttribute ProductSearchParams productSearchParams,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) boolean isSizeScanned) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<ProductWithSize> response = productService.getProductsSizes(productSearchParams, keycloakId, pageRequest);
+        Page<ProductWithSize> response = productService.getProductsSizes(productSearchParams, isSizeScanned, keycloakId, pageRequest);
 
         return ResponseEntity.ok(new PaginatedResponse<>(response));
     }
