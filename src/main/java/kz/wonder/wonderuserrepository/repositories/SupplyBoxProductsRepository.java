@@ -35,22 +35,16 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
             "WHERE sbp.id IN ( " +
-            "  SELECT MIN(sbp2.id) FROM SupplyBoxProduct sbp2 " +
+            "  SELECT sbp2.id FROM SupplyBoxProduct sbp2 " +
             "  LEFT JOIN Product p2 ON p2.id = sbp2.product.id " +
-            "  WHERE ((:byArticle = false OR (sbp2.article LIKE '%'|| :searchValue ||'%')) " +
-            "  AND (:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
-            "  AND (:byShopName = false OR lower(sbp2.supplyBox.supply.author.kaspiToken.sellerName) LIKE '%' || lower(:searchValue) || '%') " +
-            "  AND (:byCellCode = false OR sbp2.storeCellProduct.storeCell.code LIKE '%' || lower(:searchValue) || '%') " +
+            "  WHERE ((:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
             "  AND (:byVendorCode = false OR p2.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
             "  AND sbp2.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
-            "  GROUP BY p2.originalVendorCode " +
+            "  GROUP BY p2.originalVendorCode, sbp2.id " +
             ")")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
-                                        @Param("byArticle") Boolean byArticle,
                                         @Param("byProductName") Boolean byProductName,
-                                        @Param("byShopName") Boolean byShopName,
-                                        @Param("byCellCode") Boolean byCellCode,
                                         @Param("byVendorCode") Boolean byVendorCode,
                                         Pageable pageable);
 

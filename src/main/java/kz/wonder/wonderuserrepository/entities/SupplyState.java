@@ -5,5 +5,6 @@ public enum SupplyState {
     ACCEPTED, // приняли
     IN_PROGRESS, // в прогрессе
     IN_DELIVERY, //
+    END, //
     REJECTED //
 }

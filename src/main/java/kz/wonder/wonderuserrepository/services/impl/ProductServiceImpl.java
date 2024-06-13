@@ -32,7 +32,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -64,6 +63,11 @@ public class ProductServiceImpl implements ProductService {
         try (XSSFWorkbook workbook = new XSSFWorkbook(excelFile.getInputStream());
              ForkJoinPool customThreadPool = new ForkJoinPool(300)) {
             final Map<String, KaspiCity> cityCache = Collections.synchronizedMap(new HashMap<>());
+
+
+            var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakUserId)
+                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
 
             log.info("{} sheets loaded", workbook.getNumberOfSheets());
 
@@ -103,6 +107,9 @@ public class ProductServiceImpl implements ProductService {
 
             log.info("cities cache size: {}", cityCache.size());
             log.info("Product responses with size: {}", productResponses.size());
+
+            token.setXmlUpdated(false);
+            kaspiTokenRepository.save(token);
         } catch (ExecutionException | InterruptedException e) {
             log.error("Parallel processing error: ", e);
             Thread.currentThread().interrupt();
@@ -213,6 +220,11 @@ public class ProductServiceImpl implements ProductService {
 
         final var wonderUser = kaspiToken.getWonderUser();
 
+
+        if (kaspiToken.isXmlUpdated())
+            return wonderUser.getKeycloakId() + ".xml";
+
+
         KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
 
         Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
@@ -225,6 +237,7 @@ public class ProductServiceImpl implements ProductService {
         var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
 
         kaspiToken.setPathToXml(fileName);
+        kaspiToken.setXmlUpdated(true);
         kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
         kaspiTokenRepository.save(kaspiToken);
 
@@ -304,9 +317,16 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Товар уже имеет такое же состояние публикации");
         }
 
+
         product.setEnabled(isPublished);
 
         productRepository.save(product);
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
     @Override
@@ -318,6 +338,12 @@ public class ProductServiceImpl implements ProductService {
         if (productPriceChangeRequest.getMainPriceList() != null) {
             updateMainCities(keycloakId, productPriceChangeRequest.getMainPriceList());
         }
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
     @Override
@@ -329,11 +355,8 @@ public class ProductServiceImpl implements ProductService {
 
         var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
                 store.getId(),
-                productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase() : "",
-                productSearchParams.isByArticle(),
+                productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
-                productSearchParams.isByShopName(),
-                productSearchParams.isByCellCode(),
                 productSearchParams.isByVendorCode(),
                 pageRequest
         );
@@ -376,11 +399,8 @@ public class ProductServiceImpl implements ProductService {
 
         var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
                 store.getId(),
-                productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase() : "",
-                productSearchParams.isByArticle(),
+                productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
-                productSearchParams.isByShopName(),
-                productSearchParams.isByCellCode(),
                 productSearchParams.isByVendorCode(),
                 pageRequest
         );
@@ -434,6 +454,4 @@ public class ProductServiceImpl implements ProductService {
                     productPriceRepository.save(productPrice);
                 });
     }
-
-
 }

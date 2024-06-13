@@ -188,10 +188,10 @@ public class StoreController {
     public ResponseEntity<StoreResponse> getByIdOwnStore(@Parameter(description = "ID of the store to get retrieved")
                                                              @PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        var isSuperAdmin = getAuthorities(token.getAuthorities())
-                .contains(KeycloakRole.SUPER_ADMIN.name());
+        var keycloakId = Utils.extractIdFromToken(token);
 
-        var store = kaspiStoreService.getById(id, isSuperAdmin, Utils.extractIdFromToken(token));
+
+        var store = kaspiStoreService.getById(id, keycloakId);
 
         return ResponseEntity.ok(store);
     }
@@ -232,15 +232,12 @@ public class StoreController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the store details by ID")
     })
-    @AccessForAdmins
     public ResponseEntity<StoreDetailResponse> getByIdDetailOwnStores(@Parameter(description = "ID of the store to get information from", required = true)
                                                                           @PathVariable("id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        var isSuperAdmin = getAuthorities(token.getAuthorities())
-                .contains(KeycloakRole.SUPER_ADMIN.name());
         var keycloakId = extractIdFromToken(token);
 
-        var store = kaspiStoreService.getByIdAndByUserDetail(storeId, isSuperAdmin, keycloakId);
+        var store = kaspiStoreService.getByIdAndByUserDetail(storeId, keycloakId);
         return ResponseEntity.ok(store);
     }
 

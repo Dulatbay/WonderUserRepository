@@ -84,6 +84,13 @@ dependencies {
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:2.3.3")
 
 //    implementation("org.flywaydb:flyway-core")
+
+    // ZXing dependencies
+    implementation("com.google.zxing:core:3.4.1")
+    implementation("com.google.zxing:javase:3.4.1")
+
+    // iTextPDF dependencies
+    implementation("com.itextpdf:itextpdf:5.5.13.2")
 }
 
 dependencyManagement {
