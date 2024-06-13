@@ -48,7 +48,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
-    @Column(name = "deleted")
+    @Column(name = "deleted", nullable = false)
     private boolean deleted;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)

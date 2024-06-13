@@ -26,7 +26,7 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     @Query("SELECT ks FROM KaspiStore ks " +
             "WHERE (:streetName is null  or ks.streetName = :streetName) and " +
             "      (:streetNumber is null or ks.streetNumber = :streetNumber) and " +
-            "       ks.isDeleted = false")
+            "       ks.deleted = false")
     Optional<KaspiStore> findByStoreAddress(
             @Param("streetName") String streetName,
             @Param("streetNumber") String streetNumber);

@@ -34,12 +34,17 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "WHERE ((:byArticle = false OR (lower(sbp.article) LIKE '%'||lower(:searchValue)||'%')) " +
-            "AND (:byProductName = false OR p.name LIKE '%' || lower(:searchValue) || '%') " +
-            "AND (:byShopName = false OR sbp.supplyBox.supply.author.kaspiToken.sellerName LIKE '%' || lower(:searchValue) || '%') " +
-            "AND (:byCellCode = false OR sbp.storeCellProduct.storeCell.code LIKE '%' || lower(:searchValue) || '%') " +
-            "AND (:byVendorCode = false OR p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
-            "AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+            "WHERE sbp.id IN ( " +
+            "  SELECT MIN(sbp2.id) FROM SupplyBoxProduct sbp2 " +
+            "  LEFT JOIN Product p2 ON p2.id = sbp2.product.id " +
+            "  WHERE ((:byArticle = false OR (sbp2.article LIKE '%'|| :searchValue ||'%')) " +
+            "  AND (:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
+            "  AND (:byShopName = false OR lower(sbp2.supplyBox.supply.author.kaspiToken.sellerName) LIKE '%' || lower(:searchValue) || '%') " +
+            "  AND (:byCellCode = false OR sbp2.storeCellProduct.storeCell.code LIKE '%' || lower(:searchValue) || '%') " +
+            "  AND (:byVendorCode = false OR p2.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  AND sbp2.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
+            "  GROUP BY p2.originalVendorCode " +
+            ")")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
                                         @Param("byArticle") Boolean byArticle,
@@ -48,6 +53,7 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
                                         @Param("byCellCode") Boolean byCellCode,
                                         @Param("byVendorCode") Boolean byVendorCode,
                                         Pageable pageable);
+
 
 
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +

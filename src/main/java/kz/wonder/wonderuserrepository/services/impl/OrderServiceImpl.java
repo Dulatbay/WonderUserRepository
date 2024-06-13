@@ -13,14 +13,12 @@ import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.KaspiOrderMapper;
-import kz.wonder.wonderuserrepository.mappers.OrderMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -144,7 +142,7 @@ public class OrderServiceImpl implements OrderService {
                     startDate,
                     currentTime,
                     state,
-                    pageNumber);
+                    pageNumber, e);
         }
 
 
@@ -166,7 +164,7 @@ public class OrderServiceImpl implements OrderService {
                 orderSearchParams.isByProductVendorCode(),
                 pageRequest);
 
-        return orders.map(OrderServiceImpl::getEmployeeOrderResponse);
+        return orders.map(this::getEmployeeOrderResponse);
     }
 
     @Override
@@ -179,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
         var kaspiOrderProducts = order.getProducts();
 
         return kaspiOrderProducts.stream()
-                .map(kaspiOrderProduct -> OrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
+                .map(kaspiOrderProduct -> kaspiOrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
                 .toList();
     }
 
@@ -193,7 +191,7 @@ public class OrderServiceImpl implements OrderService {
         var kaspiOrderProducts = order.getProducts();
 
         return kaspiOrderProducts.stream()
-                .map(kaspiOrderProduct -> OrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
+                .map(kaspiOrderProduct -> kaspiOrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
                 .toList();
     }
 
@@ -222,11 +220,11 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .toList();
 
-        return OrderMapper.toOrderEmployeeDetailResponse(order, orderProducts);
+        return kaspiOrderMapper.toOrderEmployeeDetailResponse(order, orderProducts);
     }
 
-    private static @NotNull OrderEmployeeDetailResponse.Product getOrderEmployeeProduct(Optional<Product> product, Optional<SupplyBoxProduct> supplyBoxProductOptional, Optional<StoreCellProduct> storeCellProductOptional) {
-        return OrderMapper.mapToGetOrderEmployeeProduct(product, supplyBoxProductOptional, storeCellProductOptional);
+    private OrderEmployeeDetailResponse.Product getOrderEmployeeProduct(Optional<Product> product, Optional<SupplyBoxProduct> supplyBoxProductOptional, Optional<StoreCellProduct> storeCellProductOptional) {
+        return kaspiOrderMapper.mapToGetOrderEmployeeProduct(product, supplyBoxProductOptional, storeCellProductOptional);
     }
 
     @Override
@@ -264,12 +262,12 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private static OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
-        return OrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
+    private OrderResponse getOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {
+        return kaspiOrderMapper.mapToOrderResponse(kaspiOrder, tradePrice);
     }
 
-    private static EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        return OrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
+    private EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
+        return kaspiOrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
     }
 
 
@@ -293,10 +291,10 @@ public class OrderServiceImpl implements OrderService {
 
 
     private void processOrderProduct(KaspiToken token, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
-        var vendorCode = OrderMapper.extractVendorCode(orderEntry);
+        var vendorCode = kaspiOrderMapper.extractVendorCode(orderEntry);
 
         var product = productRepository
-                .findByOriginalVendorCodeAndKeycloakId(vendorCode,
+                .findByOriginalVendorCodeAndKeycloakIdAndDeletedIsFalse(vendorCode,
                         token.getWonderUser().getKeycloakId())
                 .orElse(null);
 

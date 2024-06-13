@@ -97,6 +97,7 @@ public class KaspiStoreMapper {
         kaspiStore.setStreetNumber(kaspiStoreCreateRequest.getStreetNumber());
         kaspiStore.setFormattedAddress(formattedAddress);
         kaspiStore.setEnabled(true);
+        kaspiStore.setDeleted(false);
 
         return kaspiStore;
     }

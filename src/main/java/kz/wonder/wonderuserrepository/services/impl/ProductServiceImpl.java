@@ -32,6 +32,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -138,7 +139,7 @@ public class ProductServiceImpl implements ProductService {
     private Product processProduct(String vendorCode, String name, String link, String isPublic, double tradePrice, String keycloakUserId) {
         var originVendorCode = vendorCode.split("_")[0];
         Product product = productRepository
-                .findByOriginalVendorCodeAndKeycloakId(originVendorCode, keycloakUserId)
+                .findByOriginalVendorCodeAndKeycloakIdAndDeletedIsFalse(originVendorCode, keycloakUserId)
                 .orElse(new Product());
         product.setVendorCode(vendorCode);
         product.setOriginalVendorCode(originVendorCode);
@@ -204,8 +205,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public String generateOfProductsXmlByKeycloakId(String keycloakId) throws JAXBException {
-        final var listOfProducts = productRepository.findAllByKeycloakId(keycloakId)
-                .subList(0, 10);
+        final var listOfProducts = productRepository.findAllByKeycloakIdAndDeletedIsFalse(keycloakId);
         final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
                         "Kaspi токен не существует",
@@ -233,11 +233,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProductById(String keycloakId, Long productId) {
-
-        final var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+        final var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Товар не существует"));
         log.info("Product with id {} was deleted", productId);
-        productRepository.delete(product);
+
+        product.setDeleted(true);
+        product.setEnabled(false);
+        productRepository.save(product);
     }
 
     // todo: refactoring
@@ -295,7 +297,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void changePublish(String keycloakId, Long productId, Boolean isPublished) {
-        var product = productRepository.findByIdAndKeycloakId(productId, keycloakId)
+        var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(productId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
         if (product.isEnabled() == isPublished) {
@@ -344,7 +346,7 @@ public class ProductServiceImpl implements ProductService {
         final var wonderUser = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
-        boolean productExists = productRepository.existsByOriginalVendorCode(originVendorCode);
+        boolean productExists = productRepository.existsByOriginalVendorCodeAndDeletedIsFalse(originVendorCode);
 
 
         if (!productExists) {
@@ -390,7 +392,7 @@ public class ProductServiceImpl implements ProductService {
         mainPrices
                 .forEach(price -> {
 
-                    var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
+                    var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(price.getProductId(), keycloakId)
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
 
@@ -419,7 +421,7 @@ public class ProductServiceImpl implements ProductService {
     private void updatePrice(String keycloakId, List<ProductPriceChangeRequest.Price> prices) {
         prices
                 .forEach(price -> {
-                    var product = productRepository.findByIdAndKeycloakId(price.getProductId(), keycloakId)
+                    var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(price.getProductId(), keycloakId)
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
                     var city = kaspiCityRepository.findById(price.getCityId())

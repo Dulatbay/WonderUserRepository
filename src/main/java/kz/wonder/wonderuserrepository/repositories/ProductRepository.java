@@ -11,16 +11,17 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    Optional<Product> findByVendorCodeAndKeycloakId(String vendorCode, String keycloakId);
+    Optional<Product> findByVendorCodeAndKeycloakIdAndDeletedIsFalse(String vendorCode, String keycloakId);
 
-    Optional<Product> findByOriginalVendorCodeAndKeycloakId(String originalVendorCode, String keycloakId);
+    Optional<Product> findByOriginalVendorCodeAndKeycloakIdAndDeletedIsFalse(String originalVendorCode, String keycloakId);
 
-    Optional<Product> findByIdAndKeycloakId(Long id, String keycloakId);
+    Optional<Product> findByIdAndKeycloakIdAndDeletedIsFalse(Long id, String keycloakId);
 
     @Query("SELECT p FROM Product p WHERE " +
             "(:name IS NULL OR lower(p.name) LIKE '%' || lower(:name) || '%') OR " +
             "(:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%') AND " +
-            "(:isEnabled IS NULL OR p.enabled = :isEnabled)")
+            "(:isEnabled IS NULL OR p.enabled = :isEnabled) AND " +
+            "p.deleted = false")
     Page<Product> findAllBy(@Param("name") String name,
                             @Param("vendorCode") String vendorCode,
                             @Param("isEnabled") Boolean isEnabled,
@@ -30,7 +31,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "WHERE p.keycloakId = :keycloakUserId AND " +
             "(:name IS NULL OR lower(p.name) LIKE '%' || lower(:name) || '%') OR " +
             "(:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%') AND " +
-            "(:isEnabled IS NULL OR p.enabled = :isEnabled)")
+            "(:isEnabled IS NULL OR p.enabled = :isEnabled) AND " +
+            "p.deleted = false")
     Page<Product> findByParams(
             @Param("keycloakUserId") String keycloakUserId,
             @Param("name") String name,
@@ -38,17 +40,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("isEnabled") Boolean isEnabled,
             Pageable pageable);
 
-    List<Product> findAllByKeycloakId(String keycloakUserId);
+    List<Product> findAllByKeycloakIdAndDeletedIsFalse(String keycloakUserId);
 
     @Query("SELECT p FROM Product p " +
             "WHERE p.keycloakId = :keycloakUserId " +
             "AND ((:name IS NULL OR lower(p.name) LIKE '%' || lower(:name)|| '%') OR (:vendorCode IS NULL OR lower(p.vendorCode) LIKE '%' || lower(:vendorCode) || '%')) " +
-            "AND (:isEnabled IS NULL OR p.enabled = :isEnabled)")
+            "AND (:isEnabled IS NULL OR p.enabled = :isEnabled) " +
+            "AND p.deleted = false")
     Page<Product> findAllByKeycloakId(@Param("keycloakUserId") String keycloakUserId,
                                       @Param("name") String name,
                                       @Param("vendorCode") String vendorCode,
                                       @Param("isEnabled") Boolean isEnabled,
                                       Pageable pageable);
 
-    boolean existsByOriginalVendorCode(String originalVendorCode);
+    boolean existsByOriginalVendorCodeAndDeletedIsFalse(String originalVendorCode);
 }

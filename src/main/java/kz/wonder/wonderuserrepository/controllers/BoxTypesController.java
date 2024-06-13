@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.dto.request.BoxTypeCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.BoxTypeResponse;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
-import kz.wonder.wonderuserrepository.security.authorizations.base.AdminAuthorization;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -42,10 +41,21 @@ public class BoxTypesController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved all box types for the store")
     })
-    public ResponseEntity<List<BoxTypeResponse>> getAll(@Parameter(description = "ID of the store to get box types", required = true)
+    public ResponseEntity<List<BoxTypeResponse>> getAllByStoreId(@Parameter(description = "ID of the store to get box types", required = true)
                                                             @RequestParam(value = "store-id", required = false) Long storeId) {
-        return ResponseEntity.ok(boxTypeService.getAll(storeId));
+        return ResponseEntity.ok(boxTypeService.getAllByStore(storeId));
     }
+
+    @GetMapping("/all")
+    @Operation(summary = "Get all box types", description = "Retrieves all box types")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved all box types")
+    })
+    public ResponseEntity<List<BoxTypeResponse>> getAll() {
+        return ResponseEntity.ok(boxTypeService.getAll());
+    }
+
+
 
     @DeleteMapping("{id}")
     @Operation(summary = "Delete existing box type", description = "This endpoint allows to delete existing box type. Fill in the id of the box type")
