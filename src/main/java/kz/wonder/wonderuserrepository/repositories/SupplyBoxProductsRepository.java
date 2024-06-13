@@ -34,7 +34,7 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "WHERE sbp.id IN ( " +
+            "WHERE MIN(sbp.id) IN ( " +
             "  SELECT sbp2.id FROM SupplyBoxProduct sbp2 " +
             "  LEFT JOIN Product p2 ON p2.id = sbp2.product.id " +
             "  WHERE ((:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
