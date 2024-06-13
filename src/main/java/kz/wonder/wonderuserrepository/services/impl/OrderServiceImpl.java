@@ -12,13 +12,13 @@ import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.KaspiDeliveryAddressMapper;
 import kz.wonder.wonderuserrepository.mappers.KaspiOrderMapper;
+import kz.wonder.wonderuserrepository.mappers.KaspiStoreMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.OrderService;
-import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class OrderServiceImpl implements OrderService {
     private final KaspiOrderRepository kaspiOrderRepository;
-    private final UserService userService;
     private final KaspiApi kaspiApi;
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductRepository productRepository;
@@ -45,6 +43,10 @@ public class OrderServiceImpl implements OrderService {
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
     private final KaspiOrderMapper kaspiOrderMapper;
+    private final KaspiDeliveryAddressMapper kaspiDeliveryAddressMapper;
+    private final KaspiCityRepository kaspiCityRepository;
+    private final KaspiStoreMapper kaspiStoreMapper;
+    private final KaspiStoreRepository kaspiStoreRepository;
 
 
     @Override
@@ -112,16 +114,61 @@ public class OrderServiceImpl implements OrderService {
             log.info("orders count: {}, products count: {}", orders.size(), products.size());
 
             for (var order : orders) {
-                var pairResult = saveKaspiOrder(order, token);
-                if (pairResult.getValue()) {
-                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId())).toList();
-                    orderEntries.stream()
-                            .filter(orderEntry -> !kaspiOrderProductRepository.existsByKaspiId(orderEntry.getId()))
-                            .forEach(orderEntry -> {
-                                processOrderProduct(token, pairResult.getKey(), orderEntry);
-                            });
-                }
+                try {
+                    var kaspiOrder = saveKaspiOrder(order, token);
+                    boolean storeNotFound = (kaspiOrder.getKaspiCity() == null || kaspiOrder.getKaspiStore() == null);
 
+
+                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId()) && kaspiOrderProductRepository.existsByKaspiId(p.getId())).toList();
+
+                    for (var orderEntry : orderEntries) {
+                        processOrderProduct(token, kaspiOrder, orderEntry);
+
+                        if (storeNotFound) {
+                            var pointOfServiceResponse = kaspiApi.getStoreById(orderEntry.getId(), token.getToken()).block();
+
+                            assert pointOfServiceResponse != null;
+                            var kaspiCity = kaspiCityRepository.findByKaspiId(pointOfServiceResponse.getCityRelationship().getData().getId())
+                                    .orElseThrow(() -> new RuntimeException("Kaspi Store not found"));
+
+                            var kaspiStore = kaspiStoreMapper.findByAddress(pointOfServiceResponse.getAddress(), kaspiCity);
+
+                            if (kaspiStore.isEmpty())
+                                kaspiStore = kaspiStoreRepository.findByOriginAddressId(pointOfServiceResponse.getId());
+
+                            if (kaspiStore.isEmpty()) {
+
+
+                                log.info("Create store with kaspiEndPoint: {}", kaspiOrder.getCode());
+
+                                var createdKaspiStore = kaspiStoreMapper.createStoreByParamsOfOrder(pointOfServiceResponse.getId(),
+                                        pointOfServiceResponse.getDisplayName(),
+                                        pointOfServiceResponse.getAddress(),
+                                        kaspiCity,
+                                        null
+                                );
+
+                                kaspiOrder.setKaspiStore(createdKaspiStore);
+                                kaspiOrderRepository.save(kaspiOrder);
+                            } else {
+                                kaspiOrder.setKaspiStore(kaspiStore.get());
+                                kaspiOrderRepository.save(kaspiOrder);
+                            }
+
+                            storeNotFound = false;
+                        }
+
+                    }
+                } catch (Exception e) {
+                    log.error("Initializing error, sellerName: {}, startDate: {}, endDate: {}, orderState: {}, pageNumber: {}, order: {}",
+                            token.getSellerName(),
+                            startDate,
+                            currentTime,
+                            state,
+                            pageNumber,
+                            order.getAttributes().getCode(),
+                            e);
+                }
             }
 
             if (ordersDataResponse.getMeta().getPageCount() > pageNumber + 1) {
@@ -144,8 +191,6 @@ public class OrderServiceImpl implements OrderService {
                     state,
                     pageNumber, e);
         }
-
-
     }
 
     @Override
@@ -155,13 +200,13 @@ public class OrderServiceImpl implements OrderService {
                 Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
                 Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
                 orderSearchParams.getDeliveryMode(),
-                orderSearchParams.getSearchValue().toLowerCase(),
-                orderSearchParams.isByOrderCode(),
-                orderSearchParams.isByShopName(),
-                orderSearchParams.isByStoreAddress(),
-                orderSearchParams.isByProductName(),
-                orderSearchParams.isByProductArticle(),
-                orderSearchParams.isByProductVendorCode(),
+//                orderSearchParams.getSearchValue() != null ? orderSearchParams.getSearchValue().toLowerCase().trim() : null,
+//                orderSearchParams.isByOrderCode(),
+//                orderSearchParams.isByShopName(),
+//                orderSearchParams.isByStoreAddress(),
+//                orderSearchParams.isByProductName(),
+//                orderSearchParams.isByProductArticle(),
+//                orderSearchParams.isByProductVendorCode(),
                 pageRequest);
 
         return orders.map(this::getEmployeeOrderResponse);
@@ -239,7 +284,7 @@ public class OrderServiceImpl implements OrderService {
 
             log.info("Found {} tokens", tokens.size());
 
-            tokens.parallelStream().forEach(token -> {
+            tokens.forEach(token -> {
                 if (token.getToken().equals("tester")) return;
                 try {
                     CompletableFuture<Void> kaspiDeliveryFuture = CompletableFuture.runAsync(() ->
@@ -271,21 +316,45 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-    private Pair<KaspiOrder, Boolean> saveKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
+    private KaspiOrder saveKaspiOrder(OrdersDataResponse.OrdersDataItem order, KaspiToken token) {
         var orderAttributes = order.getAttributes();
         var optionalKaspiOrder = kaspiOrderRepository.findByCode(orderAttributes.getCode());
 
         if (optionalKaspiOrder.isPresent()) {
-            var updatedKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
-            updatedKaspiOrder.setId(optionalKaspiOrder.get().getId());
-            updatedKaspiOrder.setCreatedAt(optionalKaspiOrder.get().getCreatedAt());
-            updatedKaspiOrder.setOrderAssemble(optionalKaspiOrder.get().getOrderAssemble());
-
-            return Pair.of(kaspiOrderRepository.save(updatedKaspiOrder), Objects.equals(updatedKaspiOrder.getStatus(), "ACCEPTED_BY_MERCHANT"));
+            return kaspiOrderMapper.updateKaspiOrder(optionalKaspiOrder.get(), token, order, orderAttributes);
         } else {
-            var toCreateKaspiOrder = kaspiOrderMapper.toKaspiOrder(token, order, orderAttributes);
-            kaspiOrderRepository.save(toCreateKaspiOrder);
-            return Pair.of(kaspiOrderRepository.save(toCreateKaspiOrder), Objects.equals(toCreateKaspiOrder.getStatus(), "ACCEPTED_BY_MERCHANT"));
+            var kaspiOrder = kaspiOrderMapper.saveKaspiOrder(token, order, orderAttributes);
+
+            detectStoreAndCity(orderAttributes, kaspiOrder);
+
+            return kaspiOrderRepository.save(kaspiOrder);
+        }
+    }
+
+    private void detectStoreAndCity(OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
+        if (orderAttributes.getDeliveryAddress() != null) {
+            kaspiOrder.setDeliveryAddress(kaspiDeliveryAddressMapper.getKaspiDeliveryAddress(orderAttributes));
+        }
+
+        // if the originAddress is null, then an order delivery type is pickup
+        if (orderAttributes.getOriginAddress() != null) {
+
+            var kaspiCity = kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
+                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
+
+            var kaspiStore = kaspiStoreMapper.getKaspiStore(orderAttributes, orderAttributes.getOriginAddress(), kaspiCity);
+
+            kaspiOrder.setKaspiStore(kaspiStore);
+            kaspiOrder.setKaspiCity(kaspiCity);
+        } else {
+            var pickupPointId = orderAttributes.getPickupPointId();
+
+            var kaspiStoreOptional = kaspiStoreRepository.findByPickupPointId(pickupPointId);
+
+            if (kaspiStoreOptional.isPresent()) {
+                kaspiOrder.setKaspiStore(kaspiStoreOptional.get());
+                kaspiOrder.setKaspiCity(kaspiStoreOptional.get().getKaspiCity());
+            }
         }
     }
 
@@ -312,9 +381,9 @@ public class OrderServiceImpl implements OrderService {
 
 
                 log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-//                    if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
-                log.info("supplyBoxProductToSave: {}", supplyBoxProduct.getId());
-//            }
+                if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+                    log.info("supplyBoxProduct to save: {}", supplyBoxProduct.getId());
+                }
 
                 supplyBoxProduct.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
                 supplyBoxProduct.setKaspiOrder(kaspiOrder);

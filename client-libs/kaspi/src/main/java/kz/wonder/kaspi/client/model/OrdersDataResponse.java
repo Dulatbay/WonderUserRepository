@@ -31,10 +31,10 @@ public class OrdersDataResponse {
         private Double deliveryCostForSeller;
         private Boolean isKaspiDelivery;
         private String deliveryMode;
-        private DeliveryAddress deliveryAddress;
+        private DeliveryAddress deliveryAddress = new DeliveryAddress();
         private Boolean signatureRequired;
         private Integer creditTerm;
-        private KaspiDelivery kaspiDelivery;
+        private KaspiDelivery kaspiDelivery = new KaspiDelivery();
         private Boolean preOrder;
         private String pickupPointId;
         private String state;
@@ -53,18 +53,6 @@ public class OrdersDataResponse {
         private City city;
     }
 
-    @Data
-    public static class DetailedAddress {
-        private String streetName;
-        private String streetNumber;
-        private String town;
-        private String district;
-        private String building;
-        private String apartment;
-        private String formattedAddress;
-        private Double latitude;
-        private Double longitude;
-    }
 
     @Data
     public static class City {

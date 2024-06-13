@@ -13,9 +13,11 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
 
     Optional<KaspiStore> findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(String keycloakId, Long id);
 
-    Optional<KaspiStore> findByOriginAddressIdAndDeletedIsFalse(String originAddressId);
+    Optional<KaspiStore> findByOriginAddressId(String originAddressId);
 
     Optional<KaspiStore> findByPickupPointIdAndWonderUserKeycloakIdAndDeletedIsFalse(String pickupPointId, String keycloakId);
+
+    Optional<KaspiStore> findByPickupPointId(String pickupPointId);
 
     List<KaspiStore> findAllByEnabledIsTrueAndDeletedIsFalse();
 
@@ -26,8 +28,10 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
     @Query("SELECT ks FROM KaspiStore ks " +
             "WHERE (:streetName is null  or ks.streetName = :streetName) and " +
             "      (:streetNumber is null or ks.streetNumber = :streetNumber) and " +
-            "       ks.deleted = false")
+            "       ks.deleted = false and" +
+            "       ks.kaspiCity.id = :kaspiCityId")
     Optional<KaspiStore> findByStoreAddress(
             @Param("streetName") String streetName,
-            @Param("streetNumber") String streetNumber);
+            @Param("streetNumber") String streetNumber,
+            @Param("kaspiCityId") Long kaspiCityId);
 }

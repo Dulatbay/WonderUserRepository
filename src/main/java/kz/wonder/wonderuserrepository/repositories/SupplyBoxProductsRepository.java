@@ -34,18 +34,22 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "WHERE MIN(sbp.id) IN ( " +
-            "  SELECT sbp2.id FROM SupplyBoxProduct sbp2 " +
+            "LEFT JOIN ProductSize ps ON ps.originVendorCode = p.originalVendorCode " +
+            "WHERE (:isSizeScanned is NULL " +
+            "OR (:isSizeScanned = false " +
+            "OR (ps.comment is not null OR ps.weight is not null OR ps.width is not null OR ps.length is not null OR ps.height is not null))) " +
+            "AND sbp.id IN ( " +
+            "  SELECT MIN(sbp2.id) FROM SupplyBoxProduct sbp2 " +
             "  LEFT JOIN Product p2 ON p2.id = sbp2.product.id " +
             "  WHERE ((:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
             "  AND (:byVendorCode = false OR p2.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
             "  AND sbp2.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
-            "  GROUP BY p2.originalVendorCode, sbp2.id " +
-            ")")
+            "  GROUP BY p2.originalVendorCode) ")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
                                         @Param("byProductName") Boolean byProductName,
                                         @Param("byVendorCode") Boolean byVendorCode,
+                                        @Param("isSizeScanned") Boolean isSizeScanned,
                                         Pageable pageable);
 
 

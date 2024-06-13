@@ -74,24 +74,18 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
             "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
             "WHERE se.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
-            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
-            "OR ((:byOrderCode = false OR lower(ko.code) LIKE '%' || :searchValue  || '%') " +
-            "OR (:byShopName = false OR lower(ko.wonderUser.kaspiToken.sellerName) LIKE '%' || :searchValue  || '%') " +
-            "OR (:byStoreAddress = false OR lower(ko.kaspiStore.formattedAddress) LIKE '%' || :searchValue  || '%') " +
-            "OR (:byProductName = false OR lower(kop.product.name) LIKE '%' || :searchValue || '%') " +
-            "OR (:byProductArticle = false OR  lower(kop.supplyBoxProduct.article)  LIKE '%' || :searchValue || '%') " +
-            "OR (:byProductVendorCode = false OR :searchValue like kop.product.vendorCode))" +
-            "ORDER BY ko.creationDate ASC")
+            "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) ")
     Page<KaspiOrder> findAllEmployeeOrders(String keycloakId,
                                            Long from,
                                            Long to,
                                            DeliveryMode deliveryMode,
-                                           String searchValue,
-                                           boolean byOrderCode,
-                                           boolean byShopName,
-                                           boolean byStoreAddress,
-                                           boolean byProductName,
-                                           boolean byProductArticle,
-                                           boolean byProductVendorCode,Pageable pageable);
+//                                           String searchValue,
+//                                           boolean byOrderCode,
+//                                           boolean byShopName,
+//                                           boolean byStoreAddress,
+//                                           boolean byProductName,
+//                                           boolean byProductArticle,
+//                                           boolean byProductVendorCode,
+                                           Pageable pageable);
 
 }

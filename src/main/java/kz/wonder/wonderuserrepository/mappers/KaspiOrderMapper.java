@@ -9,6 +9,7 @@ import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
+import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,56 +28,26 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 @RequiredArgsConstructor
 @Slf4j
 public class KaspiOrderMapper {
-    private final KaspiDeliveryAddressMapper deliveryAddressMapper;
-    private final KaspiStoreMapper kaspiStoreMapper;
-    private final KaspiCityRepository kaspiCityRepository;
-    private final KaspiStoreRepository kaspiStoreRepository;
     private final StoreCellProductRepository storeCellProductRepository;
+    private final KaspiOrderRepository kaspiOrderRepository;
 
 
-    public KaspiOrder toKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
+    public KaspiOrder saveKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
         KaspiOrder kaspiOrder = new KaspiOrder();
+
+        this.mapToKaspiOrder(token, order, orderAttributes, kaspiOrder);
+
+        return kaspiOrder;
+    }
+
+    private void mapToKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes, KaspiOrder kaspiOrder) {
         kaspiOrder.setKaspiId(order.getOrderId());
         kaspiOrder.setCode(orderAttributes.getCode());
         kaspiOrder.setTotalPrice(orderAttributes.getTotalPrice());
         kaspiOrder.setPaymentMode(orderAttributes.getPaymentMode());
-
-        if (orderAttributes.getDeliveryAddress() != null) {
-            kaspiOrder.setDeliveryAddress(deliveryAddressMapper.getKaspiDeliveryAddress(orderAttributes));
-        }
-
-        // if the originAddress is null, then an order delivery type is express
-        if (orderAttributes.getOriginAddress() != null) {
-            var kaspiCity = kaspiCityRepository.findByCode(orderAttributes.getOriginAddress().getCity().getCode())
-                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Kaspi city not found", ""));
-
-            var kaspiStore = kaspiStoreMapper.getKaspiStore(orderAttributes, orderAttributes.getOriginAddress(), kaspiCity);
-
-            kaspiOrder.setKaspiStore(kaspiStore);
-            kaspiOrder.setKaspiCity(kaspiCity);
-            kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
-            kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());
-            kaspiOrder.setCourierTransmissionPlanningDate(orderAttributes.getKaspiDelivery().getCourierTransmissionPlanningDate());
-            kaspiOrder.setWaybillNumber(orderAttributes.getKaspiDelivery().getWaybillNumber());
-            kaspiOrder.setExpress(orderAttributes.getKaspiDelivery().getExpress());
-            kaspiOrder.setReturnedToWarehouse(orderAttributes.getKaspiDelivery().getReturnedToWarehouse());
-            kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
-        } else {
-            var pickupPointId = orderAttributes.getPickupPointId();
-
-            var kaspiStoreOptional = kaspiStoreRepository.findByPickupPointIdAndWonderUserKeycloakIdAndDeletedIsFalse(pickupPointId, token.getWonderUser().getKeycloakId());
-
-            if (kaspiStoreOptional.isPresent()) {
-                kaspiOrder.setKaspiStore(kaspiStoreOptional.get());
-                kaspiOrder.setKaspiCity(kaspiStoreOptional.get().getKaspiCity());
-            }
-        }
-
-
         kaspiOrder.setCreditTerm(orderAttributes.getCreditTerm());
         kaspiOrder.setPlannedDeliveryDate(orderAttributes.getPlannedDeliveryDate());
         kaspiOrder.setCreationDate(orderAttributes.getCreationDate());
-        kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
         kaspiOrder.setIsKaspiDelivery(orderAttributes.getIsKaspiDelivery());
         kaspiOrder.setDeliveryMode(DeliveryMode.buildDeliveryMode(orderAttributes.getDeliveryMode(), orderAttributes.getIsKaspiDelivery()));
         kaspiOrder.setSignatureRequired(orderAttributes.getSignatureRequired());
@@ -91,9 +62,23 @@ public class KaspiOrderMapper {
         kaspiOrder.setCustomerFirstName(orderAttributes.getCustomer().getFirstName());
         kaspiOrder.setCustomerLastName(orderAttributes.getCustomer().getLastName());
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
+        kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
         kaspiOrder.setWonderUser(token.getWonderUser());
+        kaspiOrder.setWaybill(orderAttributes.getKaspiDelivery().getWaybill());
+        kaspiOrder.setCourierTransmissionDate(orderAttributes.getKaspiDelivery().getCourierTransmissionDate());
+        kaspiOrder.setCourierTransmissionPlanningDate(orderAttributes.getKaspiDelivery().getCourierTransmissionPlanningDate());
+        kaspiOrder.setWaybillNumber(orderAttributes.getKaspiDelivery().getWaybillNumber());
+        kaspiOrder.setExpress(orderAttributes.getKaspiDelivery().getExpress());
+        kaspiOrder.setReturnedToWarehouse(orderAttributes.getKaspiDelivery().getReturnedToWarehouse());
+        kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
+    }
 
-        return kaspiOrder;
+
+    public KaspiOrder updateKaspiOrder(KaspiOrder kaspiOrder, KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
+
+        mapToKaspiOrder(token, order, orderAttributes, kaspiOrder);
+
+        return kaspiOrderRepository.save(kaspiOrder);
     }
 
     public OrderResponse mapToOrderResponse(KaspiOrder kaspiOrder, Double tradePrice) {

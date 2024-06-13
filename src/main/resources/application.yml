@@ -4,7 +4,7 @@ application:
   keycloak-url: ${KEYCLOAK_URL:http://34.118.60.220}
   realm: wonder
   client-id: wonder
-  username: admin_qit
+  username: admin@mail.ru
   password: admin_password
   mode: ${APP_MODE}
   admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:99d66d43-e8a1-4fe6-a854-8ce686c73ed6}

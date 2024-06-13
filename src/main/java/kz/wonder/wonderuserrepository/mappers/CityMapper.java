@@ -21,6 +21,7 @@ public class CityMapper {
         newCity.setCode(city.getAttributes().getCode());
         newCity.setName(city.getAttributes().getName());
         newCity.setEnabled(city.getAttributes().isActive());
+        newCity.setKaspiId(city.getId());
         return newCity;
     }
 }
