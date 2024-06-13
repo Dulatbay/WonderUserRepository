@@ -118,7 +118,6 @@ public class OrderServiceImpl implements OrderService {
                     var kaspiOrder = saveKaspiOrder(order, token);
                     boolean storeNotFound = (kaspiOrder.getKaspiCity() == null || kaspiOrder.getKaspiStore() == null);
 
-
                     var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId()) && kaspiOrderProductRepository.existsByKaspiId(p.getId())).toList();
 
                     for (var orderEntry : orderEntries) {
@@ -137,8 +136,6 @@ public class OrderServiceImpl implements OrderService {
                                 kaspiStore = kaspiStoreRepository.findByOriginAddressId(pointOfServiceResponse.getId());
 
                             if (kaspiStore.isEmpty()) {
-
-
                                 log.info("Create store with kaspiEndPoint: {}", kaspiOrder.getCode());
 
                                 var createdKaspiStore = kaspiStoreMapper.createStoreByParamsOfOrder(pointOfServiceResponse.getId(),
@@ -367,8 +364,6 @@ public class OrderServiceImpl implements OrderService {
                         token.getWonderUser().getKeycloakId())
                 .orElse(null);
 
-//        if (product != null)
-//            log.info("product id: {}, keycloak id: {}, store id: {}", product.getId(), token.getWonderUser().getKeycloakId(), kaspiOrder.getKaspiStore().getId());
 
         if (product != null) {
 
@@ -381,9 +376,9 @@ public class OrderServiceImpl implements OrderService {
 
 
                 log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-                if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
-                    log.info("supplyBoxProduct to save: {}", supplyBoxProduct.getId());
-                }
+//                if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
+                log.info("supplyBoxProduct to save: {}", supplyBoxProduct.getId());
+//                }
 
                 supplyBoxProduct.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
                 supplyBoxProduct.setKaspiOrder(kaspiOrder);

@@ -4,11 +4,12 @@ package kz.wonder.wonderuserrepository.dto.request;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class EmployeeUpdateRequest {
-    @Digits(integer = 10, fraction = 0, message = "Phone number must have 10 integers")
+    @Size(min = 10, max = 11, message = "Phone number must be in range 10-11")
     private String phoneNumber;
 
     @NotNull(message = "Store id must not be null")
