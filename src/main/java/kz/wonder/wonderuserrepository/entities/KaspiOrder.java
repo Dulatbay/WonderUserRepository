@@ -125,7 +125,7 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @JoinColumn(name = "wonder_user_id", columnDefinition = "bigint")
     private WonderUser wonderUser;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", fetch = FetchType.EAGER)
     private List<KaspiOrderProduct> products = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY,

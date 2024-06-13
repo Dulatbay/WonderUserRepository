@@ -197,13 +197,13 @@ public class OrderServiceImpl implements OrderService {
                 Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
                 Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
                 orderSearchParams.getDeliveryMode(),
-//                orderSearchParams.getSearchValue() != null ? orderSearchParams.getSearchValue().toLowerCase().trim() : null,
-//                orderSearchParams.isByOrderCode(),
-//                orderSearchParams.isByShopName(),
-//                orderSearchParams.isByStoreAddress(),
-//                orderSearchParams.isByProductName(),
-//                orderSearchParams.isByProductArticle(),
-//                orderSearchParams.isByProductVendorCode(),
+                orderSearchParams.getSearchValue() != null ? orderSearchParams.getSearchValue().toLowerCase().trim() : null,
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
                 pageRequest);
 
         return orders.map(this::getEmployeeOrderResponse);
@@ -392,8 +392,7 @@ public class OrderServiceImpl implements OrderService {
                 kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
                 kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProduct);
 
-
-                kaspiOrder.getProducts().add(kaspiOrderProduct);
+                kaspiOrderProductRepository.save(kaspiOrderProduct);
             }
 
 
