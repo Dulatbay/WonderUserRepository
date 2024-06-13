@@ -19,7 +19,6 @@ public class StoreCellCreateRequest {
     @NotNull(message = "Cell cannot be null")
     private Long cell;
 
-    @NotNull(message = "Please provide comment")
     private String comment;
 
     @NotNull(message = "Please provide width")
