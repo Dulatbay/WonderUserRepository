@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -126,7 +128,7 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private WonderUser wonderUser;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.EAGER)
-    private List<KaspiOrderProduct> products = new ArrayList<>();
+    private Set<KaspiOrderProduct> products = new HashSet<>();
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "kaspiOrder",

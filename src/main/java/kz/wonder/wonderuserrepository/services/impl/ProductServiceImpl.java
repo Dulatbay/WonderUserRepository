@@ -181,7 +181,7 @@ public class ProductServiceImpl implements ProductService {
         var priceAtShymkent = processProductPrice(product, cityShymkent, priceShymkent);
 
 
-        product.setPrices(new ArrayList<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
+        product.setPrices(new HashSet<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
     }
 
     private KaspiCity getCachedCity(String cityName, Map<String, KaspiCity> cityCache) {
@@ -218,7 +218,6 @@ public class ProductServiceImpl implements ProductService {
                         "Создай свой kaspi токен перед запросом"));
 
 
-
         if (kaspiToken.isXmlUpdated())
             return kaspiToken.getPathToXml();
 
@@ -248,8 +247,7 @@ public class ProductServiceImpl implements ProductService {
             kaspiTokenRepository.save(kaspiToken);
 
             return resultOfUploading.get(0);
-        }
-        catch (JAXBException e) {
+        } catch (JAXBException e) {
             log.error("JAXBException: ", e);
             throw new IllegalStateException("Error when generating xml");
         }
@@ -430,6 +428,7 @@ public class ProductServiceImpl implements ProductService {
 
         tokens.parallelStream()
                 .forEach(this::generateAndUpload);
+        log.info("Generated xmls: {}", tokens.size());
     }
 
     private void updateMainCities(String keycloakId, List<ProductPriceChangeRequest.MainPrice> mainPrices) {

@@ -8,8 +8,8 @@ import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(schema = schemaName, name = "wonder_user")
 public class WonderUser extends AbstractEntity<Long> {
@@ -27,6 +27,7 @@ public class WonderUser extends AbstractEntity<Long> {
     private String username;
 
 
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
             orphanRemoval = true,
