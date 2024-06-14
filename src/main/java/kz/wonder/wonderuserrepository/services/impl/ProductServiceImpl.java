@@ -367,7 +367,6 @@ public class ProductServiceImpl implements ProductService {
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
                 productSearchParams.isByVendorCode(),
-                null,
                 pageRequest
         );
 
@@ -407,7 +406,7 @@ public class ProductServiceImpl implements ProductService {
 
         final var store = storeEmployee.getKaspiStore();
 
-        var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
+        var supplyBoxProducts = supplyBoxProductsRepository.findByParamsUniqueByProduct(
                 store.getId(),
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),

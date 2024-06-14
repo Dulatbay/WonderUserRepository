@@ -77,7 +77,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Order not found"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Заказ не найден"));
 
         validateEmployeeWithStore(storeEmployee, order);
 

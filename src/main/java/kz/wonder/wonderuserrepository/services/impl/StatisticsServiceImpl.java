@@ -47,19 +47,19 @@ public class StatisticsServiceImpl implements StatisticsService {
         var startPast = startCurrent.minus(duration);
 
 
-        var listOfProducts = supplyBoxProductsRepository.findAllAdminSells(keycloakId, startPast, end);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllAdminSells(keycloakId, startPast, end);
         var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startPast, end, keycloakId);
 
-        log.info("startPast: {}, startCurrent: {}, end: {}, listOfProduct size: {}, supplies size: {}",
-                startPast, startCurrent, end, listOfProducts.size(), supplies.size());
+        log.info("startPast: {}, startCurrent: {}, end: {}, supplyBoxProducts size: {}, supplies size: {}",
+                startPast, startCurrent, end, supplyBoxProducts.size(), supplies.size());
 
 
         AdminSalesInformation adminSalesInformation = new AdminSalesInformation();
 
-        adminSalesInformation.setOrdersInfo(getAdminOrdersInfo(startCurrent, end, startPast, listOfProducts));
-        adminSalesInformation.setSellersInfo(getAdminSellersInfo(startCurrent, end, startPast, listOfProducts));
+        adminSalesInformation.setOrdersInfo(getAdminOrdersInfo(startCurrent, end, startPast, supplyBoxProducts));
+        adminSalesInformation.setSellersInfo(getAdminSellersInfo(startCurrent, end, startPast, supplyBoxProducts));
         adminSalesInformation.setSuppliesInfo(getAdminSuppliesInfo(startCurrent, end, startPast, supplies));
-        adminSalesInformation.setIncomeInfo(getAdminIncomeInfo(startCurrent, end, startPast, listOfProducts));
+        adminSalesInformation.setIncomeInfo(getAdminIncomeInfo(startCurrent, end, startPast, supplyBoxProducts));
 
         return adminSalesInformation;
     }
@@ -160,7 +160,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             if (!sellerTopProductInformationHashMap.containsKey(product.getId())) {
                 Optional<ProductPrice> productPrice = Optional.ofNullable(product.getMainCityPrice());
                 if (productPrice.isEmpty()) {
-                    productPrice = productPriceRepository.findFirstByProductIdOrderByPriceAsc(product.getId());
+                    productPrice = productPriceRepository.findFirstByProductIdOrderByPriceDesc(product.getId());
                 }
 
                 var sellerTopProductInformation = new SellerTopProductInformation();
