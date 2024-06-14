@@ -114,9 +114,9 @@ public class StoreController {
     })
     @AccessForAdmins
     public ResponseEntity<Void> addBoxTypeToStore(@Parameter(description = "ID of the box type", required = true)
-                                                   @RequestParam("box-type-id") Long boxTypeId,
+                                                  @RequestParam("box-type-id") Long boxTypeId,
                                                   @Parameter(description = "ID of the store which will support new box type", required = true)
-                                                   @RequestParam("store-id") Long storeId) {
+                                                  @RequestParam("store-id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
         if (getAuthorities(token.getAuthorities())
@@ -136,9 +136,9 @@ public class StoreController {
     })
     @AccessForAdmins
     public ResponseEntity<Void> removeBoxTypeFromStore(@Parameter(description = "ID of the box type", required = true)
-                                                            @RequestParam("box-type-id") Long boxTypeId,
+                                                       @RequestParam("box-type-id") Long boxTypeId,
                                                        @Parameter(description = "ID of the store which will stop supporting mentioned box type", required = true)
-                                                            @RequestParam("store-id") Long storeId) {
+                                                       @RequestParam("store-id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         if (getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name())) {
             kaspiStoreService.removeBoxType(boxTypeId, storeId);
@@ -186,7 +186,7 @@ public class StoreController {
     })
     @AccessForAdmins
     public ResponseEntity<StoreResponse> getByIdOwnStore(@Parameter(description = "ID of the store to get retrieved")
-                                                             @PathVariable Long id) {
+                                                         @PathVariable Long id) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
@@ -233,7 +233,7 @@ public class StoreController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the store details by ID")
     })
     public ResponseEntity<StoreDetailResponse> getByIdDetailOwnStores(@Parameter(description = "ID of the store to get information from", required = true)
-                                                                          @PathVariable("id") Long storeId) {
+                                                                      @PathVariable("id") Long storeId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 

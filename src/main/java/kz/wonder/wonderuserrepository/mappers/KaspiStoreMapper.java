@@ -34,11 +34,18 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMA
 @Slf4j
 public class KaspiStoreMapper {
     private final KaspiStoreRepository kaspiStoreRepository;
+    private final UserService userService;
     // todo: переделать этот говно код
     @Value("${application.admin-keycloak-id}")
     private String adminKeycloakId;
     private WonderUser admin;
-    private final UserService userService;
+
+    public static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
+        String name = selectedCity.getName() != null ? selectedCity.getName() + ", " : "";
+        String streetName = kaspiStore.getStreetName() != null ? kaspiStore.getStreetName() + ", " : "";
+        String streetNumber = kaspiStore.getStreetNumber() != null ? kaspiStore.getStreetNumber() : "";
+        return name + streetName + streetNumber;
+    }
 
     public KaspiStore getKaspiStore(OrdersDataResponse.OrderAttributes orderAttributes, OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(orderAttributes.getOriginAddress().getId());
@@ -199,7 +206,6 @@ public class KaspiStoreMapper {
                 .build();
     }
 
-
     private List<AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
 
         final var awts = new ArrayList<AvailableWorkTime>();
@@ -216,12 +222,5 @@ public class KaspiStoreMapper {
         });
 
         return awts;
-    }
-
-    public static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
-        String name = selectedCity.getName() != null ? selectedCity.getName() + ", " : "";
-        String streetName = kaspiStore.getStreetName() != null ? kaspiStore.getStreetName() + ", " : "";
-        String streetNumber = kaspiStore.getStreetNumber() != null ? kaspiStore.getStreetNumber() : "";
-        return name + streetName + streetNumber;
     }
 }

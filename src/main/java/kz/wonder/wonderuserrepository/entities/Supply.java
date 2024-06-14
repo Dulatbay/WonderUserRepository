@@ -2,14 +2,12 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "supply", schema = schemaName)
@@ -29,7 +27,7 @@ public class Supply extends AbstractEntity<Long> {
 
     @Column(name = "comment")
     private String comment;
-    
+
     @Column(name = "accepted_time")
     private LocalDateTime acceptedTime;
 

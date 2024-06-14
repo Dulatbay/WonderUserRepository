@@ -232,7 +232,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
                 .getKeycloakId()
                 .equals(keycloakId);
 
-        if(!isHisStore && !store.isEnabled())
+        if (!isHisStore && !store.isEnabled())
             throw new IllegalArgumentException("Склад не в данный момент не работает");
 
 
@@ -249,7 +249,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
         var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
 
-        if(!isHisStore && !store.isEnabled())
+        if (!isHisStore && !store.isEnabled())
             throw new IllegalArgumentException("Склад не в данный момент не работает");
 
 

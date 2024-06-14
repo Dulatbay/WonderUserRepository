@@ -9,7 +9,6 @@ import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
 import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
 import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;

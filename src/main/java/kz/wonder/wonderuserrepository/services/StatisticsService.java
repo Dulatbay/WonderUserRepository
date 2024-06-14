@@ -12,7 +12,7 @@ public interface StatisticsService {
 
     SellerSalesInformation getSellerSalesInformation(String keycloakId, DurationParams duration);
 
-    Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId,  Pageable pageable);
+    Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId, Pageable pageable);
 
     Page<AdminLastOrdersInformation> getAdminLastOrders(String keycloakId, Pageable pageable);
 

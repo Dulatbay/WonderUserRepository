@@ -42,7 +42,7 @@ public class BoxTypesController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved all box types for the store")
     })
     public ResponseEntity<List<BoxTypeResponse>> getAllByStoreId(@Parameter(description = "ID of the store to get box types", required = true)
-                                                            @RequestParam(value = "store-id", required = false) Long storeId) {
+                                                                 @RequestParam(value = "store-id", required = false) Long storeId) {
         return ResponseEntity.ok(boxTypeService.getAllByStore(storeId));
     }
 
@@ -56,7 +56,6 @@ public class BoxTypesController {
     }
 
 
-
     @DeleteMapping("{id}")
     @Operation(summary = "Delete existing box type", description = "This endpoint allows to delete existing box type. Fill in the id of the box type")
     @ApiResponses(value = {
@@ -64,7 +63,7 @@ public class BoxTypesController {
     })
     @AccessForAdmins
     public ResponseEntity<Void> delete(@Parameter(description = "ID of the box type to be deleted", required = true)
-                                           @PathVariable Long id) {
+                                       @PathVariable Long id) {
         boxTypeService.deleteById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

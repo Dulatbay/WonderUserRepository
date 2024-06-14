@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.entities.Product;
 import kz.wonder.wonderuserrepository.entities.ProductPrice;
 import org.springframework.data.jpa.repository.JpaRepository;
 

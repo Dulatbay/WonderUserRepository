@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @Slf4j
 @RequiredArgsConstructor
-@EnableFeignClients(basePackages  = "kz.wonder.filemanager.client.api")
+@EnableFeignClients(basePackages = "kz.wonder.filemanager.client.api")
 public class WonderUserRepositoryApplication {
 
     public static void main(String[] args) {

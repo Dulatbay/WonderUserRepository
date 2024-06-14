@@ -108,7 +108,4 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
                                            Pageable pageable);
 
 
-
-
-
 }

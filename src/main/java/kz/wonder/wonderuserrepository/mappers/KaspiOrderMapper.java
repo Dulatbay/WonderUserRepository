@@ -7,14 +7,10 @@ import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
-import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
-import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -31,6 +27,12 @@ public class KaspiOrderMapper {
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
 
+    public static void updateKaspiOrderProduct(KaspiOrderProduct existingOrderProduct, KaspiOrder kaspiOrder, Product product, OrderEntry orderEntry, SupplyBoxProduct supplyBoxProductToSave) {
+        existingOrderProduct.setOrder(kaspiOrder);
+        existingOrderProduct.setProduct(product);
+        existingOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
+        existingOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
+    }
 
     public KaspiOrder saveKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
         KaspiOrder kaspiOrder = new KaspiOrder();
@@ -72,7 +74,6 @@ public class KaspiOrderMapper {
         kaspiOrder.setReturnedToWarehouse(orderAttributes.getKaspiDelivery().getReturnedToWarehouse());
         kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
     }
-
 
     public KaspiOrder updateKaspiOrder(KaspiOrder kaspiOrder, KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
 
@@ -157,13 +158,6 @@ public class KaspiOrderMapper {
             return vendorCode.split("_")[0];
         }
         return null;
-    }
-
-    public static void updateKaspiOrderProduct(KaspiOrderProduct existingOrderProduct, KaspiOrder kaspiOrder, Product product, OrderEntry orderEntry, SupplyBoxProduct supplyBoxProductToSave) {
-        existingOrderProduct.setOrder(kaspiOrder);
-        existingOrderProduct.setProduct(product);
-        existingOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
-        existingOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
     }
 
 }

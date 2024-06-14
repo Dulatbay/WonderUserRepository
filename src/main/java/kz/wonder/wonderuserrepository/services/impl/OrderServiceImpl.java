@@ -16,6 +16,7 @@ import kz.wonder.wonderuserrepository.mappers.KaspiDeliveryAddressMapper;
 import kz.wonder.wonderuserrepository.mappers.KaspiOrderMapper;
 import kz.wonder.wonderuserrepository.mappers.KaspiStoreMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
+import kz.wonder.wonderuserrepository.services.ApplicationPropertyService;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,12 +24,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.UPDATE_ORDERS_IGNORE_TIME_PROPERTY_NAME;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiCityRepository kaspiCityRepository;
     private final KaspiStoreMapper kaspiStoreMapper;
     private final KaspiStoreRepository kaspiStoreRepository;
+    private final ApplicationPropertyService applicationPropertyService;
 
 
     @Override
@@ -356,7 +361,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-    private void processOrderProduct(KaspiToken token, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
+    @Transactional
+    public void processOrderProduct(KaspiToken token, KaspiOrder kaspiOrder, OrderEntry orderEntry) {
         var vendorCode = kaspiOrderMapper.extractVendorCode(orderEntry);
 
         var product = productRepository
@@ -376,9 +382,11 @@ public class OrderServiceImpl implements OrderService {
 
 
                 log.info("accepted time: {}, now: {}", supplyBoxProduct.getAcceptedTime(), sellAt);
-//                if (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt)) {
-                log.info("supplyBoxProduct to save: {}", supplyBoxProduct.getId());
-//                }
+
+                if (applicationPropertyService.getApplicationPropertyByName(UPDATE_ORDERS_IGNORE_TIME_PROPERTY_NAME).getValue().equals("true")
+                        || (supplyBoxProduct.getAcceptedTime() != null && supplyBoxProduct.getAcceptedTime().isBefore(sellAt))) {
+                    log.info("supplyBoxProduct to save: {}", supplyBoxProduct.getId());
+                }
 
                 supplyBoxProduct.setState(ProductStateInStore.WAITING_FOR_ASSEMBLY);
                 supplyBoxProduct.setKaspiOrder(kaspiOrder);
@@ -399,8 +407,6 @@ public class OrderServiceImpl implements OrderService {
         }
 
         kaspiOrderRepository.save(kaspiOrder);
-
-
     }
 
 

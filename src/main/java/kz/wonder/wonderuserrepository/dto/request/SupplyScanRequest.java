@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -15,9 +14,8 @@ public class SupplyScanRequest {
 
     @Data
     public static class ProductCell {
+        List<String> productArticles;
         @NotNull(message = "Cell code must not be null")
         private String cellCode;
-
-        List<String> productArticles;
     }
 }
