@@ -9,7 +9,7 @@ import lombok.Data;
 
 @Data
 public class EmployeeUpdateRequest {
-    @Size(min = 10, max = 11, message = "Phone number must be in range 10-11")
+    @Size(min = 10, max = 20, message = "Phone number must be in range 10-20")
     private String phoneNumber;
 
     @NotNull(message = "Store id must not be null")

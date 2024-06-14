@@ -1,9 +1,11 @@
 package kz.wonder.wonderuserrepository.services;
 
+import kz.wonder.wonderuserrepository.dto.response.SellerSupplyReport;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
+import java.util.List;
 
 public interface BarcodeService {
-    MultipartFile generateProductBarcode(String productName, String productArticle, String boxVendorCode, String shopName);
+    MultipartFile generateBarcode(String barcodeText, List<String> additionalTexts);
+    MultipartFile generateSupplyReport(SellerSupplyReport supply);
 }

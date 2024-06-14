@@ -31,11 +31,15 @@ public class SupplyBox extends AbstractEntity<Long> {
     @Column(name = "vendor_code", nullable = false, unique = true)
     private String vendorCode;
 
+    @Column(name = "path_to_barcode", nullable = false, unique = true, updatable = false)
+    private String pathToBarcode;
+
     @Override
     protected void onCreate() {
         super.onCreate();
         if (vendorCode == null) {
             vendorCode = Utils.generateRandomNumber();
+            pathToBarcode = vendorCode + ".pdf";
         }
     }
 }

@@ -9,10 +9,10 @@ import java.util.List;
 @Data
 @Builder
 public class ProductStorageResponse {
-    // детальный просмотр продуктов внутри заказа для складмэна
     List<Product> products;
     private Long supplyId;
     private Long storeId;
+    private String pathToSupplyReport;
     private String storeAddress;
 
     @Data
@@ -23,6 +23,8 @@ public class ProductStorageResponse {
         private String vendorCode;
         private String vendorCodeOfBox;
         private String typeOfBoxName;
+        private String pathToBoxBarcode;
+        private String pathToProductBarcode;
         private ProductStateInStore productStateInStore;
     }
 }

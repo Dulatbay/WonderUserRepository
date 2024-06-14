@@ -118,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
                     var kaspiOrder = saveKaspiOrder(order, token);
                     boolean storeNotFound = (kaspiOrder.getKaspiCity() == null || kaspiOrder.getKaspiStore() == null);
 
-                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId()) && kaspiOrderProductRepository.existsByKaspiId(p.getId())).toList();
+                    var orderEntries = products.stream().filter(p -> p.getId().startsWith(order.getOrderId()) && !kaspiOrderProductRepository.existsByKaspiId(p.getId())).toList();
 
                     for (var orderEntry : orderEntries) {
                         processOrderProduct(token, kaspiOrder, orderEntry);
@@ -197,13 +197,13 @@ public class OrderServiceImpl implements OrderService {
                 Utils.getTimeStampFromLocalDateTime(startDate.atStartOfDay()),
                 Utils.getTimeStampFromLocalDateTime(endDate.atStartOfDay()),
                 orderSearchParams.getDeliveryMode(),
-//                orderSearchParams.getSearchValue() != null ? orderSearchParams.getSearchValue().toLowerCase().trim() : null,
-//                orderSearchParams.isByOrderCode(),
-//                orderSearchParams.isByShopName(),
-//                orderSearchParams.isByStoreAddress(),
-//                orderSearchParams.isByProductName(),
-//                orderSearchParams.isByProductArticle(),
-//                orderSearchParams.isByProductVendorCode(),
+                orderSearchParams.getSearchValue() != null ? orderSearchParams.getSearchValue().toLowerCase().trim() : null,
+                orderSearchParams.isByOrderCode(),
+                orderSearchParams.isByShopName(),
+                orderSearchParams.isByStoreAddress(),
+                orderSearchParams.isByProductName(),
+                orderSearchParams.isByProductArticle(),
+                orderSearchParams.isByProductVendorCode(),
                 pageRequest);
 
         return orders.map(this::getEmployeeOrderResponse);
@@ -277,7 +277,7 @@ public class OrderServiceImpl implements OrderService {
             long durationOf14Days = Duration.ofDays(14).toMillis();
             long durationOf5Days = Duration.ofDays(5).toMillis();
 
-            var tokens = kaspiTokenRepository.findAll();
+            var tokens = kaspiTokenRepository.findAllWithFetching();
 
             log.info("Found {} tokens", tokens.size());
 
@@ -392,8 +392,7 @@ public class OrderServiceImpl implements OrderService {
                 kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
                 kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProduct);
 
-
-                kaspiOrder.getProducts().add(kaspiOrderProduct);
+                kaspiOrderProductRepository.save(kaspiOrderProduct);
             }
 
 

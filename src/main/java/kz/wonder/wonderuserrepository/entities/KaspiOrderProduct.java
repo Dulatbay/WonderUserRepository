@@ -11,7 +11,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "kaspi_order_product", schema = schemaName)
 public class KaspiOrderProduct extends AbstractEntity<Long> {
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "kaspi_order_id")
     private KaspiOrder order;
 

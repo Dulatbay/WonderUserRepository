@@ -2,10 +2,13 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.base.PaginatedResponse;
-import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.params.ProductSearchParams;
+import kz.wonder.wonderuserrepository.dto.request.ProductPriceChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
-import kz.wonder.wonderuserrepository.dto.response.*;
+import kz.wonder.wonderuserrepository.dto.response.ProductPriceResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
+import kz.wonder.wonderuserrepository.dto.response.ProductWithSize;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndEmployee;
 import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
 import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
@@ -25,8 +28,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -123,14 +124,8 @@ public class ProductController {
         var userId = Utils.extractIdFromToken(token);
 
         String pathToXml;
-        try {
-            pathToXml = productService.generateOfProductsXmlByKeycloakId(userId);
-        } catch (IOException e) {
-            log.error("IOException: ", e);
-            throw new RuntimeException(e);
-        } catch (JAXBException e) {
-            throw new RuntimeException(e);
-        }
+        pathToXml = productService.generateOfProductsXmlByKeycloakId(userId);
+
 
         return ResponseEntity.status(HttpStatus.CREATED).body(pathToXml);
     }

@@ -19,7 +19,7 @@ public interface ProductService {
 
     Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue);
 
-    String generateOfProductsXmlByKeycloakId(String userId) throws IOException, javax.xml.bind.JAXBException;
+    String generateOfProductsXmlByKeycloakId(String userId);
 
     void deleteProductById(String keycloakId, Long productId);
 
@@ -34,4 +34,6 @@ public interface ProductService {
     void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId);
 
     Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest);
+
+    void generateXmls();
 }
