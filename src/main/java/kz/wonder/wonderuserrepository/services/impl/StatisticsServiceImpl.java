@@ -76,7 +76,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         // todo: too long
         var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(startPast.minusDays(1)), getTimeStampFromLocalDateTime(end.plusDays(1)));
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndAuthorKeycloakId(startPast, end, keycloakId);
+        var supplies = supplyRepository.findAllSellerSupplies(startPast, end, keycloakId);
         var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, startPast, end);
 
         log.info("startPast: {}, startCurrent: {}, end: {}, supplyBoxProducts size: {}, supplies size: {}, orders size: {}",
@@ -97,7 +97,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     public Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId, Pageable pageable) {
         var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, pageable);
 
-        // pair of store id and product id as key of the map
         Map<Pair<Long, Long>, ProductWithCount> productWithCountMap = new HashMap<>();
 
         supplyBoxProducts.forEach(supplyBoxProduct -> {
@@ -364,8 +363,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         AtomicReference<Long> countOfCurrent = new AtomicReference<>(0L);
         AtomicReference<Long> countOfPast = new AtomicReference<>(0L);
 
-        supplies.forEach(kaspiOrder -> {
-            var creationDate = kaspiOrder.getCreatedAt();
+        supplies.forEach(supply -> {
+            var creationDate = supply.getCreatedAt();
             if (isCurrent(startCurrent, end, creationDate)) {
                 countOfCurrent.getAndSet(countOfCurrent.get() + 1);
             } else if (isPast(startPast, end, creationDate)) {

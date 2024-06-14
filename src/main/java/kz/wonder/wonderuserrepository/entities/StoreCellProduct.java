@@ -30,8 +30,6 @@ public class StoreCellProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "employee_id", nullable = false)
     private StoreEmployee storeEmployee;
 
-    
-    // todo: add not null constraint
     @Column(name = "is_busy", nullable = false)
     private boolean isBusy;
 }

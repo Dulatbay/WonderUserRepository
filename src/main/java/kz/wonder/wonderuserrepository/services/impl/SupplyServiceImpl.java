@@ -288,7 +288,7 @@ public class SupplyServiceImpl implements SupplyService {
 
     @Override
     public List<SupplySellerResponse> getSuppliesOfSeller(String keycloakId, LocalDate startDate, LocalDate endDate) {
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndAuthorKeycloakId(
+        var supplies = supplyRepository.findAllSellerSupplies(
                 startDate.atStartOfDay(),
                 endDate.atStartOfDay(),
                 keycloakId);
