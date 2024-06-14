@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.config;
 import kz.wonder.wonderuserrepository.services.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ public class Scheduler {
     private final UserService userService;
     private final ProductService productService;
 
+    @Async
     @Scheduled(fixedRate = CITIES_INIT_DELAY, initialDelay = INITIAL_DELAY)
     public void updateCitiesFromKaspiApi() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(SYNC_CITIES_PROPERTY_NAME);
@@ -29,6 +31,7 @@ public class Scheduler {
         }
     }
 
+    @Async
     @Scheduled(fixedRate = SYNC_USERS_DELAY, initialDelay = INITIAL_DELAY)
     public void syncUsers() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(SYNC_USERS_PROPERTY_NAME);
@@ -40,6 +43,7 @@ public class Scheduler {
         }
     }
 
+    @Async
     @Scheduled(fixedRate = ORDERS_INIT_DELAY, initialDelay = INITIAL_DELAY)
     public void updateOrders() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(UPDATE_ORDERS_PROPERTY_NAME);
@@ -51,6 +55,7 @@ public class Scheduler {
         }
     }
 
+    @Async
     @Scheduled(fixedRate = XML_INIT_DELAY, initialDelay = INITIAL_DELAY)
     public void updateXml() {
         var applicationProperty = applicationPropertyService.getApplicationPropertyByName(UPDATE_XML_PROPERTY_NAME);

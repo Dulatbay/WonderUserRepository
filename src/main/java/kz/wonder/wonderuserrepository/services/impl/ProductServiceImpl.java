@@ -229,7 +229,7 @@ public class ProductServiceImpl implements ProductService {
     private String generateAndUpload(KaspiToken kaspiToken) {
         try {
             final var wonderUser = kaspiToken.getWonderUser();
-            final var listOfProducts = productRepository.findAllByKeycloakIdAndDeletedIsFalse(wonderUser.getKeycloakId());
+            final var listOfProducts = productRepository.findAllSellerProductsWithPrices(wonderUser.getKeycloakId());
 
             KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
 
@@ -424,7 +424,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void generateXmls() {
-        var tokens = kaspiTokenRepository.findAllByXmlUpdatedIsFalse();
+        var tokens = kaspiTokenRepository.findAllXmlsToUpdate();
+
+        log.info("Found tokens to generating: {}", tokens.size());
 
         tokens.parallelStream()
                 .forEach(this::generateAndUpload);

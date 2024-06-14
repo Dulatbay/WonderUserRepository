@@ -38,4 +38,8 @@ public class ValueConstants {
     public static final String FILE_MANAGER_XML_DIR = "xml";
     public static final String FILE_MANAGER_IMAGE_DIR = "image";
     public static final String FILE_MANAGER_DOC_DIR = "docs";
+    public static final String FILE_MANAGER_SUPPLY_REPORT_DIR = "supply-report";
+    public static final String FILE_MANAGER_PRODUCT_BARCODE_DIR = "product-barcode";
+    public static final String FILE_MANAGER_BOX_BARCODE_DIR = "box-barcode";
+
 }

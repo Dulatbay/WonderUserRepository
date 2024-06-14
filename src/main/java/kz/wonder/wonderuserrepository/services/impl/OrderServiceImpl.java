@@ -277,7 +277,7 @@ public class OrderServiceImpl implements OrderService {
             long durationOf14Days = Duration.ofDays(14).toMillis();
             long durationOf5Days = Duration.ofDays(5).toMillis();
 
-            var tokens = kaspiTokenRepository.findAll();
+            var tokens = kaspiTokenRepository.findAllWithFetching();
 
             log.info("Found {} tokens", tokens.size());
 

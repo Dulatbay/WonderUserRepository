@@ -56,7 +56,7 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
         super.onCreate();
         if (article == null) {
             article = Utils.generateRandomNumber();
-            pathToBarcode = article + ".xml";
+            pathToBarcode = article + ".pdf";
         }
     }
 }

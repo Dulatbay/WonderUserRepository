@@ -13,5 +13,6 @@ public class SupplySellerResponse {
     private LocalDateTime supplyCreatedTime;
     private LocalDateTime supplyAcceptTime;
     private SupplyState supplyState;
+    private String pathToReport;
     private String formattedAddress;
 }

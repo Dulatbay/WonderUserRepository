@@ -33,7 +33,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final SupplyRepository supplyRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
-    private final ProductRepository productRepository;
     private final KaspiOrderProductRepository kaspiOrderProductRepository;
     private final ProductPriceRepository productPriceRepository;
 

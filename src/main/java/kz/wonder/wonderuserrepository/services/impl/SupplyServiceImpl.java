@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import jakarta.transaction.Transactional;
-import kz.wonder.kaspi.client.model.OrderState;
+import kz.wonder.filemanager.client.api.FileManagerApi;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
 
 @Service
 @Slf4j
@@ -48,6 +48,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final StoreCellProductRepository storeCellProductRepository;
     private final SupplyMapper supplyMapper;
     private final BarcodeService barcodeService;
+    private final FileManagerApi fileManagerApi;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -103,7 +104,6 @@ public class SupplyServiceImpl implements SupplyService {
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
 
-        final List<MultipartFile> multipartFiles = new ArrayList<>();
 
         log.info("Found store id: {}", store.getId());
 
@@ -171,19 +171,61 @@ public class SupplyServiceImpl implements SupplyService {
             throw new IllegalArgumentException("Коробки с припасами пусты");
         }
 
-        var created = supplyRepository.save(supply);
+        var createdSupply = supplyRepository.save(supply);
 
-        log.info("Created supply id: {}", created.getId());
-        log.info("Products size in create supply: {}", created.getSupplyBoxes().size());
+        log.info("Created supply id: {}", createdSupply.getId());
+        log.info("Products size in create supply: {}", createdSupply.getSupplyBoxes().size());
 
-        CompletableFuture.runAsync(() ->
-                created.getSupplyBoxes()
-                        .forEach(box -> {
 
-                        })
+        var generateBarCodes = CompletableFuture.runAsync(() -> {
+                    log.info("Generating barcodes started, supply id: {}", createdSupply.getId());
+                    final List<MultipartFile> multipartFilesBox = new ArrayList<>();
+                    final List<MultipartFile> multipartFilesProducts = new ArrayList<>();
+
+                    createdSupply.getSupplyBoxes()
+                            .parallelStream()
+                            .forEach(box -> {
+                                var boxAdditionalText = List.of(
+                                        "Коробка: " + box.getBoxType().getName(),
+                                        "Продавец:" + createdSupply.getAuthor().getKaspiToken().getSellerName());
+                                multipartFilesBox.add(barcodeService.generateBarcode(box.getVendorCode(), boxAdditionalText));
+                                box.getSupplyBoxProducts()
+                                        .parallelStream()
+                                        .forEach(supplyBoxProduct -> {
+                                            var product = supplyBoxProduct.getProduct();
+                                            var productAdditionalText = List.of(
+                                                    product.getName().substring(0, 30),
+                                                    "Продавец:" + createdSupply.getAuthor().getKaspiToken().getSellerName()
+                                            );
+                                            multipartFilesProducts.add(barcodeService.generateBarcode(supplyBoxProduct.getArticle(), productAdditionalText));
+                                        });
+                            });
+                    log.info("Barcodes to generating, boxes: {}, products:{}", multipartFilesBox.size(), multipartFilesProducts.size());
+
+                    int batch = 50;
+                    for (int i = 0; i < multipartFilesBox.size(); i += batch) {
+                        var sublist = multipartFilesBox.subList(i, Math.min(multipartFilesBox.size(), i + batch));
+                        fileManagerApi.uploadFiles(FILE_MANAGER_BOX_BARCODE_DIR, sublist, false);
+                    }
+
+                    for (int i = 0; i < multipartFilesProducts.size(); i += batch) {
+                        var sublist = multipartFilesProducts.subList(i, Math.min(multipartFilesProducts.size(), i + batch));
+                        fileManagerApi.uploadFiles(FILE_MANAGER_PRODUCT_BARCODE_DIR, sublist, false);
+                    }
+
+                    log.info("All barcodes generated uploaded");
+                }
         );
 
-        return created.getId();
+        var generateSupply = CompletableFuture.runAsync(() -> {
+            var generatedSupplyReport = barcodeService.generateSupplyReport(this.getSellerSupplyReport(createdSupply));
+            fileManagerApi.uploadFiles(FILE_MANAGER_SUPPLY_REPORT_DIR, List.of(generatedSupplyReport), false);
+        });
+
+        CompletableFuture.allOf(generateSupply, generateBarCodes)
+                .join();
+
+        return createdSupply.getId();
     }
 
     @Override
@@ -255,16 +297,9 @@ public class SupplyServiceImpl implements SupplyService {
 
         return supplies
                 .stream()
-                .map(supply ->
-                        SupplySellerResponse.builder()
-                                .supplyCreatedTime(supply.getCreatedAt())
-                                .supplyAcceptTime(supply.getAcceptedTime())
-                                .supplyState(supply.getSupplyState())
-                                .id(supply.getId())
-                                .formattedAddress(supply.getKaspiStore().getFormattedAddress())
-                                .build()
-                ).collect(Collectors.toList());
+                .map(supplyMapper::toSupplySellerResponse).collect(Collectors.toList());
     }
+
 
     @Override
     public List<SupplyStateResponse> getSupplySellerState(Long supplyId, String keycloakId) {
@@ -318,12 +353,7 @@ public class SupplyServiceImpl implements SupplyService {
         final var supply = findSupplyById(supplyId);
         validateStoreEmployeeAndSupply(storeEmployee, supply);
 
-        return ProductStorageResponse.builder()
-                .storeId(supply.getKaspiStore().getId())
-                .supplyId(supplyId)
-                .products(buildProducts(supply))
-                .storeAddress(supply.getKaspiStore().getFormattedAddress())
-                .build();
+        return supplyMapper.toProductStorageResponse(supply);
     }
 
     @Override
@@ -337,13 +367,9 @@ public class SupplyServiceImpl implements SupplyService {
             validateStoreEmployeeAndSupply(storeEmployee, supply);
         }
 
-        return ProductStorageResponse.builder()
-                .storeId(supply.getKaspiStore().getId())
-                .supplyId(supply.getId())
-                .products(buildProducts(supply))
-                .storeAddress(supply.getKaspiStore().getFormattedAddress())
-                .build();
+        return supplyMapper.toProductStorageResponse(supply);
     }
+
 
     @Transactional
     @Override
@@ -406,6 +432,10 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Supply doesn't exist"));
 
+        return getSellerSupplyReport(supply);
+    }
+
+    public SellerSupplyReport getSellerSupplyReport(Supply supply) {
         var store = supply.getKaspiStore();
 
         SellerSupplyReport sellerSupplyReport = new SellerSupplyReport();
@@ -428,6 +458,7 @@ public class SupplyServiceImpl implements SupplyService {
 
             SellerSupplyReport.SupplyBoxInfo supplyBoxInfo = new SellerSupplyReport.SupplyBoxInfo();
             supplyBoxInfo.setBoxName(boxType.getName());
+            supplyBoxInfo.setSize(supplyBoxProducts.size());
             supplyBoxInfo.setBoxDescription(boxType.getDescription());
             supplyBoxInfo.setBoxVendorCode(supplyBox.getVendorCode());
 
@@ -453,10 +484,7 @@ public class SupplyServiceImpl implements SupplyService {
         }).toList();
 
         sellerSupplyReport.setSupplyBoxInfo(supplyBoxInfos);
-
-
         return sellerSupplyReport;
-
     }
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
@@ -475,25 +503,6 @@ public class SupplyServiceImpl implements SupplyService {
         }
     }
 
-    private ArrayList<ProductStorageResponse.Product> buildProducts(Supply supply) {
-        ArrayList<ProductStorageResponse.Product> products = new ArrayList<>();
-
-        supply.getSupplyBoxes().forEach(supplyBox ->
-                supplyBox.getSupplyBoxProducts().forEach(supplyBoxProducts -> {
-                    var product = ProductStorageResponse.Product.builder()
-                            .article(supplyBoxProducts.getArticle())
-                            .productStateInStore(supplyBoxProducts.getState())
-                            .typeOfBoxName(supplyBox.getBoxType().getName())
-                            .vendorCodeOfBox(supplyBox.getVendorCode())
-                            .vendorCode(supplyBoxProducts.getProduct().getVendorCode())
-                            .name(supplyBoxProducts.getProduct().getName())
-                            .build();
-                    products.add(product);
-                })
-        );
-
-        return products;
-    }
 
     private SupplyStorageResponse.Supply buildSupplyOfStorageResponse(Supply supply) {
         var author = supply.getAuthor();

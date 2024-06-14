@@ -40,7 +40,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("isEnabled") Boolean isEnabled,
             Pageable pageable);
 
-    List<Product> findAllByKeycloakIdAndDeletedIsFalse(String keycloakUserId);
+    @Query("SELECT p FROM Product p " +
+            "LEFT JOIN FETCH p.prices pp " +
+            "LEFT JOIN FETCH p.mainCityPrice " +
+            "LEFT JOIN FETCH pp.kaspiCity " +
+            "WHERE p.keycloakId = :keycloakUserId AND p.deleted = false")
+    List<Product> findAllSellerProductsWithPrices(String keycloakUserId);
 
     @Query("SELECT p FROM Product p " +
             "WHERE p.keycloakId = :keycloakUserId " +

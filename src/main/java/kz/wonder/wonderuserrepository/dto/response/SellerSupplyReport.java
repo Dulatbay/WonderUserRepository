@@ -24,6 +24,7 @@ public class SellerSupplyReport {
         private String boxVendorCode;
         private String boxDescription;
         private String boxName;
+        private int size;
 
         private List<SupplyProductInfo> productInfo;
     }
