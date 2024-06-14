@@ -12,7 +12,12 @@ import java.util.Optional;
 public interface SupplyRepository extends JpaRepository<Supply, Long> {
     List<Supply> findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(LocalDateTime start, LocalDateTime end, String keycloakId);
 
-    List<Supply> findAllByCreatedAtBetweenAndAuthorKeycloakId(LocalDateTime start, LocalDateTime end, String keycloakId);
+    @Query("SELECT s FROM Supply s " +
+            "JOIN FETCH s.kaspiStore " +
+            "LEFT JOIN WonderUser w ON w.id = s.author.id " +
+            "WHERE s.createdAt BETWEEN :start AND :end " +
+            "AND w.keycloakId = :keycloakId")
+    List<Supply> findAllSellerSupplies(LocalDateTime start, LocalDateTime end, String keycloakId);
 
     Optional<Supply> findByIdAndAuthorKeycloakId(Long id, String keycloakId);
 

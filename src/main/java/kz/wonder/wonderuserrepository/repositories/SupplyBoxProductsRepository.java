@@ -31,7 +31,9 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state = 'ACCEPTED')")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "JOIN FETCH sbp.kaspiOrder " +
+            "WHERE sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state = 'ACCEPTED')")
     Page<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, Pageable pageable);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.article = :article and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")

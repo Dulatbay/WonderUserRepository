@@ -73,7 +73,7 @@ public class ProductMapper {
         productSearchResponse.setPrice(product.getTradePrice());
         productSearchResponse.setVendorCode(product.getVendorCode());
         productSearchResponse.setShopName(token.getSellerName());
-        productSearchResponse.setCellCode(storeCellProduct.getStoreCell() == null ? "Еще не принят" : storeCellProduct.getStoreCell().getCode());
+        productSearchResponse.setCellCode(storeCellProduct == null ? "Еще не принят" : storeCellProduct.getStoreCell().getCode());
         productSearchResponse.setArticle(supplyBoxProduct.getArticle());
 
         return productSearchResponse;
