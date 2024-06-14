@@ -71,7 +71,7 @@ public class ProductMapper {
         productWithSize.setLength(size.getLength());
         productWithSize.setWidth(size.getWidth());
         productWithSize.setComment(size.getComment());
-        productWithSize.setVendorCode(product.getVendorCode());
+        productWithSize.setVendorCode(product.getOriginalVendorCode());
         productWithSize.setState(supplyBoxProduct.getState());
 
 
