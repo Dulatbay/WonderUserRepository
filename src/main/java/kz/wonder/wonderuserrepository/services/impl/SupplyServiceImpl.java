@@ -94,12 +94,12 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public long createSupply(SupplyCreateRequest createRequest, String userId) {
+    public SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId) {
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
 
         if (!store.isEnabled())
-            throw new IllegalArgumentException("Store is not enabled");
+            throw new IllegalArgumentException("Склад не активен");
 
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
@@ -225,7 +225,7 @@ public class SupplyServiceImpl implements SupplyService {
         CompletableFuture.allOf(generateSupply, generateBarCodes)
                 .join();
 
-        return createdSupply.getId();
+        return supplyMapper.toSupplySellerResponse(supply);
     }
 
     @Override
@@ -425,6 +425,8 @@ public class SupplyServiceImpl implements SupplyService {
                         .stream()
                         .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
         supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
+
+
     }
 
     @Override
