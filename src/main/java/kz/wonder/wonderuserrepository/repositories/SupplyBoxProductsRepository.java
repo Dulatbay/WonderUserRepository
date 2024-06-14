@@ -25,7 +25,7 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD') and sbp.createdAt BETWEEN :start AND :end")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD' OR sbp.state = 'WAITING_FOR_ASSEMBLY' OR sbp.state = 'ASSEMBLED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllAdminSells(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
@@ -52,11 +52,22 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "  AND (:byVendorCode = false OR p2.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
             "  AND sbp2.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
             "  GROUP BY p2.originalVendorCode) ")
+    Page<SupplyBoxProduct> findByParamsUniqueByProduct(@Param("kaspiStoreId") Long kaspiStoreId,
+                                                       @Param("searchValue") String searchValue,
+                                                       @Param("byProductName") Boolean byProductName,
+                                                       @Param("byVendorCode") Boolean byVendorCode,
+                                                       @Param("isSizeScanned") Boolean isSizeScanned,
+                                                       Pageable pageable);
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN Product p ON p.id = sbp.product.id " +
+            "  WHERE ((:byProductName = false OR lower(p.name) LIKE '%' || lower(:searchValue) || '%') " +
+            "  AND (:byVendorCode = false OR p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
                                         @Param("byProductName") Boolean byProductName,
                                         @Param("byVendorCode") Boolean byVendorCode,
-                                        @Param("isSizeScanned") Boolean isSizeScanned,
                                         Pageable pageable);
 
 

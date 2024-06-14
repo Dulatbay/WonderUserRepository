@@ -8,6 +8,6 @@ import java.util.Optional;
 public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long> {
     Optional<ProductPrice> findByProductIdAndKaspiCityName(Long productId, String cityName);
 
-    Optional<ProductPrice> findFirstByProductIdOrderByPriceAsc(Long productId);
+    Optional<ProductPrice> findFirstByProductIdOrderByPriceDesc(Long productId);
 
 }
