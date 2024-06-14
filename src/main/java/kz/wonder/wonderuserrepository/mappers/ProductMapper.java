@@ -17,6 +17,23 @@ public class ProductMapper {
     private final ProductSizeRepository productSizeRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
 
+    public static @NotNull ProductPriceResponse.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
+        var productPrice = new ProductPriceResponse.ProductPrice();
+
+        // todo: сделал поставку в город, где не указана цена
+
+        productPrice.setCityId(city.getId());
+        productPrice.setCityName(city.getName());
+        productPrice.setCount(product.getSupplyBoxes()
+                .stream()
+                .filter(p ->
+                        p.getState() == ProductStateInStore.ACCEPTED
+                                && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
+                )
+                .count());
+        productPrice.setPrice(price.getPrice());
+        return productPrice;
+    }
 
     public ProductResponse mapToResponse(Product product) {
         return ProductResponse.builder()
@@ -77,24 +94,6 @@ public class ProductMapper {
         productSearchResponse.setArticle(supplyBoxProduct.getArticle());
 
         return productSearchResponse;
-    }
-
-    public static @NotNull ProductPriceResponse.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
-        var productPrice = new ProductPriceResponse.ProductPrice();
-
-        // todo: сделал поставку в город, где не указана цена
-
-        productPrice.setCityId(city.getId());
-        productPrice.setCityName(city.getName());
-        productPrice.setCount(product.getSupplyBoxes()
-                .stream()
-                .filter(p ->
-                        p.getState() == ProductStateInStore.ACCEPTED
-                                && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
-                )
-                .count());
-        productPrice.setPrice(price.getPrice());
-        return productPrice;
     }
 
 }

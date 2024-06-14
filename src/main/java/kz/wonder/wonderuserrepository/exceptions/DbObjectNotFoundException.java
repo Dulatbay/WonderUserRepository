@@ -12,4 +12,5 @@ public class DbObjectNotFoundException extends RuntimeException {
     private HttpStatus httpStatus;
     private final String error;
     private final String message;
+
 }

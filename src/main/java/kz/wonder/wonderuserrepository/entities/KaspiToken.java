@@ -3,14 +3,12 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(schema = schemaName, name = "kaspi_token")
 public class KaspiToken extends AbstractEntity<Long> {

@@ -2,13 +2,11 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(schema = schemaName, name = "wonder_user")
@@ -26,8 +24,6 @@ public class WonderUser extends AbstractEntity<Long> {
     @Column(name = "username")
     private String username;
 
-
-    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
             orphanRemoval = true,

@@ -2,14 +2,11 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
-import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = false)
 @Data
 @Table(name = "kaspi_city", schema = schemaName)
 @Entity
@@ -34,13 +31,13 @@ public class KaspiCity extends AbstractEntity<Long> {
             mappedBy = "kaspiCity",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private Set<KaspiOrder> kaspiOrders;
+    private List<KaspiOrder> kaspiOrders;
 
-    @OneToMany(fetch = FetchType.LAZY,
+    @OneToMany(fetch = FetchType.EAGER,
             mappedBy = "kaspiCity",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private Set<KaspiStore> kaspiStores;
+    private List<KaspiStore> kaspiStores;
 
 }
 

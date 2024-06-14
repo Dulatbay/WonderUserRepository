@@ -18,7 +18,6 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -145,7 +144,7 @@ public class SupplyController {
 
     @GetMapping("/seller/report/{supplyId}")
     @SellerAuthorization
-    public ResponseEntity<SellerSupplyReport> getSupplySellerReport(@PathVariable Long supplyId){
+    public ResponseEntity<SellerSupplyReport> getSupplySellerReport(@PathVariable Long supplyId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 

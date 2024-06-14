@@ -2,12 +2,12 @@ package kz.wonder.wonderuserrepository.entities;
 
 
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
+import lombok.Data;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @Entity
-@EqualsAndHashCode(callSuper = false)
+@Data
 @Table(schema = schemaName, name = "telegram_account")
 public class TelegramAccount extends AbstractEntity<Long> {
     @Id

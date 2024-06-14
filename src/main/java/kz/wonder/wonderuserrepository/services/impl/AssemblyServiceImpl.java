@@ -37,6 +37,20 @@ public class AssemblyServiceImpl implements AssemblyService {
     private final StoreCellProductRepository storeCellProductRepository;
     private final OrderAssembleProcessRepository orderAssembleProcessRepository;
 
+    private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order) {
+        var assemble = order.getOrderAssemble();
+
+        if (assemble == null) {
+            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
+        }
+
+        if (assemble.getAssembleState() == AssembleState.FINISHED) {
+            throw new IllegalArgumentException("Состояние сборки уже завершено");
+        } else if (assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
+            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
+        }
+        return assemble;
+    }
 
     @Override
     public Page<EmployeeAssemblyResponse> findAssembliesByParams(String keycloakId, AssemblySearchParameters assemblySearchParameters) {
@@ -49,7 +63,6 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         log.info("Search assemblies, start unix timestamp: {}, endUnixTimeStamp: {}, product state: {}, delivery mode: {}", startUnixTimestamp, endUnixTimestamp, productState, deliveryMode);
         var supplyBoxProducts = supplyBoxProductsRepository.findAllEmployeeAssemblies(startUnixTimestamp, endUnixTimestamp, productState, deliveryMode, keycloakId, pageRequest);
-
 
 
         return supplyBoxProducts.map(supplyBoxProduct -> {
@@ -80,7 +93,6 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         return orderAssembleMapper.toProcessResponse(order, Utils.extractNameFromToken(starterToken), orderAssemble, dividedProducts.getLeft(), dividedProducts.getRight());
     }
-
 
     @Override
     public AssembleProductResponse assembleProduct(JwtAuthenticationToken starterToken, String productArticle, String orderCode) {
@@ -141,7 +153,6 @@ public class AssemblyServiceImpl implements AssemblyService {
         return new AssembleProductResponse(this.getWaybill(order), response);
     }
 
-
     @Override
     public AssembleProcessResponse getAssemble(JwtAuthenticationToken starterToken, String orderCode) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
@@ -191,21 +202,6 @@ public class AssemblyServiceImpl implements AssemblyService {
                     sbp.setState(ProductStateInStore.SOLD);
                     supplyBoxProductsRepository.save(sbp);
                 });
-    }
-
-    private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order) {
-        var assemble = order.getOrderAssemble();
-
-        if (assemble == null) {
-            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
-        }
-
-        if (assemble.getAssembleState() == AssembleState.FINISHED) {
-            throw new IllegalArgumentException("Состояние сборки уже завершено");
-        } else if (assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
-            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
-        }
-        return assemble;
     }
 
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {

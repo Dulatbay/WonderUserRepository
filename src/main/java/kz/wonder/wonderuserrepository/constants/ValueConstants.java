@@ -34,6 +34,7 @@ public class ValueConstants {
     public static final String SYNC_CITIES_PROPERTY_NAME = "sync_cities";
     public static final String SYNC_USERS_PROPERTY_NAME = "sync_users";
     public static final String UPDATE_XML_PROPERTY_NAME = "update_xml";
+    public static final String UPDATE_ORDERS_IGNORE_TIME_PROPERTY_NAME = "update_orders_ignore_time";
 
     public static final String FILE_MANAGER_XML_DIR = "xml";
     public static final String FILE_MANAGER_IMAGE_DIR = "image";

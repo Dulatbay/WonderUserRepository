@@ -3,16 +3,12 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.kaspi.client.model.PaymentMode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "kaspi_order", schema = schemaName)
@@ -128,7 +124,7 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private WonderUser wonderUser;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.EAGER)
-    private Set<KaspiOrderProduct> products = new HashSet<>();
+    private List<KaspiOrderProduct> products = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "kaspiOrder",

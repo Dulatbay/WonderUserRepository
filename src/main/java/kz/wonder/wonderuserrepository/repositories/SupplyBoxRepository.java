@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface SupplyBoxRepository extends JpaRepository<SupplyBox, Long> {
-   Optional<SupplyBox> findByVendorCode(String vendorCode);
+    Optional<SupplyBox> findByVendorCode(String vendorCode);
 }

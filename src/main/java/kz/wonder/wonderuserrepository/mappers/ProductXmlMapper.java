@@ -94,10 +94,14 @@ public class ProductXmlMapper {
             var price = optionalMainPrice.get();
             product.getPrices()
                     .forEach(p -> {
-                        KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
-                        availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
-                        availability.setStoreId(price.getKaspiCity().getId().toString());
-                        availabilities.add(availability);
+                        price.getKaspiCity()
+                                .getKaspiStores()
+                                .forEach(kaspiStore -> {
+                                    KaspiCatalog.Offer.Availability availability = new KaspiCatalog.Offer.Availability();
+                                    availability.setAvailable((price.getPrice() != null && price.getPrice() != 0) ? "yes" : "no");
+                                    availability.setStoreId(kaspiStore.getKaspiId());
+                                    availabilities.add(availability);
+                                });
 
                         var kaspiCity = price.getKaspiCity();
                         KaspiCatalog.Offer.CityPrice cityPrice = new KaspiCatalog.Offer.CityPrice();

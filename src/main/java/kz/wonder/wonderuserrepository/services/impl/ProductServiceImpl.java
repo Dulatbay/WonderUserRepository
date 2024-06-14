@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -181,7 +180,7 @@ public class ProductServiceImpl implements ProductService {
         var priceAtShymkent = processProductPrice(product, cityShymkent, priceShymkent);
 
 
-        product.setPrices(new HashSet<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
+        product.setPrices(new ArrayList<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
     }
 
     private KaspiCity getCachedCity(String cityName, Map<String, KaspiCity> cityCache) {
@@ -247,8 +246,8 @@ public class ProductServiceImpl implements ProductService {
             kaspiTokenRepository.save(kaspiToken);
 
             return resultOfUploading.get(0);
-        } catch (JAXBException e) {
-            log.error("JAXBException: ", e);
+        } catch (Exception e) {
+            log.error("Exception: ", e);
             throw new IllegalStateException("Error when generating xml");
         }
 

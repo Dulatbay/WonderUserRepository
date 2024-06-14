@@ -1,7 +1,5 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
-import jakarta.persistence.Convert;
-import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import lombok.Data;
 
 import java.time.LocalDateTime;
