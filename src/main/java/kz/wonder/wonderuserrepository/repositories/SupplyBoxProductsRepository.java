@@ -48,8 +48,11 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "AND sbp.id IN ( " +
             "  SELECT MIN(sbp2.id) FROM SupplyBoxProduct sbp2 " +
             "  LEFT JOIN Product p2 ON p2.id = sbp2.product.id " +
-            "  WHERE ((:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
-            "  AND (:byVendorCode = false OR p2.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  WHERE " +
+            " (((:byProductName = TRUE AND lower(p.name) LIKE '%' || lower(:searchValue) || '%') OR " +
+            "  (:byVendorCode = TRUE AND p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  OR " +
+            "   (:byVendorCode = FALSE AND :byProductName = FALSE)) " +
             "  AND sbp2.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
             "  GROUP BY p2.originalVendorCode) ")
     Page<SupplyBoxProduct> findByParamsUniqueByProduct(@Param("kaspiStoreId") Long kaspiStoreId,
@@ -61,8 +64,11 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
-            "  WHERE ((:byProductName = false OR lower(p.name) LIKE '%' || lower(:searchValue) || '%') " +
-            "  AND (:byVendorCode = false OR p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  WHERE " +
+            " (((:byProductName = TRUE AND lower(p.name) LIKE '%' || lower(:searchValue) || '%') OR " +
+            "  (:byVendorCode = TRUE AND p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  OR " +
+            "   (:byVendorCode = FALSE AND :byProductName = FALSE)) " +
             "  AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,

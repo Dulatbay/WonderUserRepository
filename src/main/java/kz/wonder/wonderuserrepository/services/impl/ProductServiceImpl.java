@@ -136,7 +136,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = processProduct(vendorCode, name, link, isPublic, tradePrice, keycloakUserId);
         processProductPrices(product, priceAlmaty, priceAstana, priceShymkent, cityCache);
 
-        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
+//        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
 
 
         return product;
@@ -263,6 +263,7 @@ public class ProductServiceImpl implements ProductService {
         product.setEnabled(false);
         productRepository.save(product);
     }
+
 
     // todo: refactoring
     @Override
