@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -36,7 +37,7 @@ public class Product extends AbstractEntity<Long> {
     private boolean deleted;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ProductPrice> prices;
+    private Set<ProductPrice> prices;
 
     @OneToOne
     @JoinColumn(name = "main_city_price_id")
@@ -52,5 +53,5 @@ public class Product extends AbstractEntity<Long> {
             mappedBy = "product",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<SupplyBoxProduct> supplyBoxes;
+    private Set<SupplyBoxProduct> supplyBoxes;
 }

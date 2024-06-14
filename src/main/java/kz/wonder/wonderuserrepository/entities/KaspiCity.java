@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -33,7 +34,13 @@ public class KaspiCity extends AbstractEntity<Long> {
             mappedBy = "kaspiCity",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<KaspiOrder> kaspiOrders;
+    private Set<KaspiOrder> kaspiOrders;
+
+    @OneToMany(fetch = FetchType.LAZY,
+            mappedBy = "kaspiCity",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private Set<KaspiStore> kaspiStores;
 
 }
 
