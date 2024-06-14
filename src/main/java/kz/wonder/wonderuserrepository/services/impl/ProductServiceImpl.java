@@ -259,6 +259,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Товар не существует"));
         log.info("Product with id {} was deleted", productId);
 
+        product.setDeleted(true);
         product.setEnabled(false);
         productRepository.save(product);
 
