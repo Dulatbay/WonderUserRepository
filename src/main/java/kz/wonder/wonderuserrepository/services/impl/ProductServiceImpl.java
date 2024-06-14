@@ -259,9 +259,15 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Товар не существует"));
         log.info("Product with id {} was deleted", productId);
 
-        product.setDeleted(true);
         product.setEnabled(false);
         productRepository.save(product);
+
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
     // todo: refactoring
@@ -395,6 +401,11 @@ public class ProductServiceImpl implements ProductService {
         productSize.setLength(productSizeChangeRequest.getLength());
         productSize.setWeight(productSizeChangeRequest.getWeight());
         productSize.setComment(productSizeChangeRequest.getComment());
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
 
         productSizeRepository.save(productSize);
     }
