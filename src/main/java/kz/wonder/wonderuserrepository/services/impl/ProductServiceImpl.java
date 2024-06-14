@@ -403,12 +403,12 @@ public class ProductServiceImpl implements ProductService {
         productSize.setWeight(productSizeChangeRequest.getWeight());
         productSize.setComment(productSizeChangeRequest.getComment());
 
+        productSizeRepository.save(productSize);
+
         var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
         token.setXmlUpdated(false);
         kaspiTokenRepository.save(token);
-
-        productSizeRepository.save(productSize);
     }
 
     @Override
