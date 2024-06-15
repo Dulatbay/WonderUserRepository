@@ -9,15 +9,15 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "package_order_process", schema = schemaName)
 public class PackageOrderProcess extends AbstractEntity<Long>{
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
     private StoreEmployee employee;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "package_order_id", nullable = false)
     private OrderPackage orderPackage;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
 }

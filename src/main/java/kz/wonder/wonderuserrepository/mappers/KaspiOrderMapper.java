@@ -132,7 +132,6 @@ public class KaspiOrderMapper {
         orderDetailResponse.setProductTradePrice(product.getTradePrice());
         orderDetailResponse.setProductSellPrice(kaspiOrder.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
         orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
-        orderDetailResponse.setOrderStatus(OrderStateInStore.getOrderStatus(kaspiOrder));
         return orderDetailResponse;
     }
 

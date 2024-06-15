@@ -9,7 +9,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 
 @Data
 @Entity
-@Table(name = "kaspi_store", schema = schemaName)
+@Table(name = "kaspi_product_category", schema = schemaName)
 public class KaspiProductCategory extends AbstractEntity<Long> {
     @Column(name = "code", nullable = false, unique = true)
     private String code;

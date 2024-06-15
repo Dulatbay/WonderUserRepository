@@ -10,11 +10,11 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "order_transmission", schema = schemaName)
 public class OrderTransmission extends AbstractEntity<Long> {
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private KaspiOrder kaspiOrder;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "started_employee_id", nullable = false)
     private StoreEmployee startedEmployee;
 

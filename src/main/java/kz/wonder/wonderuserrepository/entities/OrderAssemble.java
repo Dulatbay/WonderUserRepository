@@ -16,7 +16,7 @@ public class OrderAssemble extends AbstractEntity<Long> {
     @JoinColumn(name = "order_id", nullable = false)
     private KaspiOrder kaspiOrder;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "started_employee_id", nullable = false)
     private StoreEmployee startedEmployee;
 

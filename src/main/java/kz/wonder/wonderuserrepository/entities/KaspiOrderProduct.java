@@ -14,11 +14,11 @@ public class KaspiOrderProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "kaspi_order_id")
     private KaspiOrder order;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_box_product_id")
     private SupplyBoxProduct supplyBoxProduct;
 
@@ -44,7 +44,7 @@ public class KaspiOrderProduct extends AbstractEntity<Long> {
     @Column(name = "delivery_cost", nullable = false)
     private Double deliveryCost;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private KaspiProductCategory category;
 }
