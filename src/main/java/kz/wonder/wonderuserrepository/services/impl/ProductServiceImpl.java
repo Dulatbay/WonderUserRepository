@@ -453,7 +453,7 @@ public class ProductServiceImpl implements ProductService {
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Укажите цену на этот город прежде чем ставить ее главной"));
 
                     product.setMainCityPrice(productPrice);
                     productRepository.save(product);
@@ -470,7 +470,7 @@ public class ProductServiceImpl implements ProductService {
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                            .orElse(new ProductPrice(city, product, price.getPrice()));
 
                     productPrice.setPrice(price.getPrice());
                     productPriceRepository.save(productPrice);

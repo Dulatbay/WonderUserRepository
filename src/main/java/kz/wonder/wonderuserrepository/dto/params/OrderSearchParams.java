@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class OrderSearchParams {
-    private String searchValue;
+    private String searchValue = "";
     private DeliveryMode deliveryMode;
     private boolean byOrderCode;
     private boolean byShopName;
