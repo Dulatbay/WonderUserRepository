@@ -24,7 +24,7 @@ public class ProductMapper {
 
         productPrice.setCityId(city.getId());
         productPrice.setCityName(city.getName());
-        productPrice.setCount(product.getSupplyBoxes()
+        productPrice.setCount(product.getSupplyBoxProducts()
                 .stream()
                 .filter(p ->
                         p.getState() == ProductStateInStore.ACCEPTED
@@ -45,7 +45,7 @@ public class ProductMapper {
                 .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
                 .counts(product.getPrices().stream().map(price -> {
                     var city = price.getKaspiCity();
-                    var count = (product.getSupplyBoxes()
+                    var count = (product.getSupplyBoxProducts()
                             .stream()
                             .filter(p ->
                                     p.getState() == ProductStateInStore.ACCEPTED

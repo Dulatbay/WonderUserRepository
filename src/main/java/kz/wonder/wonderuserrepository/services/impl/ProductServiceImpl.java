@@ -32,7 +32,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -203,9 +202,28 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
-        log.info("Retrieving products with keycloak id: {}", keycloakUserId);
-        return productRepository.findByParams(keycloakUserId, searchValue, searchValue, isPublished, pageable)
-                .map(productMapper::mapToResponse);
+        var products = productRepository.findAllByKeycloakId(keycloakUserId, searchValue, searchValue, isPublished, pageable);
+
+        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
+
+        if (!productIds.isEmpty()) {
+            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
+
+            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
+
+            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+
+            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+
+            products.forEach(product -> {
+                product.setPrices(pricesMap.getOrDefault(product.getId(), new ArrayList<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.getOrDefault(product.getId(), new ArrayList<>()));
+            });
+        }
+
+        return products.map(productMapper::mapToResponse);
     }
 
 
@@ -297,7 +315,7 @@ public class ProductServiceImpl implements ProductService {
 
             products.forEach(product -> {
                 product.setPrices(pricesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
-                product.setSupplyBoxes(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
             });
         }
 
@@ -305,7 +323,7 @@ public class ProductServiceImpl implements ProductService {
 
         products
                 .forEach(product -> {
-                    var count = product.getSupplyBoxes().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
+                    var count = product.getSupplyBoxProducts().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
 
                     var productInfo = ProductPriceResponse.Content.ProductInfo.builder()
                             .id(product.getId())

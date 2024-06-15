@@ -50,5 +50,5 @@ public class Product extends AbstractEntity<Long> {
             mappedBy = "product",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<SupplyBoxProduct> supplyBoxes;
+    private List<SupplyBoxProduct> supplyBoxProducts;
 }
