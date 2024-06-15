@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import kz.wonder.kaspi.client.model.PaymentMode;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import lombok.Data;
 
 import java.util.ArrayList;

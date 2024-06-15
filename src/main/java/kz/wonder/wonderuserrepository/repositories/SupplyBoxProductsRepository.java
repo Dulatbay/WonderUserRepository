@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

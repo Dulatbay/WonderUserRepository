@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.entities.enums.ApplicationMode;
 import lombok.Data;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;

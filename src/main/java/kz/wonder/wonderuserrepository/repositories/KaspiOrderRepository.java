@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.KaspiOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

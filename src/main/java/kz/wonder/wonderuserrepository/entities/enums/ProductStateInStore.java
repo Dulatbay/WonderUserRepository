@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.entities;
+package kz.wonder.wonderuserrepository.entities.enums;
 
 public enum ProductStateInStore {
     ACCEPTED,

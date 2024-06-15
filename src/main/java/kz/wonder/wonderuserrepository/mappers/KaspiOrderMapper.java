@@ -2,11 +2,13 @@ package kz.wonder.wonderuserrepository.mappers;
 
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
+import kz.wonder.wonderuserrepository.dto.enums.OrderStateInStore;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +28,6 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 public class KaspiOrderMapper {
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
-
-    public static void updateKaspiOrderProduct(KaspiOrderProduct existingOrderProduct, KaspiOrder kaspiOrder, Product product, OrderEntry orderEntry, SupplyBoxProduct supplyBoxProductToSave) {
-        existingOrderProduct.setOrder(kaspiOrder);
-        existingOrderProduct.setProduct(product);
-        existingOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
-        existingOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
-    }
 
     public KaspiOrder saveKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
         KaspiOrder kaspiOrder = new KaspiOrder();
@@ -106,13 +101,14 @@ public class KaspiOrderMapper {
     }
 
     public EmployeeOrderResponse mapToEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse(kaspiOrder);
+        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
 
         orderResponse.setOrderCode(kaspiOrder.getCode());
         orderResponse.setShopName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName());
         orderResponse.setFormattedAddress(kaspiOrder.getKaspiStore().getFormattedAddress());
         orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
         orderResponse.setOrderToSendTime(getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
+        orderResponse.setOrderStatus(OrderStateInStore.getOrderStatus(kaspiOrder));
         orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
         orderResponse.setPrice(kaspiOrder.getTotalPrice());
         orderResponse.setProductsCount(kaspiOrder.getProducts().size());
@@ -136,6 +132,7 @@ public class KaspiOrderMapper {
         orderDetailResponse.setProductTradePrice(product.getTradePrice());
         orderDetailResponse.setProductSellPrice(kaspiOrder.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
         orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
+        orderDetailResponse.setOrderStatus(OrderStateInStore.getOrderStatus(kaspiOrder));
         return orderDetailResponse;
     }
 

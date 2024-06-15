@@ -6,6 +6,8 @@ import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;

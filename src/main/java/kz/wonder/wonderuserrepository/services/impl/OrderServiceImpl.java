@@ -1,9 +1,9 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.kaspi.client.api.KaspiApi;
-import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.params.OrderSearchParams;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
@@ -11,12 +11,15 @@ import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.KaspiProductUnitType;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.KaspiDeliveryAddressMapper;
 import kz.wonder.wonderuserrepository.mappers.KaspiOrderMapper;
 import kz.wonder.wonderuserrepository.mappers.KaspiStoreMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.ApplicationPropertyService;
+import kz.wonder.wonderuserrepository.services.KaspiProductCategoryService;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +55,7 @@ public class OrderServiceImpl implements OrderService {
     private final KaspiStoreMapper kaspiStoreMapper;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final ApplicationPropertyService applicationPropertyService;
+    private final KaspiProductCategoryService kaspiProductCategoryService;
 
 
     @Override
@@ -398,6 +402,12 @@ public class OrderServiceImpl implements OrderService {
                 kaspiOrderProduct.setProduct(product);
                 kaspiOrderProduct.setKaspiId(orderEntry.getId());
                 kaspiOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
+                kaspiOrderProduct.setCategory(kaspiProductCategoryService.findOrCreate(orderEntry.getAttributes().getCategory().getCode(), orderEntry.getAttributes().getCategory().getTitle()));
+                kaspiOrderProduct.setBasePrice(orderEntry.getAttributes().getBasePrice());
+                kaspiOrderProduct.setDeliveryCost(orderEntry.getAttributes().getDeliveryCost());
+                kaspiOrderProduct.setEntryNumber(orderEntry.getAttributes().getEntryNumber());
+                kaspiOrderProduct.setUnitType(KaspiProductUnitType.getByDescription(orderEntry.getAttributes().getUnitType()));
+                kaspiOrderProduct.setWeight(orderEntry.getAttributes().getWeight());
                 kaspiOrderProduct.setSupplyBoxProduct(supplyBoxProduct);
 
                 kaspiOrderProductRepository.save(kaspiOrderProduct);

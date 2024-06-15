@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import lombok.Data;
 
 import java.time.LocalDateTime;

@@ -3,7 +3,7 @@ package kz.wonder.wonderuserrepository.dto.response;
 
 import jakarta.persistence.Convert;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import lombok.Data;
 
 import java.time.LocalDateTime;

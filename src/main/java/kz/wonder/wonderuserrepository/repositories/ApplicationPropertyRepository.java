@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.entities.ApplicationMode;
+import kz.wonder.wonderuserrepository.entities.enums.ApplicationMode;
 import kz.wonder.wonderuserrepository.entities.ApplicationProperty;
 import org.springframework.data.jpa.repository.JpaRepository;
 

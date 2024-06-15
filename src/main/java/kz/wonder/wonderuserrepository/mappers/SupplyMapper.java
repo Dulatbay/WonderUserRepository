@@ -6,6 +6,7 @@ import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
 import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.SupplySellerResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.entities;
+package kz.wonder.wonderuserrepository.entities.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
