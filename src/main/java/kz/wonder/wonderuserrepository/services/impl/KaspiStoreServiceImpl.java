@@ -15,6 +15,8 @@ import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.KaspiStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     private final BoxTypeRepository boxTypeRepository;
     private final KaspiStoreMapper kaspiStoreMapper;
     private final KaspiTokenRepository kaspiTokenRepository;
+    private final MessageSource messageSource;
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -42,7 +45,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
         final var selectedCity = kaspiCityRepository.findById(kaspiStoreCreateRequest.getCityId())
                 .orElseThrow(
-                        () -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует")
+                        () -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.city-does-not-exist", null, LocaleContextHolder.getLocale()))
                 );
 
         final List<KaspiStoreAvailableTimes> availableTimes = kaspiStoreMapper.mapToEntity(kaspiStoreCreateRequest.getDayOfWeekWorks(), kaspiStore);
@@ -78,11 +81,11 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void deleteById(Long id, String keycloakUserId) {
         final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakUserId, id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Kaspiсклад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
         if (!tokens.isEmpty())
-            throw new IllegalArgumentException("Невозможно отключить склад до тех пор, пока там есть активные товары");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.cannot-disable-warehouse-with-active-products", null, LocaleContextHolder.getLocale()));
 
 
         kaspiStore.setDeleted(true);
@@ -94,13 +97,13 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void deleteById(Long id) {
         final var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         log.info("Store with id {} was deleted", id);
 
         var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
         if (!tokens.isEmpty())
-            throw new IllegalArgumentException("Невозможно отключить склад до тех пор, пока там есть активные товары");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.cannot-disable-warehouse-with-active-products", null, LocaleContextHolder.getLocale()));
 
         kaspiStore.setDeleted(true);
         kaspiStoreRepository.save(kaspiStore);
@@ -109,12 +112,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
         final var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         if (!changeRequest.isEnabled()) {
             var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
             if (!tokens.isEmpty())
-                throw new IllegalArgumentException("Невозможно отключить склад до тех пор, пока там есть активные товары");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.cannot-disable-warehouse-with-active-products", null, LocaleContextHolder.getLocale()));
         }
 
         log.info("Kaspi store with id: {}, was updated", kaspiStore.getId());
@@ -128,12 +131,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
         final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(userId, id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         if (!changeRequest.isEnabled()) {
             var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
             if (!tokens.isEmpty())
-                throw new IllegalArgumentException("Невозможно отключить склад до тех пор, пока там есть активные товары");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.cannot-disable-warehouse-with-active-products", null, LocaleContextHolder.getLocale()));
         }
 
         var toSave = mapToEntity(changeRequest, kaspiStore);
@@ -145,7 +148,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
         var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspiсклад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         addBoxTypeToStoreWithValidating(boxTypeId, kaspiStore);
     }
@@ -153,14 +156,14 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void addBoxTypeToStoreWithValidating(Long boxTypeId, Long storeId, String keycloakUserId) {
         var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakUserId, storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Kaspiсклад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         addBoxTypeToStoreWithValidating(boxTypeId, kaspiStore);
     }
 
     private void addBoxTypeToStoreWithValidating(Long boxTypeId, KaspiStore kaspiStore) {
         var boxType = boxTypeRepository.findByIdAndDeletedIsFalse(boxTypeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Тип коробки не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.box-type-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var availableBoxType = new KaspiStoreAvailableBoxTypes();
 
@@ -188,7 +191,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId) {
         var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Склад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var itemsToDelete = store.getAvailableBoxTypes()
                 .stream()
@@ -199,7 +202,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
 
         if (itemsToDelete.isEmpty()) {
-            throw new IllegalArgumentException("Store doesn't contain box type with ID: " + boxTypeId);
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.store-doesn't-contain-box-type-with-ID", null, LocaleContextHolder.getLocale()) + ": " + boxTypeId);
         }
 
 
@@ -212,7 +215,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
         var store = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakId, storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Склад не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         store.getAvailableBoxTypes()
                 .removeIf(i -> Objects.equals(i.getId(), storeId));
@@ -225,7 +228,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
-                        "Склад не существует"));
+                        messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var isHisStore = store
                 .getWonderUser()
@@ -233,7 +236,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
                 .equals(keycloakId);
 
         if(!isHisStore && !store.isEnabled())
-            throw new IllegalArgumentException("Склад не в данный момент не работает");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.the-warehouse-is-not-currently-open", null, LocaleContextHolder.getLocale()));
 
 
         return kaspiStoreMapper.mapToResponse(store);
@@ -245,12 +248,12 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
                         HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                        "Склад не существует"));
+                        messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
 
         if(!isHisStore && !store.isEnabled())
-            throw new IllegalArgumentException("Склад не в данный момент не работает");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.the-warehouse-is-not-currently-open", null, LocaleContextHolder.getLocale()));
 
 
         log.info("Retrieving store with id: {}", store.getId());
@@ -272,7 +275,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
     private KaspiStore mapToEntity(KaspiStoreChangeRequest changeRequest, KaspiStore kaspiStore) {
         var kaspiCity = kaspiCityRepository.findById(changeRequest.getCityId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "City doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.city-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         kaspiStore.setKaspiId(changeRequest.getKaspiId());
         kaspiStore.setEnabled(changeRequest.isEnabled());

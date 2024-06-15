@@ -9,6 +9,8 @@ import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderAssembleMapper {
     private final StoreCellProductRepository storeCellProductRepository;
-
+    private final MessageSource messageSource;
     public OrderAssemble toEntity(StoreEmployee storeEmployee, KaspiOrder kaspiOrder, AssembleState assembleState) {
         OrderAssemble orderAssemble = new OrderAssemble();
         orderAssemble.setAssembleState(assembleState);
@@ -56,7 +58,11 @@ public class OrderAssembleMapper {
                     var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
                     var product = kaspiOrderProduct.getProduct();
                     var storeCellProduct = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Something get wrong"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage(
+                                    "mappers.order-assemble-mapper.something-get-wrong",
+                                    null,
+                                    LocaleContextHolder.getLocale()
+                            )));
 
                     if (supplyBoxProduct.getState() == ProductStateInStore.WAITING_FOR_ASSEMBLY) {
                         var productResponse = new AssembleProcessResponse.Product();

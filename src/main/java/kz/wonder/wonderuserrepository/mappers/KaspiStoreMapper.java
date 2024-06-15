@@ -17,6 +17,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
@@ -39,6 +41,7 @@ public class KaspiStoreMapper {
     private String adminKeycloakId;
     private WonderUser admin;
     private final UserService userService;
+    private final MessageSource messageSource;
 
     public KaspiStore getKaspiStore(OrdersDataResponse.OrderAttributes orderAttributes, OrdersDataResponse.Address address, KaspiCity kaspiCity) {
         var optionalKaspiStore = kaspiStoreRepository.findByOriginAddressId(orderAttributes.getOriginAddress().getId());
@@ -139,7 +142,11 @@ public class KaspiStoreMapper {
 
             } catch (DateTimeParseException e) {
                 log.error("DateTimeParseException: ", e);
-                throw new IllegalArgumentException("Неправильный формат рабочего времени");
+                throw new IllegalArgumentException(messageSource.getMessage(
+                        "mappers.kaspi-store-mapper.incorrect-working-time-format",
+                        null,
+                        LocaleContextHolder.getLocale()
+                ));
             }
         });
         return availableTimes;

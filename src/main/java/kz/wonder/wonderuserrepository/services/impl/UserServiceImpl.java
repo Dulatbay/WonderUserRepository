@@ -11,6 +11,8 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 	private final KeycloakService keycloakService;
 	private final EntityManager entityManager;
+	private final MessageSource messageSource;
 
 
 
@@ -32,7 +35,7 @@ public class UserServiceImpl implements UserService {
 	public WonderUser getUserByKeycloakId(String keycloakId) {
 		log.info("Retrieving user with keycloakId: {}", keycloakId);
 		return userRepository.findByKeycloakId(keycloakId)
-				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
+				.orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.user-service-impl.wonder-user-does-not-exist", null, LocaleContextHolder.getLocale())));
 
 	}
 

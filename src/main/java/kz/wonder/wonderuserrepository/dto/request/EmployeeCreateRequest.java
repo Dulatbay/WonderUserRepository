@@ -14,19 +14,19 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 public class EmployeeCreateRequest extends KeycloakBaseUser {
-    @NotNull(message = "Please provide a first name")
+    @NotNull(message = "{requests.employee-create-request.please-provide-a-first-name}")
     private String firstName;
 
-    @NotNull(message = "Please provide a last name")
+    @NotNull(message = "{requests.employee-create-request.please-provide-a-last-name}")
     private String lastName;
 
-    @Email(message = "Please provide a valid email address")
+    @Email(message = "{requests.employee-create-request.please-provide-a-valid-email-address}")
     private String email;
 
-    @Size(min = 10, max = 20, message = "Phone number must be in range 10-20")
+    @Size(min = 10, max = 20, message = "{requests.employee-create-request.phone-number-must-be-in-range-10-20}")
     private String phoneNumber;
 
-    @NotNull(message = "Please provide a store id")
+    @NotNull(message = "{requests.employee-create-request.please-provide-a-store-id}")
     private Long storeId;
 
     @JsonIgnore

@@ -17,6 +17,7 @@ import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.StoreEmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RequiredArgsConstructor
 @RestController
@@ -31,6 +33,7 @@ import java.util.List;
 public class EmployeeController {
     private final StoreEmployeeService storeEmployeeService;
     private final KeycloakService keycloakService;
+    private final MessageSource messageSource;
 
     @PostMapping
     @Operation(summary = "Create employee", description = "This endpoint allows the creation of a new employee. The request must include employee details such as email, password, first name and last name. If successful, it returns the created employee's email and password.")
@@ -64,7 +67,8 @@ public class EmployeeController {
     })
     @AccessForAdmins
     public ResponseEntity<List<EmployeeResponse>> getEmployees(@RequestParam(value = "store-id", required = false)
-                                                               Long storeId) {
+                                                               Long storeId,
+                                                               Locale locale) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var authorities = Utils.getAuthorities(token.getAuthorities());
@@ -76,8 +80,10 @@ public class EmployeeController {
             result = storeEmployeeService.getAllStoreEmployees(storeId, usersInKeycloak, isSuperAdmin, keycloakIdOfCreator);
         else if (isSuperAdmin)
             result = storeEmployeeService.getAllStoreEmployees(usersInKeycloak);
-        else
-            throw new IllegalArgumentException("Неверный id магазина");
+        else{
+            String invalidStoreId = messageSource.getMessage("controllers.employee-controller.invalid-store-id", null, locale);
+            throw new IllegalArgumentException(invalidStoreId);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -88,7 +94,7 @@ public class EmployeeController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the employee")
     })
     @AccessForAdmins
-    public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable Long userId) {
+    public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable Long userId, Locale locale) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
@@ -97,7 +103,7 @@ public class EmployeeController {
         var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Сотрукдник не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("controllers.employee-controller.employee-doesn't-exist", null, locale));
 
         var userResource = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId());
 
@@ -113,7 +119,7 @@ public class EmployeeController {
             @ApiResponse(responseCode = "200", description = "Successfully deleted the employee")
     })
     @AccessForAdmins
-    public ResponseEntity<Void> deleteEmployeeId(@PathVariable Long userId) {
+    public ResponseEntity<Void> deleteEmployeeId(@PathVariable Long userId, Locale locale) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
@@ -122,7 +128,7 @@ public class EmployeeController {
         var isHisEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Сотрукдник не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("controllers.employee-controller.employee-doesn't-exist", null, locale));
 
         keycloakService.deleteUserById(storeEmployee.getWonderUser().getKeycloakId());
         storeEmployeeService.deleteStoreEmployee(storeEmployee);
@@ -135,7 +141,7 @@ public class EmployeeController {
             @ApiResponse(responseCode = "200", description = "Successfully updated the password")
     })
     @AccessForAdminsAndEmployee
-    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody @Valid UpdatePasswordRequest updatePassword) {
+    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @RequestBody @Valid UpdatePasswordRequest updatePassword, Locale locale) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
@@ -145,7 +151,7 @@ public class EmployeeController {
         var isEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Сотрукдник не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("controllers.employee-controller.employee-doesn't-exist", null, locale));
 
 
         var keycloakUser = keycloakService.getUserById(storeEmployee.getWonderUser().getKeycloakId()).toRepresentation();
@@ -161,7 +167,7 @@ public class EmployeeController {
             @ApiResponse(responseCode = "200", description = "Successfully updated the employee")
     })
     @AccessForAdminsAndEmployee
-    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, @RequestBody EmployeeUpdateRequest employeeUpdateRequest) {
+    public ResponseEntity<EmployeeResponse> updateEmployee(@PathVariable Long userId, @RequestBody EmployeeUpdateRequest employeeUpdateRequest, Locale locale) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakIdOfCreator = Utils.extractIdFromToken(token);
         var isSuperAdmin = Utils.getAuthorities(token.getAuthorities()).contains(KeycloakRole.SUPER_ADMIN.name());
@@ -170,7 +176,7 @@ public class EmployeeController {
         var isEmployee = storeEmployee.getKaspiStore().getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isEmployee && !isSuperAdmin)
-            throw new IllegalArgumentException("Сотрукдник не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("controllers.employee-controller.employee-doesn't-exist", null, locale));
 
         var keycloakBaseUser = new KeycloakBaseUser();
         keycloakBaseUser.setEmail(employeeUpdateRequest.getEmail());
