@@ -120,7 +120,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
         });
 
-        var sorted = (productWithCountMap.values().stream().sorted((a, b) -> Math.toIntExact(b.getCount() - a.getCount())).toList());
+        var sorted = (productWithCountMap.values().stream().sorted((a, b) -> Math.toIntExact(a.getCount() - b.getCount())).toList());
 
         return new PageImpl<>(sorted.stream().limit(pageable.getPageSize()).toList(), pageable, sorted.size());
     }
