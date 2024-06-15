@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
+import kz.wonder.wonderuserrepository.dto.request.SupplyStateToRejectRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndEmployee;
@@ -28,9 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
 import static kz.wonder.wonderuserrepository.constants.Utils.getAuthorities;
@@ -69,6 +68,15 @@ public class SupplyController {
         var supplyCreatedResponse = supplyService.createSupply(createRequest, userId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(supplyCreatedResponse);
+    }
+
+
+    @PutMapping("/state")
+    @AccessForAdminsAndSellers
+        public ResponseEntity<SupplySellerResponse> changeStateToReject(@RequestBody @Valid SupplyStateToRejectRequest stateUpdateRequest){
+        var supplyUpdatedResponse = supplyService.updateSupplyStateToReject(stateUpdateRequest);
+
+        return ResponseEntity.status(HttpStatus.OK).body(supplyUpdatedResponse);
     }
 
     @GetMapping("/admin")
@@ -113,6 +121,7 @@ public class SupplyController {
         }
         return ResponseEntity.ok(result);
     }
+
 
     @GetMapping("/seller")
     @Operation(summary = "Get all supplies of seller", description = "Retrieves a list of supplies within the specified date range")

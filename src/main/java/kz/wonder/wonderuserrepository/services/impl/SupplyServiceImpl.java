@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import kz.wonder.filemanager.client.api.FileManagerApi;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
+import kz.wonder.wonderuserrepository.dto.request.SupplyStateToRejectRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -91,6 +92,17 @@ public class SupplyServiceImpl implements SupplyService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public SupplySellerResponse updateSupplyStateToReject(SupplyStateToRejectRequest stateUpdateToRejectRequest){
+        final var supply = findSupplyById(stateUpdateToRejectRequest.getSupplyId());
+
+        if(supply.getSupplyState() == SupplyState.START || supply.getSupplyState() == SupplyState.ACCEPTED) supply.setSupplyState(SupplyState.REJECTED);
+
+        var updatedSupply = supplyRepository.save(supply);
+
+        return supplyMapper.toSupplySellerResponse(updatedSupply);
     }
 
     @Override
@@ -426,7 +438,8 @@ public class SupplyServiceImpl implements SupplyService {
                         .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
         supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
 
-
+        var generatedSupplyReport = barcodeService.generateSupplyReport(this.getSellerSupplyReport(supply));
+        fileManagerApi.uploadFiles(FILE_MANAGER_SUPPLY_REPORT_DIR, List.of(generatedSupplyReport), false);
     }
 
     @Override
