@@ -10,7 +10,6 @@ import java.util.List;
 
 @Data
 public class AssembleProcessResponse {
-    private Long assembleId;
     private List<Product> productsToProcess;
     private List<ProcessedProduct> processedProducts;
     private DeliveryMode deliveryMode;
@@ -33,6 +32,5 @@ public class AssembleProcessResponse {
     public static class ProcessedProduct extends Product {
         private String processedEmployeeName;
         private LocalDateTime processedDate;
-        private String waybill;
     }
 }

@@ -33,7 +33,7 @@ public class KaspiCity extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private List<KaspiOrder> kaspiOrders;
 
-    @OneToMany(fetch = FetchType.EAGER,
+    @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiCity",
             orphanRemoval = true,
             cascade = CascadeType.ALL)

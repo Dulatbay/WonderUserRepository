@@ -33,10 +33,10 @@ public class Product extends AbstractEntity<Long> {
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductPrice> prices;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "main_city_price_id")
     private ProductPrice mainCityPrice;
 
@@ -50,5 +50,5 @@ public class Product extends AbstractEntity<Long> {
             mappedBy = "product",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<SupplyBoxProduct> supplyBoxes;
+    private List<SupplyBoxProduct> supplyBoxProducts;
 }

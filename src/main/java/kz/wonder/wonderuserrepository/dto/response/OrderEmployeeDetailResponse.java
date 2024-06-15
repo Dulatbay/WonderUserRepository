@@ -23,6 +23,8 @@ public class OrderEmployeeDetailResponse {
         private String productName;
         private String productArticle;
         private String productVendorCode;
+        private String pathToProductBarcode;
+        private String pathToBoxBarcode;
         private String productCell;
     }
 }

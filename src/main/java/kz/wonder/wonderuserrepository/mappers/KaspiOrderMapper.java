@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.mappers;
 
-import kz.wonder.kaspi.client.model.Order.OrderEntry;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
@@ -126,6 +126,8 @@ public class KaspiOrderMapper {
         orderDetailResponse.setProductName(product.getName());
         orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
         orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "Not accepted yet");
+        orderDetailResponse.setPathToBoxBarcode(supplyBoxProduct.getSupplyBox().getPathToBarcode());
+        orderDetailResponse.setPathToProductBarcode(supplyBoxProduct.getPathToBarcode());
         orderDetailResponse.setProductVendorCode(product.getVendorCode());
         orderDetailResponse.setProductTradePrice(product.getTradePrice());
         orderDetailResponse.setProductSellPrice(kaspiOrder.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
@@ -149,6 +151,8 @@ public class KaspiOrderMapper {
         orderProduct.setProductArticle(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getArticle());
         orderProduct.setProductCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N/A");
         orderProduct.setProductVendorCode(product.isEmpty() ? "N/A" : product.get().getVendorCode());
+        orderProduct.setPathToProductBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getPathToBarcode());
+        orderProduct.setPathToBoxBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getSupplyBox().getPathToBarcode());
         return orderProduct;
     }
 

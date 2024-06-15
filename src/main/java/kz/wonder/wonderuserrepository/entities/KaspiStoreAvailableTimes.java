@@ -18,7 +18,7 @@ public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_store", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_store")
     private KaspiStore kaspiStore;
 
     @Column(name = "day_of_week")

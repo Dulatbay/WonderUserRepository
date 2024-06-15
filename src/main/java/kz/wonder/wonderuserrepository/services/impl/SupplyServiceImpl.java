@@ -118,10 +118,10 @@ public class SupplyServiceImpl implements SupplyService {
 
         for (var time : availableTimes) {
             if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
-                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
+//                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
                     isAvailableToSupply = true;
                     break;
-                }
+//                }
             }
         }
 
@@ -194,7 +194,7 @@ public class SupplyServiceImpl implements SupplyService {
                                         .forEach(supplyBoxProduct -> {
                                             var product = supplyBoxProduct.getProduct();
                                             var productAdditionalText = List.of(
-                                                    product.getName().substring(0, 30),
+                                                    product.getName().length() > 40 ? product.getName().substring(0, 40) : product.getName(),
                                                     "Продавец:" + createdSupply.getAuthor().getKaspiToken().getSellerName()
                                             );
                                             multipartFilesProducts.add(barcodeService.generateBarcode(supplyBoxProduct.getArticle(), productAdditionalText));

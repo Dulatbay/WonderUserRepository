@@ -37,6 +37,6 @@ public class KaspiToken extends AbstractEntity<Long> {
     private boolean xmlUpdated;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(columnDefinition = "integer", name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private WonderUser wonderUser;
 }

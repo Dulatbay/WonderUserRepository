@@ -6,5 +6,6 @@ public enum ProductStateInStore {
     PENDING,
     WAITING_FOR_ASSEMBLY,
     ASSEMBLED,
+    READY_FOR_PACKAGE,
     SOLD
 }
