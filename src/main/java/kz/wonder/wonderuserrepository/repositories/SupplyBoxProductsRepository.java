@@ -41,10 +41,8 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "LEFT JOIN FETCH sbp.storeCellProduct scp " +
             "LEFT JOIN FETCH sbp.kaspiOrderProducts kop " +
             "LEFT JOIN FETCH sbp.product p  " +
-            "WHERE s.author.keycloakId = :keycloakId AND sbp.state = 'ACCEPTED' " +
-            "GROUP BY sbp.id, kop.id " +
-            "ORDER BY COUNT(p.id) DESC ")
-    Page<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, Pageable pageable);
+            "WHERE s.author.keycloakId = :keycloakId AND sbp.state = 'ACCEPTED' ")
+    List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN SupplyBox sb ON sb.id = sbp.supplyBox.id " +
