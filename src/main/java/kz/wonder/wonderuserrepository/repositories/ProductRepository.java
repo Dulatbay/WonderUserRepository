@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 import kz.wonder.wonderuserrepository.entities.Product;
+import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,6 +55,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                       @Param("vendorCode") String vendorCode,
                                       @Param("isEnabled") Boolean isEnabled,
                                       Pageable pageable);
+
+
+
 
     boolean existsByOriginalVendorCodeAndDeletedIsFalse(String originalVendorCode);
 }

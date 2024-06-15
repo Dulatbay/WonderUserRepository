@@ -19,7 +19,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -33,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -267,30 +267,52 @@ public class ProductServiceImpl implements ProductService {
 
     // todo: refactoring
     @Override
-    public Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
+    public ProductPriceResponse getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
         Page<Product> products;
         Map<Long, CityResponse> cityResponseMap = new HashMap<>();
-
 
         if (isSuperAdmin) {
             products = productRepository.findAllBy(searchValue, searchValue, isPublished, pageable);
         } else {
+            log.info("FETCH PRODUCTS STARTED");
             products = productRepository.findAllByKeycloakId(keycloakId, searchValue, searchValue, isPublished, pageable);
+            log.info("FETCH PRODUCTS ENDED");
         }
 
-        List<ProductPriceResponse.ProductInfo> response = new ArrayList<>();
+        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
+
+        if (!productIds.isEmpty()) {
+            log.info("FETCH ProductPrice STARTED");
+            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
+            log.info("FETCH ProductPrice ENDED");
+            log.info("FETCH SupplyBoxProduct STARTED");
+            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
+            log.info("FETCH SupplyBoxProduct ENDED");
+
+            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+
+            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+
+            products.forEach(product -> {
+                product.setPrices(pricesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+                product.setSupplyBoxes(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+            });
+        }
+
+        ProductPriceResponse.Content response = new ProductPriceResponse.Content();
 
         products
                 .forEach(product -> {
                     var count = product.getSupplyBoxes().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
 
-                    var productInfo = ProductPriceResponse.ProductInfo.builder()
+                    var productInfo = ProductPriceResponse.Content.ProductInfo.builder()
                             .id(product.getId())
                             .name(product.getName())
                             .vendorCode(product.getVendorCode())
                             .count(count)
                             .isPublished(product.isEnabled())
-                            // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
                                 var city = price.getKaspiCity();
 
@@ -303,19 +325,24 @@ public class ProductServiceImpl implements ProductService {
                                     return cityResponse;
                                 });
 
-
                                 return ProductMapper.mapProductPrice(product, price, city);
                             }).toList())
                             .build();
 
-                    response.add(productInfo);
+                    response.getProducts().add(productInfo);
                 });
 
-        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
-        productPriceResponse.setProducts(response);
-        productPriceResponse.setCities(cityResponseMap.values().stream().toList());
+        response.setCities(cityResponseMap.values().stream().toList());
 
-        return new PageImpl<>(new ArrayList<>(Collections.singleton(productPriceResponse)), pageable, products.getTotalElements());
+        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
+        productPriceResponse.setContent(response);
+        productPriceResponse.setPage(pageable.getPageNumber());
+        productPriceResponse.setSize(pageable.getPageSize());
+        productPriceResponse.setLast(products.isLast());
+        productPriceResponse.setTotalPages(products.getTotalPages());
+        productPriceResponse.setTotalElements(products.getTotalElements());
+
+        return productPriceResponse;
     }
 
     @Override

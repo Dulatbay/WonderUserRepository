@@ -75,6 +75,11 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
                                         @Param("byProductName") Boolean byProductName,
                                         @Param("byVendorCode") Boolean byVendorCode,
                                         Pageable pageable);
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN sbp.product p ON p.id = sbp.id " +
+            "LEFT JOIN FETCH sbp.product " +
+            "WHERE p.id IN :productIds")
+    List<SupplyBoxProduct> findSupplyBoxesByProductIds(@Param("productIds") List<Long> productIds);
 
 
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +

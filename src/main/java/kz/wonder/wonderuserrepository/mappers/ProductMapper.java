@@ -17,8 +17,8 @@ public class ProductMapper {
     private final ProductSizeRepository productSizeRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
 
-    public static @NotNull ProductPriceResponse.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
-        var productPrice = new ProductPriceResponse.ProductPrice();
+    public static @NotNull ProductPriceResponse.Content.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
+        var productPrice = new ProductPriceResponse.Content.ProductPrice();
 
         // todo: сделал поставку в город, где не указана цена
 

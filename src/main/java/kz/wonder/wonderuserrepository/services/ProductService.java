@@ -21,7 +21,7 @@ public interface ProductService {
 
     void deleteProductById(String keycloakId, Long productId);
 
-    Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue);
+    ProductPriceResponse getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue);
 
     void changePublish(String keycloakId, Long productId, Boolean isPublished);
 

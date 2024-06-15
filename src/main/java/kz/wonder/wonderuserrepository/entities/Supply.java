@@ -14,11 +14,11 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 public class Supply extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", columnDefinition = "integer")
+    @JoinColumn(name = "author_id")
     private WonderUser author;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id", columnDefinition = "integer")
+    @JoinColumn(name = "store_id")
     private KaspiStore kaspiStore;
 
     @Column(name = "supply_states", nullable = false)

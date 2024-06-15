@@ -9,7 +9,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "kaspi_order_product", schema = schemaName)
 public class KaspiOrderProduct extends AbstractEntity<Long> {
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_order_id")
     private KaspiOrder order;
 

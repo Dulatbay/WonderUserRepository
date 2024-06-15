@@ -29,11 +29,11 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private PaymentMode paymentMode;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_store_id")
     private KaspiStore kaspiStore;
 
     @Column(name = "planned_delivery_date")
@@ -77,7 +77,7 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private String status;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "kaspi_delivery_address", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_delivery_address")
     private KaspiDeliveryAddress deliveryAddress;
 
 
@@ -120,10 +120,10 @@ public class KaspiOrder extends AbstractEntity<Long> {
     private Double deliveryCost;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "wonder_user_id", columnDefinition = "bigint")
+    @JoinColumn(name = "wonder_user_id")
     private WonderUser wonderUser;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
     private List<KaspiOrderProduct> products = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY,
