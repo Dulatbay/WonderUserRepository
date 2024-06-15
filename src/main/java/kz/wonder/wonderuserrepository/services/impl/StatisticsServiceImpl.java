@@ -97,14 +97,12 @@ public class StatisticsServiceImpl implements StatisticsService {
     public Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId, Pageable pageable) {
         var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId);
 
-        log.info("supplyBoxProducts size: {}", supplyBoxProducts.size());
 
         Map<Pair<Long, Long>, ProductWithCount> productWithCountMap = new HashMap<>();
 
         supplyBoxProducts.forEach(supplyBoxProduct -> {
             var product = supplyBoxProduct.getProduct();
             var store = supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore();
-            log.info("product: {}, store: {}", product.getId(), store.getId());
             var key = Pair.of(store.getId(), product.getId());
 
             if (!productWithCountMap.containsKey(key)) {
