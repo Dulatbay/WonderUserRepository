@@ -16,9 +16,9 @@ public enum KaspiProductUnitType {
 
     public static KaspiProductUnitType getByDescription(String description) {
         return switch (description.toLowerCase()) {
-            case "цельно-весовой": yield MEASURABLE_PIECES;
-            case "весовой": yield MEASURABLE;
-            case "штучный": yield PIECES;
+            case "цельно-весовой": case "measurable_pieces": yield MEASURABLE_PIECES;
+            case "весовой": case "measurable": yield MEASURABLE;
+            case "штучный": case "pieces": yield PIECES;
             default:
                 throw new IllegalStateException("Unexpected value: " + description.toLowerCase());
         };

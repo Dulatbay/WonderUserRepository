@@ -153,6 +153,7 @@ public class KaspiOrderMapper {
         orderProduct.setProductVendorCode(product.isEmpty() ? "N/A" : product.get().getVendorCode());
         orderProduct.setPathToProductBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getPathToBarcode());
         orderProduct.setPathToBoxBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getSupplyBox().getPathToBarcode());
+        orderProduct.setProductStateInStore(supplyBoxProductOptional.map(SupplyBoxProduct::getState).orElse(null));
         return orderProduct;
     }
 

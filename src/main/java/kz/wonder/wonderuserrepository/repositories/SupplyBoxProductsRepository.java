@@ -24,6 +24,8 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
+    boolean existsByKaspiOrderCode(String kaspiOrderCode);
+
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD' OR sbp.state = 'WAITING_FOR_ASSEMBLY' OR sbp.state = 'ASSEMBLED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllAdminSells(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);

@@ -1,12 +1,16 @@
 package kz.wonder.wonderuserrepository.services;
 
+import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.wonderuserrepository.dto.params.OrderSearchParams;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
+import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;

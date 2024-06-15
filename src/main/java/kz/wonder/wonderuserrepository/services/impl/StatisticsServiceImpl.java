@@ -133,6 +133,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 getTimeStampFromLocalDateTime(end),
                 null,
                 null,
+                null,
                 false,
                 false,
                 false,

@@ -5,6 +5,7 @@ import jakarta.persistence.Convert;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import kz.wonder.wonderuserrepository.dto.base.OrderWithStatus;
 import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class OrderEmployeeDetailResponse extends OrderWithStatus {
         private String productVendorCode;
         private String pathToProductBarcode;
         private String pathToBoxBarcode;
+        private ProductStateInStore productStateInStore;
         private String productCell;
     }
 }

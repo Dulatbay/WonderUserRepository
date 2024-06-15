@@ -14,6 +14,6 @@ public class KaspiProductCategory extends AbstractEntity<Long> {
     @Column(name = "code", nullable = false, unique = true)
     private String code;
 
-    @Column(name = "title", nullable = false, unique = true)
+    @Column(name = "title", nullable = false)
     private String title;
 }
