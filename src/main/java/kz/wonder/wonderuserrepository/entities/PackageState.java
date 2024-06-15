@@ -1,5 +1,5 @@
 package kz.wonder.wonderuserrepository.entities;
 
 public enum PackageState {
-    READY_TO_START, STARTED, IN_PROGRESS, FINISHED
+    STARTED, IN_PROGRESS, READY_TO_FINISH, FINISHED
 }

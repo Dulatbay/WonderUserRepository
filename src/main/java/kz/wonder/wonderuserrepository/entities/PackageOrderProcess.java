@@ -15,7 +15,7 @@ public class PackageOrderProcess extends AbstractEntity<Long>{
 
     @ManyToOne
     @JoinColumn(name = "package_order_id", nullable = false)
-    private PackageOrder packageOrder;
+    private OrderPackage orderPackage;
 
     @OneToOne
     @JoinColumn(name = "supply_box_product_id", nullable = false)

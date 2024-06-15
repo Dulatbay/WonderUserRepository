@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.mappers;
 
-import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
@@ -106,16 +106,20 @@ public class KaspiOrderMapper {
     }
 
     public EmployeeOrderResponse mapToEmployeeOrderResponse(KaspiOrder kaspiOrder) {
-        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
+        EmployeeOrderResponse orderResponse = new EmployeeOrderResponse(kaspiOrder);
 
         orderResponse.setOrderCode(kaspiOrder.getCode());
+        orderResponse.setShopName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName());
+        orderResponse.setFormattedAddress(kaspiOrder.getKaspiStore().getFormattedAddress());
         orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
-        orderResponse.setOrderStatus(kaspiOrder.getStatus());
         orderResponse.setOrderToSendTime(getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
         orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
+        orderResponse.setPrice(kaspiOrder.getTotalPrice());
+        orderResponse.setProductsCount(kaspiOrder.getProducts().size());
 
         return orderResponse;
     }
+
 
     public OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct, KaspiOrder kaspiOrder) {
         var product = kaspiOrderProduct.getProduct();
