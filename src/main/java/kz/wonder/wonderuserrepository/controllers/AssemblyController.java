@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @StoreEmployeeAuthorization
-@RequestMapping("/employee/assemblies")
+@RequestMapping("/assemblies")
 public class AssemblyController {
     private final AssemblyService assemblyService;
 
@@ -46,7 +46,7 @@ public class AssemblyController {
 //        return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
 //    }
 
-    @PatchMapping("/finish-assemble/{orderCode}")
+    @PatchMapping("/{orderCode}/finish")
     public ResponseEntity<Void> finishAssembly(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -56,7 +56,7 @@ public class AssemblyController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/start-assemble/{orderCode}")
+    @PostMapping("/{orderCode}/start")
     public ResponseEntity<AssembleProcessResponse> startAssemble(@PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
