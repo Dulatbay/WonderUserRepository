@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.kaspi.client.api.KaspiApi;
-import kz.wonder.kaspi.client.model.Order.OrderEntry;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.constants.Utils;

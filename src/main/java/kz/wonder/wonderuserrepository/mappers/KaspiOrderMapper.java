@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.mappers;
 
-import kz.wonder.kaspi.client.model.Order.OrderEntry;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;

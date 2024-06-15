@@ -4,6 +4,8 @@ import kz.wonder.kaspi.client.model.CitiesDataResponse;
 import kz.wonder.kaspi.client.model.OrderState;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
 import kz.wonder.kaspi.client.model.PointOfServiceResponse;
+import kz.wonder.kaspi.client.model.request.KaspiOrderAssembleRequest;
+import kz.wonder.kaspi.client.model.response.AssembleKaspiOrderResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +14,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 @Component
@@ -48,7 +52,7 @@ public class KaspiApi {
                 .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(CitiesDataResponse.class)
-                .timeout(Duration.ofSeconds(100));
+                .timeout(Duration.ofMinutes(100));
     }
 
     public Mono<PointOfServiceResponse> getStoreById(String orderEntryId, String token) {
@@ -57,7 +61,7 @@ public class KaspiApi {
                 .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(PointOfServiceResponse.class)
-                .timeout(Duration.ofSeconds(100));
+                .timeout(Duration.ofMinutes(100));
     }
 
     public Mono<CitiesDataResponse> getDataCitiesWithToken(String token) {
@@ -66,7 +70,20 @@ public class KaspiApi {
                 .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(CitiesDataResponse.class)
-                .timeout(Duration.ofSeconds(100));
+                .timeout(Duration.ofMinutes(100));
+    }
+
+    public Mono<AssembleKaspiOrderResponse> assembleOrder(KaspiOrderAssembleRequest kaspiOrderAssembleRequest, String token) {
+        Map<String, Object> request = new HashMap<>();
+
+        request.put("data", kaspiOrderAssembleRequest);
+        return webClient.post()
+                .uri("/orders")
+                .headers(httpHeaders(token))
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AssembleKaspiOrderResponse.class)
+                .timeout(Duration.ofMinutes(100));
     }
 
     public Mono<OrdersDataResponse> getOrders(String token,
@@ -98,6 +115,6 @@ public class KaspiApi {
                 .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(OrdersDataResponse.class)
-                .timeout(Duration.ofSeconds(100));
+                .timeout(Duration.ofMinutes(100));
     }
 }
