@@ -1,7 +1,5 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
-import kz.wonder.wonderuserrepository.dto.enums.OrderAvailableAction;
-import kz.wonder.wonderuserrepository.dto.enums.OrderStateInStore;
 import lombok.Data;
 
 @Data

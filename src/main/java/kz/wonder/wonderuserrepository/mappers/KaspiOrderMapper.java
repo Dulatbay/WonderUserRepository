@@ -28,6 +28,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 public class KaspiOrderMapper {
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
+    private final BarcodeMapper barcodeMapper;
 
     public KaspiOrder saveKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
         KaspiOrder kaspiOrder = new KaspiOrder();
@@ -117,7 +118,7 @@ public class KaspiOrderMapper {
     }
 
 
-    public OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct, KaspiOrder kaspiOrder) {
+    public OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct) {
         var product = kaspiOrderProduct.getProduct();
         var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
         var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
@@ -126,11 +127,11 @@ public class KaspiOrderMapper {
         orderDetailResponse.setProductName(product.getName());
         orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
         orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "Not accepted yet");
-        orderDetailResponse.setPathToBoxBarcode(supplyBoxProduct.getSupplyBox().getPathToBarcode());
-        orderDetailResponse.setPathToProductBarcode(supplyBoxProduct.getPathToBarcode());
+        orderDetailResponse.setPathToBoxBarcode(barcodeMapper.getPathToBoxBarcode(supplyBoxProduct.getSupplyBox()));
+        orderDetailResponse.setPathToProductBarcode(barcodeMapper.getPathToProductBarcode(supplyBoxProduct));
         orderDetailResponse.setProductVendorCode(product.getVendorCode());
         orderDetailResponse.setProductTradePrice(product.getTradePrice());
-        orderDetailResponse.setProductSellPrice(kaspiOrder.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
+        orderDetailResponse.setProductSellPrice(kaspiOrderProduct.getBasePrice());
         orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
         return orderDetailResponse;
     }
@@ -140,6 +141,7 @@ public class KaspiOrderMapper {
         orderEmployeeDetailResponse.setProducts(orderProducts);
         orderEmployeeDetailResponse.setDeliveryMode(order.getDeliveryMode());
         orderEmployeeDetailResponse.setDeliveryTime(getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
+        orderEmployeeDetailResponse.setOrderStatus(OrderStateInStore.getOrderStatus(order));
         return orderEmployeeDetailResponse;
     }
 
@@ -151,8 +153,8 @@ public class KaspiOrderMapper {
         orderProduct.setProductArticle(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getArticle());
         orderProduct.setProductCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N/A");
         orderProduct.setProductVendorCode(product.isEmpty() ? "N/A" : product.get().getVendorCode());
-        orderProduct.setPathToProductBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getPathToBarcode());
-        orderProduct.setPathToBoxBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getSupplyBox().getPathToBarcode());
+        orderProduct.setPathToProductBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : barcodeMapper.getPathToProductBarcode(supplyBoxProductOptional.get()));
+        orderProduct.setPathToBoxBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : barcodeMapper.getPathToBoxBarcode(supplyBoxProductOptional.get().getSupplyBox()));
         orderProduct.setProductStateInStore(supplyBoxProductOptional.map(SupplyBoxProduct::getState).orElse(null));
         return orderProduct;
     }

@@ -179,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
         var kaspiOrderProducts = order.getProducts();
 
         return kaspiOrderProducts.stream()
-                .map(kaspiOrderProduct -> kaspiOrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
+                .map(kaspiOrderProduct -> kaspiOrderMapper.toOrderDetailResponse(kaspiOrderProduct))
                 .toList();
     }
 
@@ -193,7 +193,7 @@ public class OrderServiceImpl implements OrderService {
         var kaspiOrderProducts = order.getProducts();
 
         return kaspiOrderProducts.stream()
-                .map(kaspiOrderProduct -> kaspiOrderMapper.toOrderDetailResponse(kaspiOrderProduct, order))
+                .map(kaspiOrderProduct -> kaspiOrderMapper.toOrderDetailResponse(kaspiOrderProduct))
                 .toList();
     }
 
