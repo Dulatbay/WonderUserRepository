@@ -281,6 +281,13 @@ public class ProductServiceImpl implements ProductService {
         product.setDeleted(true);
         product.setEnabled(false);
         productRepository.save(product);
+
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
 
@@ -444,6 +451,11 @@ public class ProductServiceImpl implements ProductService {
         productSize.setComment(productSizeChangeRequest.getComment());
 
         productSizeRepository.save(productSize);
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
     @Override
