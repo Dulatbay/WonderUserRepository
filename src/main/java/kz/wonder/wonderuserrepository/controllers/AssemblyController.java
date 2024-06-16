@@ -46,7 +46,7 @@ public class AssemblyController {
 //        return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
 //    }
 
-    @PatchMapping("/{orderCode}/finish")
+    @PostMapping("/{orderCode}/finish")
     public ResponseEntity<Void> finishAssembly(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
