@@ -22,7 +22,19 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "limit 1")
     Optional<SupplyBoxProduct> findFirstByStoreIdAndProductIdAndState(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId, @Param("state") ProductStateInStore state);
 
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.kaspiStore " +
+            "WHERE sbp.article = :productArticle")
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.kaspiStore " +
+            "WHERE sbp.article = :productArticle AND sbp.kaspiOrder.code = :orderCode")
+    Optional<SupplyBoxProduct> findByArticleAndOrderCode(String productArticle, String orderCode);
 
     boolean existsByKaspiOrderCode(String kaspiOrderCode);
 
