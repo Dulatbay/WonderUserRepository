@@ -14,7 +14,9 @@ public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long
     Optional<ProductPrice> findFirstByProductIdOrderByPriceDesc(Long productId);
 
     @Query("SELECT pp FROM ProductPrice pp " +
-            "JOIN FETCH pp.product p " +
+            "LEFT JOIN FETCH pp.product p " +
+            "LEFT JOIN FETCH pp.kaspiCity ppkc " +
+            "LEFT JOIN FETCH ppkc.kaspiStores " +
             "WHERE p.id IN :productIds")
     List<ProductPrice> findPricesByProductIds(@Param("productIds") List<Long> productIds);
 

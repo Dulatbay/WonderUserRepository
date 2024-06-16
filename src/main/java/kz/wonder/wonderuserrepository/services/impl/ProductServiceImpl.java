@@ -246,17 +246,13 @@ public class ProductServiceImpl implements ProductService {
     private String generateAndUpload(KaspiToken kaspiToken) {
         try {
             final var wonderUser = kaspiToken.getWonderUser();
-            final var listOfProducts = productRepository.findAllSellerProductsWithPrices(wonderUser.getKeycloakId());
-
-            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
+            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalogInChunks(wonderUser.getKeycloakId(), kaspiToken);
 
             Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
             String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
 
             var fileName = wonderUser.getKeycloakId() + ".xml";
-
             MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
-
             var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
 
             kaspiToken.setPathToXml(fileName);
@@ -269,7 +265,6 @@ public class ProductServiceImpl implements ProductService {
             log.error("Exception: ", e);
             throw new IllegalStateException("Error when generating xml");
         }
-
     }
 
     @Override
@@ -334,7 +329,7 @@ public class ProductServiceImpl implements ProductService {
                 .forEach(product -> {
                     var mainCityPrice = Optional.ofNullable(product.getMainCityPrice()).orElse(new ProductPrice());
 
-                    if (mainCityPrice.getId() != null){
+                    if (mainCityPrice.getId() != null) {
                         cityResponseMap.computeIfAbsent(mainCityPrice.getId(), k -> {
                             CityResponse cityResponse = new CityResponse();
                             cityResponse.setId(mainCityPrice.getId());
@@ -502,7 +497,7 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Found tokens to generating: {}", tokens.size());
 
-        tokens.parallelStream()
+        tokens
                 .forEach(this::generateAndUpload);
         log.info("Generated xmls: {}", tokens.size());
     }
