@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -224,7 +223,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     public List<DailyStats> getSellerDailyStats(String keycloakId, DurationParams durationParams) {
         var duration = durationParams.getDuration();
 
-        var end = LocalDate.now().atStartOfDay();
+        var end = LocalDate.now().atStartOfDay().plusDays(1);
         var start = end.minus(duration);
 
         var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
@@ -233,7 +232,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         LocalDateTime stepDate = start;
 
         while (!stepDate.isAfter(end) && !stepDate.isEqual(end)) {
-            dailyStatsMap.put(stepDate.toString(), new DailyStats(stepDate.toString()));
+            dailyStatsMap.put(getOrderDateForDuration(stepDate, durationParams), new DailyStats(stepDate.toString()));
             stepDate = nextStepDate(stepDate, durationParams);
         }
 
@@ -254,16 +253,17 @@ public class StatisticsServiceImpl implements StatisticsService {
     public List<DailyStats> getAdminDailyStats(String keycloakId, DurationParams durationParams) {
         var duration = durationParams.getDuration();
 
-        var end = LocalDate.now().atStartOfDay();
+        var end = LocalDate.now().atStartOfDay().plusDays(1);
         var start = end.minus(duration);
 
-        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+        var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+
 
         Map<String, DailyStats> dailyStatsMap = new TreeMap<>();
         LocalDateTime stepDate = start;
 
         while (!stepDate.isAfter(end) && !stepDate.isEqual(end)) {
-            dailyStatsMap.put(stepDate.toString(), new DailyStats(stepDate.toString()));
+            dailyStatsMap.put(getOrderDateForDuration(stepDate, durationParams), new DailyStats(stepDate.toString()));
             stepDate = nextStepDate(stepDate, durationParams);
         }
 
@@ -289,14 +289,19 @@ public class StatisticsServiceImpl implements StatisticsService {
         };
     }
 
-    private String getOrderDateForDuration(LocalDateTime orderDate, DurationParams duration) {
-        return switch (duration) {
-            case DAY -> String.valueOf(orderDate.getHour() - (orderDate.getHour() % 2));
-            case WEEK -> orderDate.getDayOfWeek().toString();
-            case MONTH -> Month.of(orderDate.getDayOfMonth()).toString();
-            case YEAR -> orderDate.withDayOfYear(1).toLocalDate().toString();
-        };
+    private String getOrderDateForDuration(LocalDateTime orderDate, DurationParams durationParams) {
+        LocalDateTime periodStart = LocalDate.now().atStartOfDay().minus(durationParams.getDuration());
+
+        if(durationParams != DurationParams.DAY){
+            orderDate = orderDate.toLocalDate().atStartOfDay();
+        }
+
+        while (periodStart.isBefore(orderDate) && !periodStart.isEqual(orderDate)) {
+            periodStart = nextStepDate(periodStart, durationParams);
+        }
+        return periodStart.toString();
     }
+
 
     private StateInfo<Double> getSellerIncomeInfo(List<SupplyBoxProduct> supplyBoxProducts, LocalDateTime startCurrent, LocalDateTime end, LocalDateTime startPast) {
         StateInfo<Double> incomeInfo = new StateInfo<>();
