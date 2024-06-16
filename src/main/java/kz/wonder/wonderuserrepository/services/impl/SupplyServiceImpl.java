@@ -165,8 +165,9 @@ public class SupplyServiceImpl implements SupplyService {
                             throw new IllegalArgumentException("Коробки с припасами пусты");
                         }
 
-                        supply.getSupplyBoxes().add(supplyBox);
                     });
+
+                    supply.getSupplyBoxes().add(supplyBox);
                 });
 
         if (supply.getSupplyBoxes().isEmpty()) {
@@ -176,7 +177,7 @@ public class SupplyServiceImpl implements SupplyService {
         var createdSupply = supplyRepository.save(supply);
 
         log.info("Created supply id: {}", createdSupply.getId());
-        log.info("Products size in create supply: {}", createdSupply.getSupplyBoxes().size());
+        log.info("Boxes count in created supply: {}", createdSupply.getSupplyBoxes().size());
 
 
         var generateBarCodes = CompletableFuture.runAsync(() -> {
@@ -232,7 +233,7 @@ public class SupplyServiceImpl implements SupplyService {
 
     @Override
     public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName, String keycloakId) {
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
+        var supplies = supplyRepository.findAllAdminSupplies(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
 
         log.info("Supplies size: {}", supplies.size());
 
@@ -405,8 +406,7 @@ public class SupplyServiceImpl implements SupplyService {
                                 if(storeCellProductsMap.containsKey(article))
                                     throw new IllegalArgumentException("Введите уникальные артикли");
 
-                                var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
-                                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                                var supplyBoxProduct = this.validateProduct(article, kaspiStore.getId());
 
                                 supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
                                 supplyBoxProduct.setAcceptedTime(now);
@@ -576,6 +576,22 @@ public class SupplyServiceImpl implements SupplyService {
                 break;
             default:
         }
+    }
+
+    private SupplyBoxProduct validateProduct(String article, Long kaspiStoreId) {
+        final var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+
+        validateProductForStoreCell(supplyBoxProduct, kaspiStoreId);
+        return supplyBoxProduct;
+    }
+
+    private void validateProductForStoreCell(SupplyBoxProduct supplyBoxProduct, Long kaspiStoreId) {
+        if (!supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore().getId().equals(kaspiStoreId)) {
+            throw new IllegalArgumentException("У вас нет разрешения на добавление этого товара в ячейку.");
+        }
+        if (supplyBoxProduct.getState() != ProductStateInStore.PENDING && supplyBoxProduct.getState() != ProductStateInStore.ACCEPTED)
+            throw new IllegalArgumentException("Товар уже невозможно отсканировать");
     }
 
 }

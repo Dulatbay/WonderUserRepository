@@ -78,8 +78,9 @@ public class PackageServiceImpl implements PackageService {
 
         packageProductRequest.getProductArticles()
                 .forEach(article -> {
-                    var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
+                    var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndOrderCode(article, order.getCode())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Неверный артикул"));
+
 
                     supplyBoxProduct.setState(ProductStateInStore.PACKED);
                     supplyBoxProductsRepository.save(supplyBoxProduct);

@@ -246,17 +246,13 @@ public class ProductServiceImpl implements ProductService {
     private String generateAndUpload(KaspiToken kaspiToken) {
         try {
             final var wonderUser = kaspiToken.getWonderUser();
-            final var listOfProducts = productRepository.findAllSellerProductsWithPrices(wonderUser.getKeycloakId());
-
-            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
+            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalogInChunks(wonderUser.getKeycloakId(), kaspiToken);
 
             Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
             String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
 
             var fileName = wonderUser.getKeycloakId() + ".xml";
-
             MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
-
             var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
 
             kaspiToken.setPathToXml(fileName);
@@ -269,7 +265,6 @@ public class ProductServiceImpl implements ProductService {
             log.error("Exception: ", e);
             throw new IllegalStateException("Error when generating xml");
         }
-
     }
 
     @Override
@@ -329,8 +324,23 @@ public class ProductServiceImpl implements ProductService {
 
         ProductPriceResponse.Content response = new ProductPriceResponse.Content();
 
+
         products
                 .forEach(product -> {
+                    var mainCityPrice = Optional.ofNullable(product.getMainCityPrice()).orElse(new ProductPrice());
+
+                    if (mainCityPrice.getId() != null) {
+                        cityResponseMap.computeIfAbsent(mainCityPrice.getId(), k -> {
+                            CityResponse cityResponse = new CityResponse();
+                            cityResponse.setId(mainCityPrice.getId());
+                            cityResponse.setName(mainCityPrice.getKaspiCity().getName());
+                            cityResponse.setCode(mainCityPrice.getKaspiCity().getCode());
+                            cityResponse.setEnabled(mainCityPrice.getKaspiCity().isEnabled());
+                            return cityResponse;
+                        });
+                    }
+
+
                     var count = product.getSupplyBoxProducts().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
 
                     var productInfo = ProductPriceResponse.Content.ProductInfo.builder()
@@ -353,6 +363,7 @@ public class ProductServiceImpl implements ProductService {
 
                                 return ProductMapper.mapProductPrice(product, price, city);
                             }).toList())
+                            .mainPriceCityId(mainCityPrice.getId())
                             .build();
 
                     response.getProducts().add(productInfo);
@@ -410,7 +421,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest pageRequest, String employeeKeycloakId) {
+    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest
+            pageRequest, String employeeKeycloakId) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(employeeKeycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -428,7 +440,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId) {
+    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String
+            keycloakId) {
         final var wonderUser = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -459,7 +472,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest) {
+    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean
+            isSizeScanned, String keycloakId, PageRequest pageRequest) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -483,7 +497,7 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Found tokens to generating: {}", tokens.size());
 
-        tokens.parallelStream()
+        tokens
                 .forEach(this::generateAndUpload);
         log.info("Generated xmls: {}", tokens.size());
     }

@@ -2,8 +2,16 @@ package kz.wonder.wonderuserrepository.mappers;
 
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
+import kz.wonder.wonderuserrepository.entities.AbstractEntity;
 import kz.wonder.wonderuserrepository.entities.KaspiToken;
 import kz.wonder.wonderuserrepository.entities.Product;
+import kz.wonder.wonderuserrepository.entities.ProductPrice;
+import kz.wonder.wonderuserrepository.repositories.ProductPriceRepository;
+import kz.wonder.wonderuserrepository.repositories.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBContext;
@@ -12,6 +20,7 @@ import javax.xml.bind.Marshaller;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -19,12 +28,38 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.JAXB_SCHEM
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.XML_SCHEMA_INSTANCE;
 
 @Component
+@RequiredArgsConstructor
 public class ProductXmlMapper {
+    private final ProductPriceRepository productPriceRepository;
+    private final ProductRepository productRepository;
+
     public KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
         KaspiCatalog kaspiCatalog = new KaspiCatalog();
         kaspiCatalog.setCompany(kaspiToken.getSellerName());
         kaspiCatalog.setMerchantid(kaspiToken.getSellerId());
         kaspiCatalog.setOffers(getOffers(listOfProducts));
+        return kaspiCatalog;
+    }
+
+    public KaspiCatalog buildKaspiCatalogInChunks(String keycloakUserId, KaspiToken kaspiToken) {
+        KaspiCatalog kaspiCatalog = new KaspiCatalog();
+        kaspiCatalog.setCompany(kaspiToken.getSellerName());
+        kaspiCatalog.setMerchantid(kaspiToken.getSellerId());
+        kaspiCatalog.setOffers(new ArrayList<>());
+
+
+        int pageSize = 100;
+        Pageable pageable = PageRequest.of(0, pageSize);
+        Page<Product> productsChunk;
+
+        do {
+            productsChunk = productRepository.findAllSellerProductsWithPrices(keycloakUserId, pageable);
+            if (!productsChunk.isEmpty()) {
+                kaspiCatalog.getOffers().addAll(getOffers(productsChunk.toList()));
+            }
+            pageable = pageable.next();
+        } while (!productsChunk.isEmpty());
+
         return kaspiCatalog;
     }
 
@@ -51,6 +86,16 @@ public class ProductXmlMapper {
     }
 
     private List<KaspiCatalog.Offer> getOffers(List<Product> listOfProducts) {
+        final var listOfProductPrices = productPriceRepository.findPricesByProductIds(listOfProducts.stream().map(AbstractEntity::getId).toList());
+
+        Map<Long, List<ProductPrice>> pricesMap = listOfProductPrices.stream()
+                .collect(Collectors.groupingBy(price -> price.getProduct().getId()));
+
+        for (var product : listOfProducts) {
+            product.setPrices(pricesMap.getOrDefault(product.getId(), new ArrayList<>()));
+        }
+
+
         return listOfProducts.stream().map(this::mapToOffer).collect(Collectors.toList());
     }
 

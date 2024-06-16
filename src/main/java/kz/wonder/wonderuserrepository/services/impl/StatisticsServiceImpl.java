@@ -47,7 +47,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
 
         var supplyBoxProducts = supplyBoxProductsRepository.findAllAdminSells(keycloakId, startPast, end);
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startPast, end, keycloakId);
+        var supplies = supplyRepository.findAllAdminSupplies(startPast, end, keycloakId);
 
         log.info("startPast: {}, startCurrent: {}, end: {}, supplyBoxProducts size: {}, supplies size: {}",
                 startPast, startCurrent, end, supplyBoxProducts.size(), supplies.size());

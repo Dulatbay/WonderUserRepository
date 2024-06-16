@@ -111,6 +111,7 @@ public class KaspiOrderMapper {
         orderResponse.setOrderToSendTime(getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
         orderResponse.setOrderStatus(OrderStateInStore.getOrderStatus(kaspiOrder));
         orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
+        orderResponse.setPickUpPerson(kaspiOrder.getFirstMileCourier());
         orderResponse.setPrice(kaspiOrder.getTotalPrice());
         orderResponse.setProductsCount(kaspiOrder.getProducts().size());
 
