@@ -17,6 +17,7 @@ import kz.wonder.wonderuserrepository.services.KaspiStoreService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
 import static kz.wonder.wonderuserrepository.constants.Utils.getAuthorities;
@@ -35,6 +37,7 @@ import static kz.wonder.wonderuserrepository.constants.Utils.getAuthorities;
 public class StoreController {
     private final KaspiStoreService kaspiStoreService;
     private final UserService userService;
+    private final MessageSource messageSource;
 
     @PostMapping()
     @Operation(summary = "Create new store", description = "This endpoint allows to create a new store")
@@ -44,11 +47,12 @@ public class StoreController {
     @AccessForAdmins
     public ResponseEntity<Void> createStore(@RequestBody
                                             @Valid
-                                            KaspiStoreCreateRequest kaspiStoreCreateRequest) {
+                                            KaspiStoreCreateRequest kaspiStoreCreateRequest,
+                                            Locale locale) {
         kaspiStoreCreateRequest.getDayOfWeekWorks()
                 .forEach(i -> {
                     if (i.numericDayOfWeek() < 1 || i.numericDayOfWeek() > 7)
-                        throw new IllegalArgumentException("Номер недели должен находиться в диапазоне от 1 до 7.");
+                        throw new IllegalArgumentException(messageSource.getMessage("controllers.store-controller.the-week-number-must-be-in-the-range", null, locale));
                 });
 
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();

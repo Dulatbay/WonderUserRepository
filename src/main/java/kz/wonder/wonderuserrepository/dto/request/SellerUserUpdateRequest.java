@@ -7,26 +7,26 @@ import lombok.Data;
 
 @Data
 public class SellerUserUpdateRequest {
-    @NotNull(message = "Phone number not found")
-    @Size(min = 10, max = 20, message = "Phone number must be in range 10-20")
+    @NotNull(message = "{requests.seller-user-update-request.phone-number-not-found}")
+    @Size(min = 10, max = 20, message = "{requests.seller-user-update-request.phone-number-must-be-in-range-10-20}")
     private String phoneNumber;
 
-    @NotNull(message = "Please provide seller name")
+    @NotNull(message = "{requests.seller-user-update-request.please-provide-seller-name}")
     private String sellerName;
 
-    @NotNull(message = "Please provide seller id")
+    @NotNull(message = "{requests.seller-user-update-request.please-provide-seller-id}")
     private String sellerId;
 
-    @NotNull(message = "Please provide kaspi token ")
+    @NotNull(message = "{requests.seller-user-update-request.please-provide-kaspi-token}")
     private String tokenKaspi;
 
-    @NotNull(message = "Please provide first name ")
+    @NotNull(message = "{requests.seller-user-update-request.please-provide-a-first-name}")
     private String firstName;
 
-    @NotNull(message = "Please provide last name ")
+    @NotNull(message = "{requests.seller-user-update-request.please-provide-a-last-name}")
     private String lastName;
 
-    @NotNull(message = "Please provide email ")
-    @Email(message = "Введите валидную почту")
+    @NotNull(message = "{requests.seller-user-update-request.please-provide-a-valid-email}")
+    @Email(message = "{requests.seller-user-update-request.enter-valid-email}")
     private String email;
 }

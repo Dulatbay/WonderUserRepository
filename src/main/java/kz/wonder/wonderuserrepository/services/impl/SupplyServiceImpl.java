@@ -19,6 +19,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +53,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final SupplyMapper supplyMapper;
     private final BarcodeService barcodeService;
     private final FileManagerApi fileManagerApi;
+    private final MessageSource messageSource;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -71,7 +74,7 @@ public class SupplyServiceImpl implements SupplyService {
 
                 var product = productRepository.findByVendorCodeAndKeycloakIdAndDeletedIsFalse(vendorCode, userId)
                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                                String.format("Товар с id %s не существует: ", vendorCode)));
+                                messageSource.getMessage("services-impl.supply-service-impl.product-with-id", null, LocaleContextHolder.getLocale()) + " " + vendorCode +" " + messageSource.getMessage("services-impl.supply-service-impl.does-not-exist", null, LocaleContextHolder.getLocale())));
 
                 response.add(
                         SupplyProcessFileResponse.builder()
@@ -89,7 +92,7 @@ public class SupplyServiceImpl implements SupplyService {
             return response;
         } catch (IllegalStateException e) {
             log.error("IllegalStateException :", e);
-            throw new IllegalArgumentException("Обработка файла не удалась");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.file-processing-failed", null, LocaleContextHolder.getLocale()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -98,13 +101,14 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId) {
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Магазин не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-not-found", null, LocaleContextHolder.getLocale())));
 
         if (!store.isEnabled())
-            throw new IllegalArgumentException("Склад не активен");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.store-not-enabled", null, LocaleContextHolder.getLocale()));
+
 
         final var user = userRepository.findByKeycloakId(userId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "WonderUser не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.user-not-found", null, LocaleContextHolder.getLocale())));
 
 
         log.info("Found store id: {}", store.getId());
@@ -129,7 +133,7 @@ public class SupplyServiceImpl implements SupplyService {
 
 
         if (!isAvailableToSupply) {
-            throw new IllegalArgumentException("Магазин не работает в этот период");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.store-not-operational-in-this-period", null, LocaleContextHolder.getLocale()));
         }
 
 
@@ -139,7 +143,7 @@ public class SupplyServiceImpl implements SupplyService {
         createRequest.getSelectedBoxes()
                 .forEach(selectedBox -> {
                     final var boxType = boxTypeRepository.findByIdInStore(selectedBox.getSelectedBoxId(), store.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Коробка не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale())));
 
                     var supplyBox = new SupplyBox();
                     supplyBox.setBoxType(boxType);
@@ -150,7 +154,7 @@ public class SupplyServiceImpl implements SupplyService {
                     var selectedProducts = selectedBox.getProductQuantities();
                     selectedProducts.forEach(selectedProduct -> {
                         var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(selectedProduct.getProductId(), userId)
-                                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
 
                         for (int i = 0; i < selectedProduct.getQuantity(); i++) {
                             SupplyBoxProduct boxProducts = new SupplyBoxProduct();
@@ -162,7 +166,7 @@ public class SupplyServiceImpl implements SupplyService {
                         }
 
                         if (supplyBox.getSupplyBoxProducts().isEmpty()) {
-                            throw new IllegalArgumentException("Коробки с припасами пусты");
+                            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale()));
                         }
 
                     });
@@ -171,7 +175,7 @@ public class SupplyServiceImpl implements SupplyService {
                 });
 
         if (supply.getSupplyBoxes().isEmpty()) {
-            throw new IllegalArgumentException("Коробки с припасами пусты");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale()));
         }
 
         var createdSupply = supplyRepository.save(supply);
@@ -189,16 +193,16 @@ public class SupplyServiceImpl implements SupplyService {
                             .parallelStream()
                             .forEach(box -> {
                                 var boxAdditionalText = List.of(
-                                        "Коробка: " + box.getBoxType().getName(),
-                                        "Продавец:" + createdSupply.getAuthor().getKaspiToken().getSellerName());
+                                        messageSource.getMessage("services-impl.supply-service-impl.box", null, LocaleContextHolder.getLocale()) + ": " + box.getBoxType().getName(),
+                                        messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName());
                                 multipartFilesBox.add(barcodeService.generateBarcode(box.getVendorCode(), boxAdditionalText));
                                 box.getSupplyBoxProducts()
                                         .parallelStream()
                                         .forEach(supplyBoxProduct -> {
                                             var product = supplyBoxProduct.getProduct();
                                             var productAdditionalText = List.of(
-                                                    product.getName().length() > 40 ? product.getName().substring(0, 40) : product.getName(),
-                                                    "Продавец:" + createdSupply.getAuthor().getKaspiToken().getSellerName()
+                                                    product.getName().substring(0, 30),
+                                                    messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName()
                                             );
                                             multipartFilesProducts.add(barcodeService.generateBarcode(supplyBoxProduct.getArticle(), productAdditionalText));
                                         });
@@ -256,7 +260,7 @@ public class SupplyServiceImpl implements SupplyService {
 
         String keycloakIdOfStoreOwner = supply.getKaspiStore().getWonderUser().getKeycloakId();
         if (!keycloakId.equals(keycloakIdOfStoreOwner))
-            throw new IllegalArgumentException("Поставки не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale()));
 
         log.info("Retrieving supply detail. Id: {}", id);
 
@@ -270,7 +274,7 @@ public class SupplyServiceImpl implements SupplyService {
         String keycloakIdOfSupplyOwner = supply.getAuthor().getKeycloakId();
 
         if (!keycloakId.equals(keycloakIdOfSupplyOwner))
-            throw new IllegalArgumentException("Поставки не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale()));
 
         log.info("Retrieving supply detail. Id: {}", id);
 
@@ -309,7 +313,7 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
-                        "Поставки не существует"
+                        messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())
                 ));
 
         Map<Long, SupplyStateResponse> supplyReportResponseMap = new HashMap<>();
@@ -346,7 +350,8 @@ public class SupplyServiceImpl implements SupplyService {
     public List<SupplyStorageResponse> getSuppliesOfStorage(String keycloakId, LocalDate startDate, LocalDate endDate) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-                        "Сотрудник магазина не существует", "Создайте сотрудника магазина"));
+                        messageSource.getMessage("services-impl.supply-service-impl.store-employee-not-found", null, LocaleContextHolder.getLocale()),
+                        messageSource.getMessage("services-impl.supply-service-impl.create-store-employee", null, LocaleContextHolder.getLocale())));
         return this.getSuppliesOfStorage(storeEmployee.getId(), startDate, endDate);
     }
 
@@ -362,7 +367,7 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public ProductStorageResponse getSuppliesProducts(String keycloakId, String boxVendorCode, boolean isSuperAdmin) {
         final var supplyBox = supplyBoxRepository.findByVendorCode(boxVendorCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Коробка поставки не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-box-not-exist", null, LocaleContextHolder.getLocale())));
         final var supply = supplyBox.getSupply();
 
         if (!isSuperAdmin) {
@@ -378,15 +383,15 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest) {
         final var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Действия над магазином доступны только сотрудникам склада"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-actions-only-available-to-store-employees", null, LocaleContextHolder.getLocale())));
         final var supply = supplyRepository.findById(supplyScanRequest.getSupplyId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Поставка не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
         final var kaspiStore = employee.getKaspiStore();
 
 
         boolean employeeWorkHere = supply.getKaspiStore().getId().equals(kaspiStore.getId());
 
-        if (!employeeWorkHere) throw new IllegalArgumentException("Supply doesn't exist");
+        if (!employeeWorkHere) throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale()));
 
         var now = LocalDateTime.now(ZONE_ID);
 
@@ -395,7 +400,8 @@ public class SupplyServiceImpl implements SupplyService {
                     var cellCode = productCell.getCellCode();
                     var productArticles = productCell.getProductArticles();
                     var storeCell = storeCellRepository.findByKaspiStoreIdAndCode(kaspiStore.getId(), cellCode)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Ячейка магазина не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-slot-does-not-exist", null, LocaleContextHolder.getLocale())));
+
 
 
                     Map<String, StoreCellProduct> storeCellProductsMap = new HashMap<>();
@@ -441,7 +447,7 @@ public class SupplyServiceImpl implements SupplyService {
     @Override
     public SellerSupplyReport getSupplySellerReport(Long supplyId, String keycloakId) {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Supply doesn't exist"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
 
         return getSellerSupplyReport(supply);
     }
@@ -500,17 +506,17 @@ public class SupplyServiceImpl implements SupplyService {
 
     private StoreEmployee findStoreEmployeeByKeycloakId(String keycloakId) {
         return storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Сотрудник магазина не существует", "Создайте сотрудника магазина"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, messageSource.getMessage("services-impl.supply-service-impl.store-employee-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.supply-service-impl.create-store-employee", null, LocaleContextHolder.getLocale())));
     }
 
     private Supply findSupplyById(Long supplyId) {
         return supplyRepository.findById(supplyId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Предложения не существует", "Попробуйте использовать другие параметры"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, messageSource.getMessage("services-impl.supply-service-impl.offer-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.supply-service-impl.try-using-different-parameters", null, LocaleContextHolder.getLocale())));
     }
 
     private void validateStoreEmployeeAndSupply(StoreEmployee storeEmployee, Supply supply) {
         if (!Objects.equals(supply.getKaspiStore().getId(), storeEmployee.getKaspiStore().getId())) {
-            throw new IllegalArgumentException("Поставки не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale()));
         }
     }
 

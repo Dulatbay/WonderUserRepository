@@ -4,7 +4,10 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import kz.wonder.wonderuserrepository.dto.response.SellerSupplyReport;
 import kz.wonder.wonderuserrepository.services.BarcodeService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +20,9 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.DATE_TIME_
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class BarcodeServiceImpl implements BarcodeService {
+    private final MessageSource messageSource;
     @Override
     public MultipartFile generateBarcode(String barcodeText, List<String> additionalTexts) {
         try {
@@ -99,14 +104,14 @@ public class BarcodeServiceImpl implements BarcodeService {
     }
 
     private void addSupplyDetails(Document document, SellerSupplyReport supply, Font font) throws DocumentException {
-        document.add(new Paragraph("Дата составления: " + supply.getSupplyCreationDate().format(DATE_TIME_FORMATTER), font));
-        document.add(new Paragraph("Выбранное время доставки: " + supply.getSupplySelectedDate().format(DATE_TIME_FORMATTER), font));
-        document.add(new Paragraph("Адрес склада: " + supply.getFormattedAddress(), font));
-        document.add(new Paragraph("Номер поставки: " + supply.getSupplyId(), font));
+        document.add(new Paragraph(messageSource.getMessage("services-impl.barcode-service-impl.creation-date", null, LocaleContextHolder.getLocale()) + ": " + supply.getSupplyCreationDate().format(DATE_TIME_FORMATTER), font));
+        document.add(new Paragraph(messageSource.getMessage("services-impl.barcode-service-impl.selected-delivery-time", null, LocaleContextHolder.getLocale()) + ": " + supply.getSupplySelectedDate().format(DATE_TIME_FORMATTER), font));
+        document.add(new Paragraph(messageSource.getMessage("services-impl.barcode-service-impl.warehouse-address", null, LocaleContextHolder.getLocale()) + ": " + supply.getFormattedAddress(), font));
+        document.add(new Paragraph(messageSource.getMessage("services-impl.barcode-service-impl.delivery-number", null, LocaleContextHolder.getLocale()) + ": "  + supply.getSupplyId(), font));
         if (supply.getSupplyAcceptanceDate() == null) {
-            document.add(new Paragraph("Поставка еще не принята", font));
+            document.add(new Paragraph(messageSource.getMessage("services-impl.barcode-service-impl.delivery-not-yet-accepted", null, LocaleContextHolder.getLocale()), font));
         } else {
-            document.add(new Paragraph("Дата принятия поставки: " + supply.getSupplyAcceptanceDate().format(DATE_TIME_FORMATTER), font));
+            document.add(new Paragraph(messageSource.getMessage("services-impl.barcode-service-impl.delivery-acceptance-date", null, LocaleContextHolder.getLocale()) + ": " + supply.getSupplyAcceptanceDate().format(DATE_TIME_FORMATTER), font));
         }
         document.add(Chunk.NEWLINE);
     }

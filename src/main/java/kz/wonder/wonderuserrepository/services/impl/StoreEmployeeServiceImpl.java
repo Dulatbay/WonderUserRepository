@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final KaspiStoreRepository kaspiStoreRepository;
     private final UserRepository userRepository;
+    private final MessageSource messageSource;
 
     @Override
     @Transactional
@@ -36,7 +39,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
         if (isPhoneNumberUsed)
-            throw new IllegalArgumentException("Телефон уже использован");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.phone-already-used", null, LocaleContextHolder.getLocale()));
 
         WonderUser wonderUser = new WonderUser();
         wonderUser.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
@@ -44,15 +47,15 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         wonderUser.setUsername(employeeCreateRequest.getFirstName() + " " + employeeCreateRequest.getLastName());
 
         final var store = kaspiStoreRepository.findById(employeeCreateRequest.getStoreId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Магазин не существует", "Пожалуйста, укажите правильный id магазина"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, messageSource.getMessage("services-impl.store-employee-service-impl.store-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.store-employee-service-impl.please-provide-correct-store-id", null, LocaleContextHolder.getLocale())));
         var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
 
         if (!isSuperAdmin) {
             if (!isHisStore)
-                throw new IllegalArgumentException("Магазин не существует");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.store-not-found", null, LocaleContextHolder.getLocale()));
             if (!store.isEnabled())
-                throw new IllegalArgumentException("Магазин отключен");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.store-disabled", null, LocaleContextHolder.getLocale()));
         }
 
 
@@ -71,14 +74,14 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
             final var keycloakUser = userResource.toRepresentation();
             return this.buildEmployeeResponse(keycloakUser, storeEmployee);
         } catch (NotFoundException e) {
-            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Сотрудник магазина не существует", "Пожалуйста, напишите правильный id");
+            throw new DbObjectNotFoundException(HttpStatus.NOT_FOUND, messageSource.getMessage("services-impl.store-employee-service-impl.store-employee-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.store-employee-service-impl.please-provide-correct-id", null, LocaleContextHolder.getLocale()));
         }
     }
 
     @Override
     public StoreEmployee getStoreEmployeeById(Long id) {
         return storeEmployeeRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, "Сотрудник не существует", "Пожалуйста, попробуйте еще раз с другими параметрами"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, messageSource.getMessage("services-impl.store-employee-service-impl.store-employee-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.store-employee-service-impl.please-try-again-with-different-parameters", null, LocaleContextHolder.getLocale())));
     }
 
     @Override
@@ -124,7 +127,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
         var isHisStore = kaspiStore.getWonderUser().getKeycloakId().equals(keycloakIdOfCreator);
 
         if (!isHisStore && !isSuperAdmin)
-            throw new IllegalArgumentException("Магазин не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.store-not-found", null, LocaleContextHolder.getLocale()));
 
 
         final var storeEmployees = storeEmployeeRepository.findAllByKaspiStoreId(storeId);
@@ -162,9 +165,9 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
 
     private StoreEmployee getStoreEmployeeWithStoreId(Long employeeId, Long storeId) {
         final var storeEmployee = storeEmployeeRepository.findById(employeeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Сотрудник не существует", "Пожалуйста, попробуйте еще раз с другими параметрами"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, messageSource.getMessage("services-impl.store-employee-service-impl.store-employee-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.store-employee-service-impl.please-try-again-with-different-parameters", null, LocaleContextHolder.getLocale())));
         final var kaspiStore = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, "Магазин не существует", "Пожалуйста, попробуйте еще раз с другими параметрами"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, messageSource.getMessage("services-impl.store-employee-service-impl.store-not-found", null, LocaleContextHolder.getLocale()), messageSource.getMessage("services-impl.store-employee-service-impl.please-try-again-with-different-parameters", null, LocaleContextHolder.getLocale())));
 
         log.info("Getting Employee with StoreID: {}. EmployeeID: {}", storeId, employeeId);
 

@@ -10,9 +10,9 @@ public class UpdatePasswordRequest {
     @JsonIgnore
     private String email;
 
-    @NotNull(message = "Please provide old password")
+    @NotNull(message = "{requests.update-password-request.please-provide-old-password}")
     private String oldPassword;
 
-    @NotNull(message = "Please provide new password")
+    @NotNull(message = "{requests.update-password-request.please-provide-new-password}")
     private String newPassword;
 }
