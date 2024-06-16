@@ -14,6 +14,7 @@ public class EmployeeOrderResponse extends OrderWithStatus {
     private LocalDateTime orderCreatedAt;
     private LocalDateTime orderToSendTime;
     private DeliveryMode deliveryType;
+    private String pickUpPerson;
     //    private String orderStatusInKaspi;
     private Double price;
     private Integer productsCount;

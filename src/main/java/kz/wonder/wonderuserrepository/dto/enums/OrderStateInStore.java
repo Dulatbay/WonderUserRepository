@@ -21,10 +21,9 @@ public enum OrderStateInStore {
     PACKAGING_NOT_STARTED("Упаковка не начата", OrderAvailableAction.START_PACKING),
     PACKAGING_IN_PROGRESS("Идет упаковка", OrderAvailableAction.PACK_PRODUCT),
     READY_TO_FINISH_PACKAGING("Готов к завершению упаковки", OrderAvailableAction.FINISH_PACKING),
-    READY_TO_SHIP_TO_COURIER("Готов к отправке, ожидание курьера", OrderAvailableAction.HANDLE_TO_COURIER),
     READY_TO_SHIP_TO_COURIER_EXPRESS("Готов к отправке экспресс, ожидание курьера", OrderAvailableAction.HANDLE_TO_COURIER_EXPRESS),
     READY_TO_SHIP_TO_ZAMMLER("Готов к отправке, ожидание замлера", OrderAvailableAction.HANDLE_TO_ZAMMLER),
-    READY_TO_SHIP_TO_CLIENT("Готов к отправке, ожидание клииента", OrderAvailableAction.HANDLE_TO_CLIENT),
+    READY_TO_SHIP_TO_CLIENT("Готов к отправке, ожидание клиента", OrderAvailableAction.HANDLE_TO_CLIENT),
     READY_TO_SHIP("Готов к отправке, наша доставка", OrderAvailableAction.HANDLE),
     HANDED_TO_COURIER("Передан курьеру", OrderAvailableAction.NOTHING),
     HANDED_TO_CLIENT("Передан клиенту", OrderAvailableAction.NOTHING),
@@ -69,11 +68,14 @@ public enum OrderStateInStore {
         if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_REGIONAL_PICKUP))) {
             return OrderStateInStore.READY_TO_SHIP_TO_ZAMMLER;
         }
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELiVERY_POSTOMAT))) {
+            return OrderStateInStore.READY_TO_SHIP_TO_ZAMMLER;
+        }
         if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_PICKUP))) {
             return OrderStateInStore.READY_TO_SHIP_TO_CLIENT;
         }
-        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELiVERY_POSTOMAT))) {
-            return OrderStateInStore.READY_TO_SHIP_TO_COURIER;
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_REGIONAL_TODOOR))) {
+            return OrderStateInStore.READY_TO_SHIP_TO_ZAMMLER;
         }
         if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_LOCAL))) {
             return OrderStateInStore.READY_TO_SHIP;
