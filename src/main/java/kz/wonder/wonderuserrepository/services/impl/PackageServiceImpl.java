@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.PackageProductRequest;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
 import kz.wonder.wonderuserrepository.entities.enums.PackageState;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
@@ -10,6 +11,7 @@ import kz.wonder.wonderuserrepository.services.PackageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.NotAuthorizedException;
 
@@ -34,7 +36,12 @@ public class PackageServiceImpl implements PackageService {
 
         validateEmployeeWithStore(storeEmployee, order);
 
+        var orderAssemble = order.getOrderAssemble();
         var packageOrder = order.getOrderPackage();
+
+        if(orderAssemble == null || orderAssemble.getAssembleState() != AssembleState.FINISHED){
+            throw new IllegalArgumentException("Заказ не собран");
+        }
 
         if (packageOrder != null) {
             throw new IllegalArgumentException("Упаковка уже началась");
@@ -49,6 +56,7 @@ public class PackageServiceImpl implements PackageService {
     }
 
     @Override
+    @Transactional
     public void packageProduct(String orderCode, PackageProductRequest packageProductRequest, String keycloakId) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotAuthorizedException(""));
@@ -96,6 +104,7 @@ public class PackageServiceImpl implements PackageService {
     }
 
     @Override
+    @Transactional
     public void finishPackaging(String orderCode, String keycloakId) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotAuthorizedException(""));
@@ -129,6 +138,7 @@ public class PackageServiceImpl implements PackageService {
         }
 
         orderPackage.setStartedEmployee(storeEmployee);
+        orderPackage.setPackageState(PackageState.FINISHED);
         orderPackageRepository.save(orderPackage);
         // todo: make also for storeEmployee that will finish packing
         order.getProducts()
