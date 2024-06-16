@@ -329,8 +329,23 @@ public class ProductServiceImpl implements ProductService {
 
         ProductPriceResponse.Content response = new ProductPriceResponse.Content();
 
+
         products
                 .forEach(product -> {
+                    var mainCityPrice = Optional.ofNullable(product.getMainCityPrice()).orElse(new ProductPrice());
+
+                    if (mainCityPrice.getId() != null){
+                        cityResponseMap.computeIfAbsent(mainCityPrice.getId(), k -> {
+                            CityResponse cityResponse = new CityResponse();
+                            cityResponse.setId(mainCityPrice.getId());
+                            cityResponse.setName(mainCityPrice.getKaspiCity().getName());
+                            cityResponse.setCode(mainCityPrice.getKaspiCity().getCode());
+                            cityResponse.setEnabled(mainCityPrice.getKaspiCity().isEnabled());
+                            return cityResponse;
+                        });
+                    }
+
+
                     var count = product.getSupplyBoxProducts().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
 
                     var productInfo = ProductPriceResponse.Content.ProductInfo.builder()
@@ -353,6 +368,7 @@ public class ProductServiceImpl implements ProductService {
 
                                 return ProductMapper.mapProductPrice(product, price, city);
                             }).toList())
+                            .mainPriceCityId(mainCityPrice.getId())
                             .build();
 
                     response.getProducts().add(productInfo);
@@ -410,7 +426,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest pageRequest, String employeeKeycloakId) {
+    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest
+            pageRequest, String employeeKeycloakId) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(employeeKeycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -428,7 +445,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId) {
+    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String
+            keycloakId) {
         final var wonderUser = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -459,7 +477,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest) {
+    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean
+            isSizeScanned, String keycloakId, PageRequest pageRequest) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 

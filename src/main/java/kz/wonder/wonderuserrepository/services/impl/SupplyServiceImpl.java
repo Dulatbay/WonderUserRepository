@@ -232,7 +232,7 @@ public class SupplyServiceImpl implements SupplyService {
 
     @Override
     public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName, String keycloakId) {
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
+        var supplies = supplyRepository.findAllAdminSupplies(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
 
         log.info("Supplies size: {}", supplies.size());
 

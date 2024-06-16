@@ -64,6 +64,7 @@ public class SupplyMapper {
     public SupplySellerResponse toSupplySellerResponse(Supply supply) {
         return SupplySellerResponse.builder()
                 .supplyCreatedTime(supply.getCreatedAt())
+                .supplySelectedTime(supply.getSelectedTime())
                 .supplyAcceptTime(supply.getAcceptedTime())
                 .supplyState(supply.getSupplyState())
                 .pathToReport(barcodeMapper.getPathToReport(supply))

@@ -30,6 +30,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 
     @Query("SELECT p FROM Product p " +
+            "LEFT JOIN FETCH p.prices pp " +
+            "LEFT JOIN FETCH pp.kaspiCity " +
             "WHERE p.keycloakId = :keycloakUserId AND p.deleted = false")
     List<Product> findAllSellerProductsWithPrices(String keycloakUserId);
 
