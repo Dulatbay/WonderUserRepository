@@ -16,9 +16,9 @@ public interface StatisticsService {
 
     Page<AdminLastOrdersInformation> getAdminLastOrders(String keycloakId, Pageable pageable);
 
-    Page<SellerTopProductInformation> getSellerTopProductsInformation(String keycloakId, Pageable pageable);
+    Page<SellerTopProductInformation> getSellerTopProductsInformation(String keycloakId, DurationParams durationParams, Pageable pageable);
 
-    Page<AdminTopSellerInformation> getAdminTopSellersInformation(String keycloakId, Pageable pageable);
+    Page<AdminTopSellerInformation> getAdminTopSellersInformation(String keycloakId, DurationParams durationParams, Pageable pageable);
 
     List<DailyStats> getSellerDailyStats(String keycloakId, DurationParams durationParams);
 

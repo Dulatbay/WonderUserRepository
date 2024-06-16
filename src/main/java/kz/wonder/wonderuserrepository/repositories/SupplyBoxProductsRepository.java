@@ -39,7 +39,18 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
     boolean existsByKaspiOrderCode(String kaspiOrderCode);
 
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD' OR sbp.state = 'WAITING_FOR_ASSEMBLY' OR sbp.state = 'ASSEMBLED') and sbp.createdAt BETWEEN :start AND :end")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN FETCH sbp.kaspiOrder " +
+            "LEFT JOIN FETCH sbp.storeCellProduct " +
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.author a " +
+            "LEFT JOIN FETCH sbp.product p " +
+            "LEFT JOIN FETCH s.kaspiStore sk " +
+            "LEFT JOIN FETCH sk.wonderUser w " +
+            "where w.keycloakId = :keycloakId " +
+            "and (sbp.state = 'SOLD' OR sbp.state = 'WAITING_FOR_ASSEMBLY' OR sbp.state = 'ASSEMBLED') " +
+            "and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllAdminSells(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
@@ -53,7 +64,6 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "LEFT JOIN FETCH sb.supply s " +
             "LEFT JOIN FETCH s.author a " +
             "LEFT JOIN FETCH sbp.storeCellProduct scp " +
-            "LEFT JOIN FETCH sbp.kaspiOrderProducts kop " +
             "LEFT JOIN FETCH sbp.product p  " +
             "WHERE s.author.keycloakId = :keycloakId AND sbp.state = 'ACCEPTED' ")
     List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId);

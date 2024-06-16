@@ -103,13 +103,14 @@ public class StatisticsController {
     @GetMapping("/top-products/seller-stats")
     @SellerAuthorization
     public ResponseEntity<PaginatedResponse<SellerTopProductInformation>> getSellerTopProducts(@RequestParam(defaultValue = "0") int page,
-                                                                                               @RequestParam(defaultValue = "10") int size) {
+                                                                                               @RequestParam(defaultValue = "10") int size,
+                                                                                               @RequestParam(value = "duration", defaultValue = "MONTH") DurationParams durationParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<SellerTopProductInformation> sellerTopProductInformation = statisticsService.getSellerTopProductsInformation(keycloakId, pageable);
+        Page<SellerTopProductInformation> sellerTopProductInformation = statisticsService.getSellerTopProductsInformation(keycloakId, durationParams, pageable);
 
         return ResponseEntity.ok(new PaginatedResponse<>(sellerTopProductInformation));
     }
@@ -117,13 +118,14 @@ public class StatisticsController {
     @GetMapping("/top-sellers/admin-stats")
     @AccessForAdmins
     public ResponseEntity<PaginatedResponse<AdminTopSellerInformation>> getAdminTopSellers(@RequestParam(defaultValue = "0") int page,
-                                                                                           @RequestParam(defaultValue = "10") int size) {
+                                                                                           @RequestParam(defaultValue = "10") int size,
+                                                                                           @RequestParam(name = "duration", defaultValue = "MONTH") DurationParams durationParams) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<AdminTopSellerInformation> adminTopSellerInformation = statisticsService.getAdminTopSellersInformation(keycloakId, pageable);
+        Page<AdminTopSellerInformation> adminTopSellerInformation = statisticsService.getAdminTopSellersInformation(keycloakId, durationParams, pageable);
 
         return ResponseEntity.ok(new PaginatedResponse<>(adminTopSellerInformation));
     }
