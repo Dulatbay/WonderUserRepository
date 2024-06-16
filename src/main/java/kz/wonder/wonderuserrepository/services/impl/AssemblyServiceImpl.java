@@ -16,6 +16,8 @@ import kz.wonder.wonderuserrepository.services.AssemblyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -24,6 +26,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.NotAuthorizedException;
+
+import java.util.Locale;
+
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @Slf4j
@@ -36,6 +42,7 @@ public class AssemblyServiceImpl implements AssemblyService {
     private final OrderAssembleMapper orderAssembleMapper;
     private final StoreCellProductRepository storeCellProductRepository;
     private final OrderAssembleProcessRepository orderAssembleProcessRepository;
+    private final MessageSource messageSource;
 
     private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order) {
         var assemble = order.getOrderAssemble();
@@ -77,6 +84,10 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage(
+                        "services-impl.assembly-service-impl.order-not-found",
+                        null,
+                        LocaleContextHolder.getLocale())));
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Заказ не найден"));
 
         validateEmployeeWithStore(storeEmployee, order);
@@ -84,7 +95,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var orderAssembleOptional = orderAssembleRepository.findByKaspiOrderId(order.getId());
 
         if (orderAssembleOptional.isPresent()) {
-            throw new IllegalArgumentException("Сборка уже началась");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-has-already-started", null, LocaleContextHolder.getLocale()));
         }
 
         var orderAssemble = orderAssembleRepository.save(orderAssembleMapper.toEntity(storeEmployee, order, AssembleState.STARTED));
@@ -100,20 +111,22 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
+                .orElseThrow(() -> new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
         var store = validateEmployeeWithStore(storeEmployee, order);
 
         var assemble = order.getOrderAssemble();
 
         if (assemble == null) {
-            throw new IllegalArgumentException("Сборка еще не началась");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-hasn't-started-yet", null, LocaleContextHolder.getLocale()));
         }
 
         if (assemble.getAssembleState() == AssembleState.FINISHED) {
-            throw new IllegalArgumentException("Сборка уже закончена");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-is-already-finished", null, LocaleContextHolder.getLocale()));
         }
 
+        var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.assembly-service-impl.incorrect-article", null, LocaleContextHolder.getLocale())));
         assembleProductRequest.getProductArticles()
                 .forEach(productArticle -> {
                     var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
@@ -159,7 +172,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
+                .orElseThrow(() -> new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
         validateEmployeeWithStore(storeEmployee, order);
 
@@ -191,16 +204,16 @@ public class AssemblyServiceImpl implements AssemblyService {
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
+                .orElseThrow(() -> new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
-        var assemble = validateAssembleToFinish(order);
+        var assemble = validateAssembleToFinish(order, messageSource, LocaleContextHolder.getLocale());
 
         validateEmployeeWithStore(storeEmployee, order);
 
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
         if (!dividedProducts.getLeft().isEmpty()) {
-            throw new IllegalArgumentException(dividedProducts.getLeft().size() + " товаров осталось для сканирования");
+            throw new IllegalArgumentException(dividedProducts.getLeft().size() + " " + messageSource.getMessage("services-impl.assembly-service-impl.items-left-to-scan", null, LocaleContextHolder.getLocale()));
         }
 
         assemble.setAssembleState(AssembleState.FINISHED);
@@ -214,18 +227,33 @@ public class AssemblyServiceImpl implements AssemblyService {
                 });
     }
 
-    // todo: duplicate in packageService
+    private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order, MessageSource messageSource, Locale locale) {
+        var assemble = order.getOrderAssemble();
+
+        if (assemble == null) {
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-state-is-not-ready-for-completion", null, locale));
+        }
+
+        if (assemble.getAssembleState() == AssembleState.FINISHED) {
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-state-is-already-completed", null, locale));
+        } else if (assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-state-not-ready-for-completion", null, locale));
+        }
+        return assemble;
+    }
+
+
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
         var storeEmployeeKaspiStore = storeEmployee.getKaspiStore();
         var orderStore = order.getKaspiStore();
 
         if (!storeEmployeeKaspiStore.getId().equals(orderStore.getId()))
-            throw new IllegalArgumentException("Заказ не найден");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.order-not-found", null, LocaleContextHolder.getLocale()));
 
         var orderProducts = order.getProducts();
 
         if (orderProducts == null || orderProducts.isEmpty())
-            throw new IllegalArgumentException("Заказ не может быть собран");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.order-cannot-be-assembled", null, LocaleContextHolder.getLocale()));
 
         return orderStore;
     }
@@ -233,6 +261,6 @@ public class AssemblyServiceImpl implements AssemblyService {
     private String getWaybill(KaspiOrder kaspiOrder) {
         if (kaspiOrder.getWaybill() != null) return kaspiOrder.getWaybill();
         // generate with api
-        return "Сгениророван(Скоро)";
+        return messageSource.getMessage("services-impl.assembly-service-impl.generated-soon", null, LocaleContextHolder.getLocale());
     }
 }

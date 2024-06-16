@@ -5,24 +5,24 @@ import lombok.Data;
 
 @Data
 public class StoreCellChangeRequest {
-    @NotNull(message = "Row cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.row-cannot-be-null}")
     private Long row;
 
-    @NotNull(message = "Column cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.column-cannot-be-null}")
     private Long col;
 
-    @NotNull(message = "Cell cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.cell-cannot-be-null}")
     private Long cell;
 
-    @NotNull(message = "Comment cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.comment-cannot-be-null}")
     private String comment;
 
-    @NotNull(message = "Width cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.width-cannot-be-null}")
     private Double width;
 
-    @NotNull(message = "Height cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.height-cannot-be-null}")
     private Double height;
 
-    @NotNull(message = "Depth cannot be null")
+    @NotNull(message = "{requests.store-cell-change-request.depth-cannot-be-null}")
     private Double depth;
 }

@@ -10,6 +10,8 @@ import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.services.CityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,7 @@ public class CityServiceImpl implements CityService {
     private final KaspiApi kaspiApi;
     private final KaspiCityRepository cityRepository;
     private final CityMapper cityMapper;
+    private final MessageSource messageSource;
 
     @Override
     public void syncWithKaspi() {
@@ -59,6 +62,6 @@ public class CityServiceImpl implements CityService {
     @Override
     public KaspiCity getKaspiCityByName(String name) {
         return cityRepository.findByName(name)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.city-service-impl.city-does-not-exist", null, LocaleContextHolder.getLocale())));
     }
 }
