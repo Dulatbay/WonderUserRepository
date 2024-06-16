@@ -112,7 +112,7 @@ public class AssemblyServiceImpl implements AssemblyService {
          assembleProductRequest.getProductArticles()
                 .forEach(productArticle -> {
                     var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Incorrect article"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Неправильный артикул"));
 
                     var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
 
