@@ -142,6 +142,7 @@ public class KaspiOrderMapper {
         orderEmployeeDetailResponse.setProducts(orderProducts);
         orderEmployeeDetailResponse.setDeliveryMode(order.getDeliveryMode());
         orderEmployeeDetailResponse.setOrderCode(order.getCode());
+        orderEmployeeDetailResponse.setWaybill(order.getWaybill());
         orderEmployeeDetailResponse.setDeliveryTime(getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
         orderEmployeeDetailResponse.setOrderStatus(OrderStateInStore.getOrderStatus(order));
         return orderEmployeeDetailResponse;

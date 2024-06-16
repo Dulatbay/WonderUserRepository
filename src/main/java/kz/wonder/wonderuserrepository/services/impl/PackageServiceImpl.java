@@ -1,7 +1,11 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
 import kz.wonder.wonderuserrepository.dto.request.PackageProductRequest;
-import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.dto.response.StartPackageResponse;
+import kz.wonder.wonderuserrepository.entities.KaspiOrder;
+import kz.wonder.wonderuserrepository.entities.OrderPackage;
+import kz.wonder.wonderuserrepository.entities.OrderPackageProcess;
+import kz.wonder.wonderuserrepository.entities.StoreEmployee;
 import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
 import kz.wonder.wonderuserrepository.entities.enums.PackageState;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
@@ -9,6 +13,8 @@ import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.PackageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +26,13 @@ import javax.ws.rs.NotAuthorizedException;
 public class PackageServiceImpl implements PackageService {
     private final OrderPackageProcessRepository orderPackageProcessRepository;
     private final OrderPackageRepository orderPackageRepository;
-    private final OrderAssembleRepository orderAssembleRepository;
     private final StoreEmployeeRepository storeEmployeeRepository;
     private final SupplyBoxProductsRepository supplyBoxProductsRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
-
+    private final MessageSource messageSource;
 
     @Override
-    public void startPackaging(String orderCode, String keycloakId) {
+    public StartPackageResponse startPackaging(String orderCode, String keycloakId) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
@@ -39,7 +44,7 @@ public class PackageServiceImpl implements PackageService {
         var orderAssemble = order.getOrderAssemble();
         var packageOrder = order.getOrderPackage();
 
-        if(orderAssemble == null || orderAssemble.getAssembleState() != AssembleState.FINISHED){
+        if (orderAssemble == null || orderAssemble.getAssembleState() != AssembleState.FINISHED) {
             throw new IllegalArgumentException("Заказ не собран");
         }
 
@@ -53,6 +58,7 @@ public class PackageServiceImpl implements PackageService {
         orderPackage.setStartedEmployee(storeEmployee);
 
         orderPackageRepository.save(orderPackage);
+        return new StartPackageResponse(this.getWaybill(order));
     }
 
     @Override
@@ -151,7 +157,7 @@ public class PackageServiceImpl implements PackageService {
 
     }
 
-    private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
+    private void validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
         var storeEmployeeKaspiStore = storeEmployee.getKaspiStore();
         var orderStore = order.getKaspiStore();
 
@@ -163,6 +169,10 @@ public class PackageServiceImpl implements PackageService {
         if (orderProducts == null || orderProducts.isEmpty())
             throw new IllegalArgumentException("Заказ не может быть собран");
 
-        return orderStore;
+    }
+
+    private String getWaybill(KaspiOrder kaspiOrder) {
+        if (kaspiOrder.getWaybill() != null) return kaspiOrder.getWaybill();
+        return messageSource.getMessage("services-impl.assembly-service-impl.generated-soon", null, LocaleContextHolder.getLocale());
     }
 }

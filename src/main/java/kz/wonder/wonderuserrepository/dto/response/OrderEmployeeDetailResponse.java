@@ -17,6 +17,7 @@ public class OrderEmployeeDetailResponse extends OrderWithStatus {
 
     private DeliveryMode deliveryMode;
     private String orderCode;
+    private String waybill;
 
     @Convert(converter = LocalDateTimeAttributeConverter.class)
     private LocalDateTime deliveryTime;

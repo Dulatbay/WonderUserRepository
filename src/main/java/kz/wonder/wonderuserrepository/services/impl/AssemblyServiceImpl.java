@@ -239,10 +239,4 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         return orderStore;
     }
-
-    private String getWaybill(KaspiOrder kaspiOrder) {
-        if (kaspiOrder.getWaybill() != null) return kaspiOrder.getWaybill();
-        // generate with api
-        return messageSource.getMessage("services-impl.assembly-service-impl.generated-soon", null, LocaleContextHolder.getLocale());
-    }
 }
