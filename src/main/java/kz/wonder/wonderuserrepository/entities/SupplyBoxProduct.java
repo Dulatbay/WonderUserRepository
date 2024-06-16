@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.constants.Utils;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,14 +11,14 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 
 @Data
 @Entity
-@Table(name = "supply_box_products", schema = schemaName)
+@Table(name = "supply_box_product", schema = schemaName)
 public class SupplyBoxProduct extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supply_box_id", columnDefinition = "integer")
+    @JoinColumn(name = "supply_box_id")
     private SupplyBox supplyBox;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", columnDefinition = "integer")
+    @JoinColumn(name = "product_id")
     private Product product;
 
     @Column(name = "article", nullable = false, unique = true, updatable = false)

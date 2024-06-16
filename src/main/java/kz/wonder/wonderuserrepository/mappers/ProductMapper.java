@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductWithSize;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductSizeRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +18,14 @@ public class ProductMapper {
     private final ProductSizeRepository productSizeRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
 
-    public static @NotNull ProductPriceResponse.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
-        var productPrice = new ProductPriceResponse.ProductPrice();
+    public static @NotNull ProductPriceResponse.Content.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
+        var productPrice = new ProductPriceResponse.Content.ProductPrice();
 
         // todo: сделал поставку в город, где не указана цена
 
         productPrice.setCityId(city.getId());
         productPrice.setCityName(city.getName());
-        productPrice.setCount(product.getSupplyBoxes()
+        productPrice.setCount(product.getSupplyBoxProducts()
                 .stream()
                 .filter(p ->
                         p.getState() == ProductStateInStore.ACCEPTED
@@ -45,7 +46,7 @@ public class ProductMapper {
                 .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
                 .counts(product.getPrices().stream().map(price -> {
                     var city = price.getKaspiCity();
-                    var count = (product.getSupplyBoxes()
+                    var count = (product.getSupplyBoxProducts()
                             .stream()
                             .filter(p ->
                                     p.getState() == ProductStateInStore.ACCEPTED

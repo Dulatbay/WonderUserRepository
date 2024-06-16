@@ -71,7 +71,7 @@ public class SupplyController {
     }
 
 
-    @PutMapping("/state")
+    @PutMapping("/change-state")
     @AccessForAdminsAndSellers
         public ResponseEntity<SupplySellerResponse> changeStateToReject(@RequestBody @Valid SupplyStateToRejectRequest stateUpdateRequest){
         var supplyUpdatedResponse = supplyService.updateSupplyStateToReject(stateUpdateRequest);

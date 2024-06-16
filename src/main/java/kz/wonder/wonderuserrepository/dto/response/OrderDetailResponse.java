@@ -10,5 +10,7 @@ public class OrderDetailResponse {
     private String cellCode;
     private Double productTradePrice;
     private Double productSellPrice;
+    private String pathToProductBarcode;
+    private String pathToBoxBarcode;
     private Double income;
 }

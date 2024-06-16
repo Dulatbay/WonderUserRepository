@@ -3,10 +3,12 @@ package kz.wonder.wonderuserrepository.services.impl;
 import jakarta.transaction.Transactional;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
+import kz.wonder.wonderuserrepository.dto.request.AssembleProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
-import kz.wonder.wonderuserrepository.dto.response.AssembleProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.OrderAssembleMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
@@ -22,8 +24,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.NotAuthorizedException;
-
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @Slf4j
@@ -54,8 +54,8 @@ public class AssemblyServiceImpl implements AssemblyService {
 
     @Override
     public Page<EmployeeAssemblyResponse> findAssembliesByParams(String keycloakId, AssemblySearchParameters assemblySearchParameters) {
-        long startUnixTimestamp = assemblySearchParameters.getOrderCreationStartDate().atStartOfDay().atZone(ZONE_ID).toInstant().getEpochSecond() * 1000;
-        long endUnixTimestamp = assemblySearchParameters.getOrderCreationEndDate().atStartOfDay().plusDays(1).atZone(ZONE_ID).toInstant().getEpochSecond() * 1000;
+        long startUnixTimestamp = Utils.getTimeStampFromLocalDateTime(assemblySearchParameters.getOrderCreationStartDate().atStartOfDay());
+        long endUnixTimestamp = Utils.getTimeStampFromLocalDateTime(assemblySearchParameters.getOrderCreationEndDate().atStartOfDay());
 
         PageRequest pageRequest = PageRequest.of(assemblySearchParameters.getPage(), assemblySearchParameters.getSize(), Sort.by(assemblySearchParameters.getSortBy()));
         String productState = assemblySearchParameters.getProductStateInStore() == null ? null : assemblySearchParameters.getProductStateInStore().name();
@@ -67,7 +67,7 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         return supplyBoxProducts.map(supplyBoxProduct -> {
             var orderAssemble = orderAssembleRepository.findByKaspiOrderId(supplyBoxProduct.getKaspiOrder().getId());
-            return orderAssembleMapper.mapToEmployeeAssemblyResponse(supplyBoxProduct, orderAssemble.map(OrderAssemble::getAssembleState).orElse(null));
+            return orderAssembleMapper.mapToEmployeeAssemblyResponse(supplyBoxProduct, orderAssemble.map(OrderAssemble::getAssembleState).orElse(AssembleState.WAITING_TO_ASSEMBLE));
         });
     }
 
@@ -95,7 +95,7 @@ public class AssemblyServiceImpl implements AssemblyService {
     }
 
     @Override
-    public AssembleProductResponse assembleProduct(JwtAuthenticationToken starterToken, String productArticle, String orderCode) {
+    public AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest, String orderCode) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
@@ -114,27 +114,30 @@ public class AssemblyServiceImpl implements AssemblyService {
             throw new IllegalArgumentException("Сборка уже закончена");
         }
 
-        var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Incorrect article"));
+        assembleProductRequest.getProductArticles()
+                .forEach(productArticle -> {
+                    var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Incorrect article"));
 
-        var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
+                    var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
 
-        supplyBoxProduct.setState(ProductStateInStore.ASSEMBLED);
-        supplyBoxProductsRepository.save(supplyBoxProduct);
+                    supplyBoxProduct.setState(ProductStateInStore.ASSEMBLED);
+                    supplyBoxProductsRepository.save(supplyBoxProduct);
 
 
-        storeCellProduct.setBusy(false);
-        storeCellProductRepository.save(storeCellProduct);
+                    storeCellProduct.setBusy(false);
+                    storeCellProductRepository.save(storeCellProduct);
 
-        var orderAssembleProcessOptional = orderAssembleProcessRepository.findByOrderAssembleIdAndStoreCellProductId(assemble.getId(), storeCellProduct.getId());
+                    var orderAssembleProcessOptional = orderAssembleProcessRepository.findByOrderAssembleIdAndStoreCellProductId(assemble.getId(), storeCellProduct.getId());
 
-        if (orderAssembleProcessOptional.isEmpty()) {
-            orderAssembleProcessRepository.save(orderAssembleMapper.toOrderAssembleProcessEntity(order, storeEmployee, storeCellProduct));
-        } else {
-            var orderAssembleProcess = orderAssembleProcessOptional.get();
-            orderAssembleProcess.setStoreEmployee(storeEmployee);
-            orderAssembleProcessRepository.save(orderAssembleProcess);
-        }
+                    if (orderAssembleProcessOptional.isEmpty()) {
+                        orderAssembleProcessRepository.save(orderAssembleMapper.toOrderAssembleProcessEntity(order, storeEmployee, storeCellProduct));
+                    } else {
+                        var orderAssembleProcess = orderAssembleProcessOptional.get();
+                        orderAssembleProcess.setStoreEmployee(storeEmployee);
+                        orderAssembleProcessRepository.save(orderAssembleProcess);
+                    }
+                });
 
 
         var dividedProducts = orderAssembleMapper.divideProducts(order);
@@ -147,10 +150,7 @@ public class AssemblyServiceImpl implements AssemblyService {
 
         orderAssembleRepository.save(assemble);
 
-
-        var response = orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble, dividedProducts.getLeft(), dividedProducts.getRight());
-
-        return new AssembleProductResponse(this.getWaybill(order), response);
+        return orderAssembleMapper.toProcessResponse(order, storeEmployee.getWonderUser().getUsername(), assemble, dividedProducts.getLeft(), dividedProducts.getRight());
     }
 
     @Override
@@ -164,13 +164,23 @@ public class AssemblyServiceImpl implements AssemblyService {
         validateEmployeeWithStore(storeEmployee, order);
 
         var orderAssemble = order.getOrderAssemble();
+        String starterName = null;
 
+
+        if (orderAssemble == null) {
+            orderAssemble = new OrderAssemble();
+        } else {
+            starterName = orderAssemble.getStartedEmployee().getWonderUser().getUsername();
+        }
 
         var dividedProducts = orderAssembleMapper.divideProducts(order);
 
 
-        // todo: refactor govno code
-        return orderAssembleMapper.toProcessResponse(order, orderAssemble == null ? "N\\A" : orderAssemble.getStartedEmployee().getWonderUser().getUsername(), orderAssemble == null ? new OrderAssemble() : orderAssemble, dividedProducts.getLeft(), dividedProducts.getRight());
+        return orderAssembleMapper.toProcessResponse(order,
+                starterName,
+                orderAssemble,
+                dividedProducts.getLeft(),
+                dividedProducts.getRight());
 
     }
 
@@ -199,11 +209,12 @@ public class AssemblyServiceImpl implements AssemblyService {
         order.getProducts()
                 .forEach(kaspiOrderProduct -> {
                     var sbp = kaspiOrderProduct.getSupplyBoxProduct();
-                    sbp.setState(ProductStateInStore.SOLD);
+                    sbp.setState(ProductStateInStore.READY_FOR_PACKAGE);
                     supplyBoxProductsRepository.save(sbp);
                 });
     }
 
+    // todo: duplicate in packageService
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
         var storeEmployeeKaspiStore = storeEmployee.getKaspiStore();
         var orderStore = order.getKaspiStore();

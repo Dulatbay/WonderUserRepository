@@ -13,6 +13,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Table(name = "store_cell", schema = schemaName)
 public class StoreCell extends AbstractEntity<Long> {
     private static final String CELL_CODE_FORMAT = "%s%03d%03d%03d";
+
     @Column(nullable = false)
     private Long row;
 
@@ -39,7 +40,7 @@ public class StoreCell extends AbstractEntity<Long> {
     private List<StoreCellProduct> storeCellProducts;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_store_id", columnDefinition = "integer", nullable = false)
+    @JoinColumn(name = "kaspi_store_id", nullable = false)
     private KaspiStore kaspiStore;
 
     @Override

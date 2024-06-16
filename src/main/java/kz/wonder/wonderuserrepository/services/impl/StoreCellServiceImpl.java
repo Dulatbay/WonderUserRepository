@@ -4,6 +4,7 @@ import kz.wonder.wonderuserrepository.dto.request.StoreCellChangeRequest;
 import kz.wonder.wonderuserrepository.dto.request.StoreCellCreateRequest;
 import kz.wonder.wonderuserrepository.dto.response.StoreCellResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.StoreCellMapper;
 import kz.wonder.wonderuserrepository.repositories.*;

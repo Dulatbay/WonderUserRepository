@@ -1,7 +1,7 @@
 package kz.wonder.kaspi.client.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import kz.wonder.kaspi.client.model.Order.OrderEntry;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
 import lombok.Data;
 
 import java.util.List;
@@ -90,7 +90,18 @@ public class OrdersDataResponse {
         private Integer totalCount;
     }
 
-
+    @Data
+    public static class DeliveryAddress {
+        private String streetName;
+        private String streetNumber;
+        private String town;
+        private String district;
+        private String building;
+        private String apartment;
+        private String formattedAddress;
+        private double latitude;
+        private double longitude;
+    }
 
 
     @JsonProperty("data")

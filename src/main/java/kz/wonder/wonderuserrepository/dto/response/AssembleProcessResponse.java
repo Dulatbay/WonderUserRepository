@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
-import kz.wonder.wonderuserrepository.entities.AssembleState;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -10,7 +10,6 @@ import java.util.List;
 
 @Data
 public class AssembleProcessResponse {
-    private Long assembleId;
     private List<Product> productsToProcess;
     private List<ProcessedProduct> processedProducts;
     private DeliveryMode deliveryMode;
@@ -33,6 +32,5 @@ public class AssembleProcessResponse {
     public static class ProcessedProduct extends Product {
         private String processedEmployeeName;
         private LocalDateTime processedDate;
-        private String waybill;
     }
 }

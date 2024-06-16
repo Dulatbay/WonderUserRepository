@@ -4,6 +4,8 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,9 +38,8 @@ public class OrderAssembleMapper {
         assembleProcessResponse.setDeadline(Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
         assembleProcessResponse.setDeliveryMode(kaspiOrder.getDeliveryMode());
         assembleProcessResponse.setStartedEmployeeName(starterName);
-        assembleProcessResponse.setAssembleId(orderAssemble.getId());
         assembleProcessResponse.setOrderCode(kaspiOrder.getCode());
-        assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState());
+        assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState() == null ? AssembleState.WAITING_TO_ASSEMBLE : orderAssemble.getAssembleState());
 
 
         assembleProcessResponse.setProductsToProcess(productsToProcess);
@@ -75,7 +76,6 @@ public class OrderAssembleMapper {
                         processedProduct.setCellCode(storeCellProduct.getStoreCell().getCode());
                         processedProduct.setProcessedDate(LocalDateTime.now());
                         processedProduct.setProcessedEmployeeName(assembleProcess != null ? assembleProcess.getStoreEmployee().getWonderUser().getUsername() : "N\\A");
-                        processedProduct.setWaybill(kaspiOrder.getWaybill());
                         processedProducts.add(processedProduct);
                     }
                 });

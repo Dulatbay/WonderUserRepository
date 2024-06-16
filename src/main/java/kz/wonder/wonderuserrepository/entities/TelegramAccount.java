@@ -16,12 +16,16 @@ public class TelegramAccount extends AbstractEntity<Long> {
 
     @Column(name = "tg_username", unique = true, nullable = false)
     private String tgUsername;
+
     @Column(name = "tg_chat_id", unique = true, nullable = false)
     private String tgChatId;
+
     @Column(name = "verified", nullable = false)
     private boolean verified;
+
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private WonderUser wonderUser;
