@@ -16,7 +16,5 @@ public class SupplyScanRequest {
     public static class ProductCell {
         @NotNull(message = "{requests.supply-scan-request.cell-code-must-not-be-null}")
         private String cellCode;
-
-        List<String> productArticles;
     }
 }

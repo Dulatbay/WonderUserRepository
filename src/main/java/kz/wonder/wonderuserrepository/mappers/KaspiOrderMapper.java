@@ -1,20 +1,18 @@
 package kz.wonder.wonderuserrepository.mappers;
 
-import kz.wonder.kaspi.client.model.Order.OrderEntry;
 import kz.wonder.kaspi.client.model.OrdersDataResponse;
+import kz.wonder.kaspi.client.model.response.Order.OrderEntry;
+import kz.wonder.wonderuserrepository.dto.enums.OrderStateInStore;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeOrderResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderEmployeeDetailResponse;
 import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
-import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
-import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
-import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -30,7 +28,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 public class KaspiOrderMapper {
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
-
+    private final BarcodeMapper barcodeMapper;
 
     public KaspiOrder saveKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
         KaspiOrder kaspiOrder = new KaspiOrder();
@@ -73,7 +71,6 @@ public class KaspiOrderMapper {
         kaspiOrder.setFirstMileCourier(orderAttributes.getKaspiDelivery().getFirstMileCourier());
     }
 
-
     public KaspiOrder updateKaspiOrder(KaspiOrder kaspiOrder, KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
 
         mapToKaspiOrder(token, order, orderAttributes, kaspiOrder);
@@ -108,15 +105,21 @@ public class KaspiOrderMapper {
         EmployeeOrderResponse orderResponse = new EmployeeOrderResponse();
 
         orderResponse.setOrderCode(kaspiOrder.getCode());
+        orderResponse.setShopName(kaspiOrder.getWonderUser().getKaspiToken().getSellerName());
+        orderResponse.setFormattedAddress(kaspiOrder.getKaspiStore().getFormattedAddress());
         orderResponse.setOrderCreatedAt(Instant.ofEpochMilli(kaspiOrder.getCreationDate()).atZone(ZONE_ID).toLocalDateTime());
-        orderResponse.setOrderStatus(kaspiOrder.getStatus());
         orderResponse.setOrderToSendTime(getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
+        orderResponse.setOrderStatus(OrderStateInStore.getOrderStatus(kaspiOrder));
         orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
+        orderResponse.setPickUpPerson(kaspiOrder.getFirstMileCourier());
+        orderResponse.setPrice(kaspiOrder.getTotalPrice());
+        orderResponse.setProductsCount(kaspiOrder.getProducts().size());
 
         return orderResponse;
     }
 
-    public OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct, KaspiOrder kaspiOrder) {
+
+    public OrderDetailResponse toOrderDetailResponse(KaspiOrderProduct kaspiOrderProduct) {
         var product = kaspiOrderProduct.getProduct();
         var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
         var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
@@ -125,9 +128,11 @@ public class KaspiOrderMapper {
         orderDetailResponse.setProductName(product.getName());
         orderDetailResponse.setProductArticle(supplyBoxProduct.getArticle());
         orderDetailResponse.setCellCode(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "Not accepted yet");
+        orderDetailResponse.setPathToBoxBarcode(barcodeMapper.getPathToBoxBarcode(supplyBoxProduct.getSupplyBox()));
+        orderDetailResponse.setPathToProductBarcode(barcodeMapper.getPathToProductBarcode(supplyBoxProduct));
         orderDetailResponse.setProductVendorCode(product.getVendorCode());
         orderDetailResponse.setProductTradePrice(product.getTradePrice());
-        orderDetailResponse.setProductSellPrice(kaspiOrder.getTotalPrice()); // todo: тут прибыль от заказа, как достать прибыль именно от одного продукта?(посмотреть потом в апи)
+        orderDetailResponse.setProductSellPrice(kaspiOrderProduct.getBasePrice());
         orderDetailResponse.setIncome(orderDetailResponse.getProductSellPrice() - orderDetailResponse.getProductTradePrice());
         return orderDetailResponse;
     }
@@ -136,7 +141,9 @@ public class KaspiOrderMapper {
         OrderEmployeeDetailResponse orderEmployeeDetailResponse = new OrderEmployeeDetailResponse();
         orderEmployeeDetailResponse.setProducts(orderProducts);
         orderEmployeeDetailResponse.setDeliveryMode(order.getDeliveryMode());
+        orderEmployeeDetailResponse.setOrderCode(order.getCode());
         orderEmployeeDetailResponse.setDeliveryTime(getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
+        orderEmployeeDetailResponse.setOrderStatus(OrderStateInStore.getOrderStatus(order));
         return orderEmployeeDetailResponse;
     }
 
@@ -148,6 +155,9 @@ public class KaspiOrderMapper {
         orderProduct.setProductArticle(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getArticle());
         orderProduct.setProductCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N/A");
         orderProduct.setProductVendorCode(product.isEmpty() ? "N/A" : product.get().getVendorCode());
+        orderProduct.setPathToProductBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : barcodeMapper.getPathToProductBarcode(supplyBoxProductOptional.get()));
+        orderProduct.setPathToBoxBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : barcodeMapper.getPathToBoxBarcode(supplyBoxProductOptional.get().getSupplyBox()));
+        orderProduct.setProductStateInStore(supplyBoxProductOptional.map(SupplyBoxProduct::getState).orElse(null));
         return orderProduct;
     }
 
@@ -157,13 +167,6 @@ public class KaspiOrderMapper {
             return vendorCode.split("_")[0];
         }
         return null;
-    }
-
-    public static void updateKaspiOrderProduct(KaspiOrderProduct existingOrderProduct, KaspiOrder kaspiOrder, Product product, OrderEntry orderEntry, SupplyBoxProduct supplyBoxProductToSave) {
-        existingOrderProduct.setOrder(kaspiOrder);
-        existingOrderProduct.setProduct(product);
-        existingOrderProduct.setQuantity(orderEntry.getAttributes().getQuantity());
-        existingOrderProduct.setSupplyBoxProduct(supplyBoxProductToSave);
     }
 
 }

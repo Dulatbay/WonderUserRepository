@@ -18,7 +18,6 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.http.codec.CodecsAutoConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,13 +63,12 @@ public class SupplyController {
             @ApiResponse(responseCode = "200", description = "Successfully created new supply")
     })
     @SellerAuthorization
-    public ResponseEntity<Map<String, Long>> createSupply(@RequestBody @Valid SupplyCreateRequest createRequest) {
+    public ResponseEntity<SupplySellerResponse> createSupply(@RequestBody @Valid SupplyCreateRequest createRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = extractIdFromToken(token);
-        long id = supplyService.createSupply(createRequest, userId);
-        Map<String, Long> res = new HashMap<>();
-        res.put("id", id);
-        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        var supplyCreatedResponse = supplyService.createSupply(createRequest, userId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(supplyCreatedResponse);
     }
 
     @GetMapping("/admin")
@@ -145,7 +143,7 @@ public class SupplyController {
 
     @GetMapping("/seller/report/{supplyId}")
     @SellerAuthorization
-    public ResponseEntity<SellerSupplyReport> getSupplySellerReport(@PathVariable Long supplyId){
+    public ResponseEntity<SellerSupplyReport> getSupplySellerReport(@PathVariable Long supplyId) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 

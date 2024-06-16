@@ -1,8 +1,8 @@
 package kz.wonder.wonderuserrepository.services;
 
 import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
+import kz.wonder.wonderuserrepository.dto.request.AssembleProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
-import kz.wonder.wonderuserrepository.dto.response.AssembleProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -12,7 +12,7 @@ public interface AssemblyService {
 
     AssembleProcessResponse startAssemble(JwtAuthenticationToken starterToken, String orderId);
 
-    AssembleProductResponse assembleProduct(JwtAuthenticationToken starterToken, String productArticle, String orderCode);
+    AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest, String orderCode);
 
     AssembleProcessResponse getAssemble(JwtAuthenticationToken token, String orderCode);
 

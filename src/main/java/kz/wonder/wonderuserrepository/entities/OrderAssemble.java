@@ -1,14 +1,13 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "order_assemble", schema = schemaName)
@@ -17,7 +16,7 @@ public class OrderAssemble extends AbstractEntity<Long> {
     @JoinColumn(name = "order_id", nullable = false)
     private KaspiOrder kaspiOrder;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "started_employee_id", nullable = false)
     private StoreEmployee startedEmployee;
 

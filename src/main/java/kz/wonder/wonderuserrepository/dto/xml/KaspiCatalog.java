@@ -8,16 +8,13 @@ import java.util.List;
 @XmlRootElement(name = "kaspi_catalog")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class KaspiCatalog {
-    @XmlElement(name = "company")
-    private String company;
-
-    @XmlElement(name = "merchant_id")
-    private String merchantid;
-
     @XmlAttribute
     @XmlJavaTypeAdapter(LocalDateAdapter.class)
     private final LocalDate date = LocalDate.now();
-
+    @XmlElement(name = "company")
+    private String company;
+    @XmlElement(name = "merchant_id")
+    private String merchantid;
     @XmlElementWrapper
     @XmlElement(name = "offer")
     private List<Offer> offers;

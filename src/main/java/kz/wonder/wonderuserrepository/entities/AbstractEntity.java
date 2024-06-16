@@ -2,14 +2,14 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
-import lombok.Data;
+import lombok.Getter;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
-@Data
+@Getter
 @MappedSuperclass
 public abstract class AbstractEntity<T extends Serializable> {
 

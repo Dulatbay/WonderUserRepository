@@ -2,12 +2,12 @@ package kz.wonder.wonderuserrepository.entities;
 
 
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
+import lombok.Data;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @Entity
-@EqualsAndHashCode(callSuper = false)
+@Data
 @Table(schema = schemaName, name = "telegram_account")
 public class TelegramAccount extends AbstractEntity<Long> {
     @Id
@@ -16,12 +16,16 @@ public class TelegramAccount extends AbstractEntity<Long> {
 
     @Column(name = "tg_username", unique = true, nullable = false)
     private String tgUsername;
+
     @Column(name = "tg_chat_id", unique = true, nullable = false)
     private String tgChatId;
+
     @Column(name = "verified", nullable = false)
     private boolean verified;
+
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private WonderUser wonderUser;

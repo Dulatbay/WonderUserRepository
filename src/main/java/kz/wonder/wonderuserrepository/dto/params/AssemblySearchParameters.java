@@ -2,8 +2,8 @@ package kz.wonder.wonderuserrepository.dto.params;
 
 import jakarta.persistence.Convert;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
-import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
 
 import java.time.LocalDate;

@@ -3,12 +3,10 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -17,11 +15,11 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 public class ProductPrice extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", columnDefinition = "integer")
+    @JoinColumn(name = "product_id")
     private Product product;
 
     @Column(name = "price", nullable = false)

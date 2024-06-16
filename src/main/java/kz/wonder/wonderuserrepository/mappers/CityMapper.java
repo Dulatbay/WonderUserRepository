@@ -16,7 +16,7 @@ public class CityMapper {
         return cityResponse;
     }
 
-    public KaspiCity toEntity(CitiesDataResponse.City city){
+    public KaspiCity toEntity(CitiesDataResponse.City city) {
         var newCity = new KaspiCity();
         newCity.setCode(city.getAttributes().getCode());
         newCity.setName(city.getAttributes().getName());

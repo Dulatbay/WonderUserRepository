@@ -3,17 +3,20 @@ package kz.wonder.wonderuserrepository.dto.response;
 
 import jakarta.persistence.Convert;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.dto.base.OrderWithStatus;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class OrderEmployeeDetailResponse {
+public class OrderEmployeeDetailResponse extends OrderWithStatus {
     private List<Product> products;
 
     private DeliveryMode deliveryMode;
+    private String orderCode;
 
     @Convert(converter = LocalDateTimeAttributeConverter.class)
     private LocalDateTime deliveryTime;
@@ -23,6 +26,9 @@ public class OrderEmployeeDetailResponse {
         private String productName;
         private String productArticle;
         private String productVendorCode;
+        private String pathToProductBarcode;
+        private String pathToBoxBarcode;
+        private ProductStateInStore productStateInStore;
         private String productCell;
     }
 }

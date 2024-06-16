@@ -14,5 +14,6 @@ public record ProductResponse(Long id,
                               Long mainPriceCityId,
                               List<ProductCount> counts) {
     @Builder
-    public record ProductCount(String cityName, Long count) { }
+    public record ProductCount(String cityName, Long count) {
+    }
 }

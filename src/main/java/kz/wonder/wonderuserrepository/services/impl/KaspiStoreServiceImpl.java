@@ -239,6 +239,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.the-warehouse-is-not-currently-open", null, LocaleContextHolder.getLocale()));
 
 
+
         return kaspiStoreMapper.mapToResponse(store);
     }
 
@@ -254,6 +255,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
 
         if(!isHisStore && !store.isEnabled())
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.kaspi-store-service-impl.the-warehouse-is-not-currently-open", null, LocaleContextHolder.getLocale()));
+
 
 
         log.info("Retrieving store with id: {}", store.getId());

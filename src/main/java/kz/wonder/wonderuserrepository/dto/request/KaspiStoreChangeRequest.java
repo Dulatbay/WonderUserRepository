@@ -1,7 +1,8 @@
 package kz.wonder.wonderuserrepository.dto.request;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;

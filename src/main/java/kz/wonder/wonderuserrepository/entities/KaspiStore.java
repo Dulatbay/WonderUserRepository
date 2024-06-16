@@ -2,13 +2,11 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = false)
 @Data
 @Entity
 @Table(name = "kaspi_store", schema = schemaName)
@@ -52,7 +50,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     private boolean deleted;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "user_id", columnDefinition = "integer")
+    @JoinColumn(name = "user_id")
     private WonderUser wonderUser;
 
     @OneToMany(fetch = FetchType.LAZY,
@@ -74,10 +72,10 @@ public class KaspiStore extends AbstractEntity<Long> {
     private List<KaspiOrder> orders;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_city_id", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
-    @OneToMany(fetch = FetchType.EAGER,
+    @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)

@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.ProductMapper;
 import kz.wonder.wonderuserrepository.mappers.ProductXmlMapper;
@@ -22,7 +23,6 @@ import org.apache.xmlbeans.impl.store.Locale;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -141,7 +140,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = processProduct(vendorCode, name, link, isPublic, tradePrice, keycloakUserId);
         processProductPrices(product, priceAlmaty, priceAstana, priceShymkent, cityCache);
 
-        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
+//        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
 
 
         return product;
@@ -185,7 +184,7 @@ public class ProductServiceImpl implements ProductService {
         var priceAtShymkent = processProductPrice(product, cityShymkent, priceShymkent);
 
 
-        product.setPrices(new HashSet<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
+        product.setPrices(new ArrayList<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
     }
 
     private KaspiCity getCachedCity(String cityName, Map<String, KaspiCity> cityCache) {
@@ -208,9 +207,28 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
-        log.info("Retrieving products with keycloak id: {}", keycloakUserId);
-        return productRepository.findByParams(keycloakUserId, searchValue, searchValue, isPublished, pageable)
-                .map(productMapper::mapToResponse);
+        var products = productRepository.findAllByKeycloakId(keycloakUserId, searchValue, searchValue, isPublished, pageable);
+
+        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
+
+        if (!productIds.isEmpty()) {
+            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
+
+            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
+
+            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+
+            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+
+            products.forEach(product -> {
+                product.setPrices(pricesMap.getOrDefault(product.getId(), new ArrayList<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.getOrDefault(product.getId(), new ArrayList<>()));
+            });
+        }
+
+        return products.map(productMapper::mapToResponse);
     }
 
 
@@ -232,17 +250,13 @@ public class ProductServiceImpl implements ProductService {
     private String generateAndUpload(KaspiToken kaspiToken) {
         try {
             final var wonderUser = kaspiToken.getWonderUser();
-            final var listOfProducts = productRepository.findAllSellerProductsWithPrices(wonderUser.getKeycloakId());
-
-            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
+            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalogInChunks(wonderUser.getKeycloakId(), kaspiToken);
 
             Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
             String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
 
             var fileName = wonderUser.getKeycloakId() + ".xml";
-
             MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
-
             var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
 
             kaspiToken.setPathToXml(fileName);
@@ -251,11 +265,10 @@ public class ProductServiceImpl implements ProductService {
             kaspiTokenRepository.save(kaspiToken);
 
             return resultOfUploading.get(0);
-        } catch (JAXBException e) {
-            log.error("JAXBException: ", e);
+        } catch (Exception e) {
+            log.error("Exception: ", e);
             throw new IllegalStateException(messageSource.getMessage("services-impl.product-service-impl.error-generating-xml", null, LocaleContextHolder.getLocale()));
         }
-
     }
 
     @Override
@@ -267,34 +280,79 @@ public class ProductServiceImpl implements ProductService {
         product.setDeleted(true);
         product.setEnabled(false);
         productRepository.save(product);
+
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
+
 
     // todo: refactoring
     @Override
-    public Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
+    public ProductPriceResponse getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
         Page<Product> products;
         Map<Long, CityResponse> cityResponseMap = new HashMap<>();
-
 
         if (isSuperAdmin) {
             products = productRepository.findAllBy(searchValue, searchValue, isPublished, pageable);
         } else {
+            log.info("FETCH PRODUCTS STARTED");
             products = productRepository.findAllByKeycloakId(keycloakId, searchValue, searchValue, isPublished, pageable);
+            log.info("FETCH PRODUCTS ENDED");
         }
 
-        List<ProductPriceResponse.ProductInfo> response = new ArrayList<>();
+        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
+
+        if (!productIds.isEmpty()) {
+            log.info("FETCH ProductPrice STARTED");
+            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
+            log.info("FETCH ProductPrice ENDED");
+            log.info("FETCH SupplyBoxProduct STARTED");
+            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
+            log.info("FETCH SupplyBoxProduct ENDED");
+
+            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+
+            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+
+            products.forEach(product -> {
+                product.setPrices(pricesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+            });
+        }
+
+        ProductPriceResponse.Content response = new ProductPriceResponse.Content();
+
 
         products
                 .forEach(product -> {
-                    var count = product.getSupplyBoxes().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
+                    var mainCityPrice = Optional.ofNullable(product.getMainCityPrice()).orElse(new ProductPrice());
 
-                    var productInfo = ProductPriceResponse.ProductInfo.builder()
+                    if (mainCityPrice.getId() != null) {
+                        cityResponseMap.computeIfAbsent(mainCityPrice.getId(), k -> {
+                            CityResponse cityResponse = new CityResponse();
+                            cityResponse.setId(mainCityPrice.getId());
+                            cityResponse.setName(mainCityPrice.getKaspiCity().getName());
+                            cityResponse.setCode(mainCityPrice.getKaspiCity().getCode());
+                            cityResponse.setEnabled(mainCityPrice.getKaspiCity().isEnabled());
+                            return cityResponse;
+                        });
+                    }
+
+
+                    var count = product.getSupplyBoxProducts().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
+
+                    var productInfo = ProductPriceResponse.Content.ProductInfo.builder()
                             .id(product.getId())
                             .name(product.getName())
                             .vendorCode(product.getVendorCode())
                             .count(count)
                             .isPublished(product.isEnabled())
-                            // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
                                 var city = price.getKaspiCity();
 
@@ -307,19 +365,25 @@ public class ProductServiceImpl implements ProductService {
                                     return cityResponse;
                                 });
 
-
                                 return ProductMapper.mapProductPrice(product, price, city);
                             }).toList())
+                            .mainPriceCityId(mainCityPrice.getId())
                             .build();
 
-                    response.add(productInfo);
+                    response.getProducts().add(productInfo);
                 });
 
-        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
-        productPriceResponse.setProducts(response);
-        productPriceResponse.setCities(cityResponseMap.values().stream().toList());
+        response.setCities(cityResponseMap.values().stream().toList());
 
-        return new PageImpl<>(new ArrayList<>(Collections.singleton(productPriceResponse)), pageable, products.getTotalElements());
+        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
+        productPriceResponse.setContent(response);
+        productPriceResponse.setPage(pageable.getPageNumber());
+        productPriceResponse.setSize(pageable.getPageSize());
+        productPriceResponse.setLast(products.isLast());
+        productPriceResponse.setTotalPages(products.getTotalPages());
+        productPriceResponse.setTotalElements(products.getTotalElements());
+
+        return productPriceResponse;
     }
 
     @Override
@@ -361,7 +425,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest pageRequest, String employeeKeycloakId) {
+    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest
+            pageRequest, String employeeKeycloakId) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(employeeKeycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -372,7 +437,6 @@ public class ProductServiceImpl implements ProductService {
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
                 productSearchParams.isByVendorCode(),
-                null,
                 pageRequest
         );
 
@@ -380,7 +444,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId) {
+    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String
+            keycloakId) {
         final var wonderUser = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -403,16 +468,22 @@ public class ProductServiceImpl implements ProductService {
         productSize.setComment(productSizeChangeRequest.getComment());
 
         productSizeRepository.save(productSize);
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
     @Override
-    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest) {
+    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean
+            isSizeScanned, String keycloakId, PageRequest pageRequest) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
         final var store = storeEmployee.getKaspiStore();
 
-        var supplyBoxProducts = supplyBoxProductsRepository.findByParams(
+        var supplyBoxProducts = supplyBoxProductsRepository.findByParamsUniqueByProduct(
                 store.getId(),
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
@@ -430,7 +501,7 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Found tokens to generating: {}", tokens.size());
 
-        tokens.parallelStream()
+        tokens
                 .forEach(this::generateAndUpload);
         log.info("Generated xmls: {}", tokens.size());
     }
@@ -460,6 +531,7 @@ public class ProductServiceImpl implements ProductService {
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
 
+
                     product.setMainCityPrice(productPrice);
                     productRepository.save(product);
                 });
@@ -476,6 +548,7 @@ public class ProductServiceImpl implements ProductService {
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
+
 
                     productPrice.setPrice(price.getPrice());
                     productPriceRepository.save(productPrice);

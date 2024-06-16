@@ -3,7 +3,6 @@ package kz.wonder.wonderuserrepository.services.impl;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import kz.wonder.wonderuserrepository.dto.response.SellerSupplyReport;
-import kz.wonder.wonderuserrepository.entities.Supply;
 import kz.wonder.wonderuserrepository.services.BarcodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

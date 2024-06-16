@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,21 +22,46 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "limit 1")
     Optional<SupplyBoxProduct> findFirstByStoreIdAndProductIdAndState(@Param("kaspiStoreId") Long kaspiStoreId, @Param("productId") Long productId, @Param("state") ProductStateInStore state);
 
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.kaspiStore " +
+            "WHERE sbp.article = :productArticle")
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.kaspiStore " +
+            "WHERE sbp.article = :productArticle AND sbp.kaspiOrder.code = :orderCode")
+    Optional<SupplyBoxProduct> findByArticleAndOrderCode(String productArticle, String orderCode);
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD') and sbp.createdAt BETWEEN :start AND :end")
+    boolean existsByKaspiOrderCode(String kaspiOrderCode);
+
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD' OR sbp.state = 'WAITING_FOR_ASSEMBLY' OR sbp.state = 'ASSEMBLED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllAdminSells(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN SupplyBox sb ON sb.id = sbp.supplyBox.id " +
+            "LEFT JOIN Supply s ON s.id = sb.supply.id " +
+            "where s.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
-            "JOIN FETCH sbp.kaspiOrder " +
-            "WHERE sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state = 'ACCEPTED')")
-    Page<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, Pageable pageable);
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.author a " +
+            "LEFT JOIN FETCH sbp.storeCellProduct scp " +
+            "LEFT JOIN FETCH sbp.kaspiOrderProducts kop " +
+            "LEFT JOIN FETCH sbp.product p  " +
+            "WHERE s.author.keycloakId = :keycloakId AND sbp.state = 'ACCEPTED' ")
+    List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId);
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.article = :article and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN SupplyBox sb ON sb.id = sbp.supplyBox.id " +
+            "LEFT JOIN Supply s ON s.id = sb.supply.id " +
+            "where sbp.article = :article and s.kaspiStore.id = :kaspiStoreId")
     Optional<SupplyBoxProduct> findByArticleAndStore(@Param("article") String article, @Param("kaspiStoreId") Long kaspiStoreId);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
@@ -48,17 +73,38 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "AND sbp.id IN ( " +
             "  SELECT MIN(sbp2.id) FROM SupplyBoxProduct sbp2 " +
             "  LEFT JOIN Product p2 ON p2.id = sbp2.product.id " +
-            "  WHERE ((:byProductName = false OR lower(p2.name) LIKE '%' || lower(:searchValue) || '%') " +
-            "  AND (:byVendorCode = false OR p2.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  WHERE " +
+            " (((:byProductName = TRUE AND lower(p.name) LIKE '%' || lower(:searchValue) || '%') OR " +
+            "  (:byVendorCode = TRUE AND p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  OR " +
+            "   (:byVendorCode = FALSE AND :byProductName = FALSE)) " +
             "  AND sbp2.supplyBox.supply.kaspiStore.id = :kaspiStoreId " +
             "  GROUP BY p2.originalVendorCode) ")
+    Page<SupplyBoxProduct> findByParamsUniqueByProduct(@Param("kaspiStoreId") Long kaspiStoreId,
+                                                       @Param("searchValue") String searchValue,
+                                                       @Param("byProductName") Boolean byProductName,
+                                                       @Param("byVendorCode") Boolean byVendorCode,
+                                                       @Param("isSizeScanned") Boolean isSizeScanned,
+                                                       Pageable pageable);
+
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN Product p ON p.id = sbp.product.id " +
+            "  WHERE " +
+            " (((:byProductName = TRUE AND lower(p.name) LIKE '%' || lower(:searchValue) || '%') OR " +
+            "  (:byVendorCode = TRUE AND p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  OR " +
+            "   (:byVendorCode = FALSE AND :byProductName = FALSE)) " +
+            "  AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
                                         @Param("byProductName") Boolean byProductName,
                                         @Param("byVendorCode") Boolean byVendorCode,
-                                        @Param("isSizeScanned") Boolean isSizeScanned,
                                         Pageable pageable);
-
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN sbp.product p ON p.id = sbp.id " +
+            "LEFT JOIN FETCH sbp.product " +
+            "WHERE p.id IN :productIds")
+    List<SupplyBoxProduct> findSupplyBoxesByProductIds(@Param("productIds") List<Long> productIds);
 
 
     @Query(nativeQuery = true, value = "SELECT sbp.* FROM schema_wonder.supply_box_products sbp " +

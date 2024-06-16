@@ -2,11 +2,10 @@ package kz.wonder.wonderuserrepository.dto.response;
 
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-public class SellerUserResponse  {
+public class SellerUserResponse {
     private Long id;
     private String phoneNumber;
 

@@ -6,6 +6,8 @@ import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
@@ -97,12 +99,13 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public long createSupply(SupplyCreateRequest createRequest, String userId) {
+    public SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId) {
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-not-found", null, LocaleContextHolder.getLocale())));
 
         if (!store.isEnabled())
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.store-not-enabled", null, LocaleContextHolder.getLocale()));
+
 
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.user-not-found", null, LocaleContextHolder.getLocale())));
@@ -121,10 +124,10 @@ public class SupplyServiceImpl implements SupplyService {
 
         for (var time : availableTimes) {
             if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
-                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
+//                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
                     isAvailableToSupply = true;
                     break;
-                }
+//                }
             }
         }
 
@@ -166,8 +169,9 @@ public class SupplyServiceImpl implements SupplyService {
                             throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale()));
                         }
 
-                        supply.getSupplyBoxes().add(supplyBox);
                     });
+
+                    supply.getSupplyBoxes().add(supplyBox);
                 });
 
         if (supply.getSupplyBoxes().isEmpty()) {
@@ -177,7 +181,7 @@ public class SupplyServiceImpl implements SupplyService {
         var createdSupply = supplyRepository.save(supply);
 
         log.info("Created supply id: {}", createdSupply.getId());
-        log.info("Products size in create supply: {}", createdSupply.getSupplyBoxes().size());
+        log.info("Boxes count in created supply: {}", createdSupply.getSupplyBoxes().size());
 
 
         var generateBarCodes = CompletableFuture.runAsync(() -> {
@@ -228,12 +232,12 @@ public class SupplyServiceImpl implements SupplyService {
         CompletableFuture.allOf(generateSupply, generateBarCodes)
                 .join();
 
-        return createdSupply.getId();
+        return supplyMapper.toSupplySellerResponse(supply);
     }
 
     @Override
     public List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String fullName, String keycloakId) {
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
+        var supplies = supplyRepository.findAllAdminSupplies(startDate.atStartOfDay(), endDate.atStartOfDay(), keycloakId);
 
         log.info("Supplies size: {}", supplies.size());
 
@@ -398,11 +402,17 @@ public class SupplyServiceImpl implements SupplyService {
                     var storeCell = storeCellRepository.findByKaspiStoreIdAndCode(kaspiStore.getId(), cellCode)
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-slot-does-not-exist", null, LocaleContextHolder.getLocale())));
 
-                    List<StoreCellProduct> storeCellProducts = productArticles
-                            .stream()
-                            .map(article -> {
-                                var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
-                                        .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
+
+
+                    Map<String, StoreCellProduct> storeCellProductsMap = new HashMap<>();
+
+                    productArticles
+                            .forEach(article -> {
+
+                                if(storeCellProductsMap.containsKey(article))
+                                    throw new IllegalArgumentException("Введите уникальные артикли");
+
+                                var supplyBoxProduct = this.validateProduct(article, kaspiStore.getId());
 
                                 supplyBoxProduct.setState(ProductStateInStore.ACCEPTED);
                                 supplyBoxProduct.setAcceptedTime(now);
@@ -416,10 +426,11 @@ public class SupplyServiceImpl implements SupplyService {
                                 storeCellProduct.setSupplyBoxProduct(supplyBoxProduct);
                                 storeCellProduct.setBusy(true);
 
-                                return storeCellProduct;
-                            }).toList();
+                                storeCellProductsMap.put(article, storeCellProduct);
 
-                    storeCellProductRepository.saveAll(storeCellProducts);
+                            });
+
+                    storeCellProductRepository.saveAll(storeCellProductsMap.values());
                 });
 
         supply.setAcceptedTime(now);
@@ -429,6 +440,8 @@ public class SupplyServiceImpl implements SupplyService {
                         .stream()
                         .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
         supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
+
+
     }
 
     @Override
@@ -569,6 +582,22 @@ public class SupplyServiceImpl implements SupplyService {
                 break;
             default:
         }
+    }
+
+    private SupplyBoxProduct validateProduct(String article, Long kaspiStoreId) {
+        final var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+
+        validateProductForStoreCell(supplyBoxProduct, kaspiStoreId);
+        return supplyBoxProduct;
+    }
+
+    private void validateProductForStoreCell(SupplyBoxProduct supplyBoxProduct, Long kaspiStoreId) {
+        if (!supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore().getId().equals(kaspiStoreId)) {
+            throw new IllegalArgumentException("У вас нет разрешения на добавление этого товара в ячейку.");
+        }
+        if (supplyBoxProduct.getState() != ProductStateInStore.PENDING && supplyBoxProduct.getState() != ProductStateInStore.ACCEPTED)
+            throw new IllegalArgumentException("Товар уже невозможно отсканировать");
     }
 
 }

@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductWithSize;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductSizeRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,24 @@ public class ProductMapper {
     private final KaspiTokenRepository kaspiTokenRepository;
     private final MessageSource messageSource;
 
+    public static @NotNull ProductPriceResponse.Content.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
+        var productPrice = new ProductPriceResponse.Content.ProductPrice();
+
+        // todo: сделал поставку в город, где не указана цена
+
+        productPrice.setCityId(city.getId());
+        productPrice.setCityName(city.getName());
+        productPrice.setCount(product.getSupplyBoxProducts()
+                .stream()
+                .filter(p ->
+                        p.getState() == ProductStateInStore.ACCEPTED
+                                && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
+                )
+                .count());
+        productPrice.setPrice(price.getPrice());
+        return productPrice;
+    }
+
     public ProductResponse mapToResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
@@ -30,7 +49,7 @@ public class ProductMapper {
                 .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
                 .counts(product.getPrices().stream().map(price -> {
                     var city = price.getKaspiCity();
-                    var count = (product.getSupplyBoxes()
+                    var count = (product.getSupplyBoxProducts()
                             .stream()
                             .filter(p ->
                                     p.getState() == ProductStateInStore.ACCEPTED
@@ -56,7 +75,7 @@ public class ProductMapper {
         productWithSize.setLength(size.getLength());
         productWithSize.setWidth(size.getWidth());
         productWithSize.setComment(size.getComment());
-        productWithSize.setVendorCode(product.getVendorCode());
+        productWithSize.setVendorCode(product.getOriginalVendorCode());
         productWithSize.setState(supplyBoxProduct.getState());
 
 
@@ -79,24 +98,6 @@ public class ProductMapper {
         productSearchResponse.setArticle(supplyBoxProduct.getArticle());
 
         return productSearchResponse;
-    }
-
-    public static @NotNull ProductPriceResponse.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
-        var productPrice = new ProductPriceResponse.ProductPrice();
-
-        // todo: сделал поставку в город, где не указана цена
-
-        productPrice.setCityId(city.getId());
-        productPrice.setCityName(city.getName());
-        productPrice.setCount(product.getSupplyBoxes()
-                .stream()
-                .filter(p ->
-                        p.getState() == ProductStateInStore.ACCEPTED
-                                && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
-                )
-                .count());
-        productPrice.setPrice(price.getPrice());
-        return productPrice;
     }
 
 }

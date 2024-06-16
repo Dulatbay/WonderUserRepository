@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -47,19 +46,19 @@ public class StatisticsServiceImpl implements StatisticsService {
         var startPast = startCurrent.minus(duration);
 
 
-        var listOfProducts = supplyBoxProductsRepository.findAllAdminSells(keycloakId, startPast, end);
-        var supplies = supplyRepository.findAllByCreatedAtBetweenAndKaspiStore_WonderUserKeycloakId(startPast, end, keycloakId);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllAdminSells(keycloakId, startPast, end);
+        var supplies = supplyRepository.findAllAdminSupplies(startPast, end, keycloakId);
 
-        log.info("startPast: {}, startCurrent: {}, end: {}, listOfProduct size: {}, supplies size: {}",
-                startPast, startCurrent, end, listOfProducts.size(), supplies.size());
+        log.info("startPast: {}, startCurrent: {}, end: {}, supplyBoxProducts size: {}, supplies size: {}",
+                startPast, startCurrent, end, supplyBoxProducts.size(), supplies.size());
 
 
         AdminSalesInformation adminSalesInformation = new AdminSalesInformation();
 
-        adminSalesInformation.setOrdersInfo(getAdminOrdersInfo(startCurrent, end, startPast, listOfProducts));
-        adminSalesInformation.setSellersInfo(getAdminSellersInfo(startCurrent, end, startPast, listOfProducts));
+        adminSalesInformation.setOrdersInfo(getAdminOrdersInfo(startCurrent, end, startPast, supplyBoxProducts));
+        adminSalesInformation.setSellersInfo(getAdminSellersInfo(startCurrent, end, startPast, supplyBoxProducts));
         adminSalesInformation.setSuppliesInfo(getAdminSuppliesInfo(startCurrent, end, startPast, supplies));
-        adminSalesInformation.setIncomeInfo(getAdminIncomeInfo(startCurrent, end, startPast, listOfProducts));
+        adminSalesInformation.setIncomeInfo(getAdminIncomeInfo(startCurrent, end, startPast, supplyBoxProducts));
 
         return adminSalesInformation;
     }
@@ -95,14 +94,14 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId, Pageable pageable) {
-        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, pageable);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId);
+
 
         Map<Pair<Long, Long>, ProductWithCount> productWithCountMap = new HashMap<>();
 
         supplyBoxProducts.forEach(supplyBoxProduct -> {
             var product = supplyBoxProduct.getProduct();
             var store = supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore();
-
             var key = Pair.of(store.getId(), product.getId());
 
             if (!productWithCountMap.containsKey(key)) {
@@ -118,7 +117,9 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
         });
 
-        return new PageImpl<>(new ArrayList<>(productWithCountMap.values()), pageable, supplyBoxProducts.getTotalElements());
+        var sorted = (productWithCountMap.values().stream().sorted((a, b) -> Math.toIntExact(a.getCount() - b.getCount())).toList());
+
+        return new PageImpl<>(sorted.stream().limit(pageable.getPageSize()).toList(), pageable, sorted.size());
     }
 
     @Override
@@ -129,6 +130,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId,
                 getTimeStampFromLocalDateTime(start),
                 getTimeStampFromLocalDateTime(end),
+                null,
                 null,
                 null,
                 false,
@@ -160,7 +162,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             if (!sellerTopProductInformationHashMap.containsKey(product.getId())) {
                 Optional<ProductPrice> productPrice = Optional.ofNullable(product.getMainCityPrice());
                 if (productPrice.isEmpty()) {
-                    productPrice = productPriceRepository.findFirstByProductIdOrderByPriceAsc(product.getId());
+                    productPrice = productPriceRepository.findFirstByProductIdOrderByPriceDesc(product.getId());
                 }
 
                 var sellerTopProductInformation = new SellerTopProductInformation();
@@ -221,7 +223,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     public List<DailyStats> getSellerDailyStats(String keycloakId, DurationParams durationParams) {
         var duration = durationParams.getDuration();
 
-        var end = LocalDate.now().atStartOfDay();
+        var end = LocalDate.now().atStartOfDay().plusDays(1);
         var start = end.minus(duration);
 
         var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
@@ -230,7 +232,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         LocalDateTime stepDate = start;
 
         while (!stepDate.isAfter(end) && !stepDate.isEqual(end)) {
-            dailyStatsMap.put(stepDate.toString(), new DailyStats(stepDate.toString()));
+            dailyStatsMap.put(getOrderDateForDuration(stepDate, durationParams), new DailyStats(stepDate.toString()));
             stepDate = nextStepDate(stepDate, durationParams);
         }
 
@@ -251,16 +253,17 @@ public class StatisticsServiceImpl implements StatisticsService {
     public List<DailyStats> getAdminDailyStats(String keycloakId, DurationParams durationParams) {
         var duration = durationParams.getDuration();
 
-        var end = LocalDate.now().atStartOfDay();
+        var end = LocalDate.now().atStartOfDay().plusDays(1);
         var start = end.minus(duration);
 
-        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+        var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+
 
         Map<String, DailyStats> dailyStatsMap = new TreeMap<>();
         LocalDateTime stepDate = start;
 
         while (!stepDate.isAfter(end) && !stepDate.isEqual(end)) {
-            dailyStatsMap.put(stepDate.toString(), new DailyStats(stepDate.toString()));
+            dailyStatsMap.put(getOrderDateForDuration(stepDate, durationParams), new DailyStats(stepDate.toString()));
             stepDate = nextStepDate(stepDate, durationParams);
         }
 
@@ -286,14 +289,19 @@ public class StatisticsServiceImpl implements StatisticsService {
         };
     }
 
-    private String getOrderDateForDuration(LocalDateTime orderDate, DurationParams duration) {
-        return switch (duration) {
-            case DAY -> String.valueOf(orderDate.getHour() - (orderDate.getHour() % 2));
-            case WEEK -> orderDate.getDayOfWeek().toString();
-            case MONTH -> Month.of(orderDate.getDayOfMonth()).toString();
-            case YEAR -> orderDate.withDayOfYear(1).toLocalDate().toString();
-        };
+    private String getOrderDateForDuration(LocalDateTime orderDate, DurationParams durationParams) {
+        LocalDateTime periodStart = LocalDate.now().atStartOfDay().minus(durationParams.getDuration());
+
+        if(durationParams != DurationParams.DAY){
+            orderDate = orderDate.toLocalDate().atStartOfDay();
+        }
+
+        while (periodStart.isBefore(orderDate) && !periodStart.isEqual(orderDate)) {
+            periodStart = nextStepDate(periodStart, durationParams);
+        }
+        return periodStart.toString();
     }
+
 
     private StateInfo<Double> getSellerIncomeInfo(List<SupplyBoxProduct> supplyBoxProducts, LocalDateTime startCurrent, LocalDateTime end, LocalDateTime startPast) {
         StateInfo<Double> incomeInfo = new StateInfo<>();

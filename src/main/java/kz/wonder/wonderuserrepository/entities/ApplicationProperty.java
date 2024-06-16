@@ -1,12 +1,11 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.entities.enums.ApplicationMode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "application_property",

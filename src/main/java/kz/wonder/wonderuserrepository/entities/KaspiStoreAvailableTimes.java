@@ -3,7 +3,6 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.config.converters.DayOfWeekIntegerConverter;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -11,7 +10,6 @@ import java.time.LocalTime;
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
 @Entity
 @Table(name = "kaspi_store_available_times", schema = schemaName)
 public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
@@ -20,7 +18,7 @@ public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kaspi_store", columnDefinition = "integer")
+    @JoinColumn(name = "kaspi_store")
     private KaspiStore kaspiStore;
 
     @Column(name = "day_of_week")
