@@ -3,7 +3,7 @@ package kz.wonder.wonderuserrepository.controllers;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.PackageProductRequest;
-import kz.wonder.wonderuserrepository.dto.response.OrderPackageDetailResponse;
+import kz.wonder.wonderuserrepository.dto.response.StartPackageResponse;
 import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.PackageService;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +23,14 @@ public class PackageController {
     private final PackageService packageService;
 
 
-    @PostMapping("/{orderCode}/start/")
-    public ResponseEntity<OrderPackageDetailResponse> startPackageOrder(@PathVariable String orderCode) {
+    @PostMapping("/{orderCode}/start")
+    public ResponseEntity<StartPackageResponse> startPackageOrder(@PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        packageService.startPackaging(orderCode, keycloakId);
+        StartPackageResponse startPackageResponse =  packageService.startPackaging(orderCode, keycloakId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(startPackageResponse);
     }
 
     @PostMapping("/{orderCode}/finish")
@@ -44,7 +44,7 @@ public class PackageController {
     }
 
     @PostMapping("/{orderCode}/package-product")
-    public ResponseEntity<OrderPackageDetailResponse> packageProduct(@PathVariable String orderCode, @RequestBody @Valid PackageProductRequest packageProductRequest) {
+    public ResponseEntity<Void> packageProduct(@PathVariable String orderCode, @RequestBody @Valid PackageProductRequest packageProductRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 

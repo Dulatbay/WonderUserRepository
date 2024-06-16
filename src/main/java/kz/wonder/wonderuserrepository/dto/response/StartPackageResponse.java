@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.dto.response;
 import lombok.Data;
 
 @Data
-public class OrderPackageDetailResponse {
-    // products
+public record StartPackageResponse(
+        String waybill
+) {
 }
