@@ -15,7 +15,7 @@ RUN ./gradlew dependencies
 
 COPY src src
 
-RUN ./gradlew bootJar
+RUN ./gradlew bootJar --info
 
 FROM openjdk:21-slim
 
