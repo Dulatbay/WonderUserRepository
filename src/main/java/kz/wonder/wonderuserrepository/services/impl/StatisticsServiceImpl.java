@@ -95,14 +95,14 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public Page<ProductWithCount> getSellerProductsCountInformation(String keycloakId, Pageable pageable) {
-        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId, pageable);
+        var supplyBoxProducts = supplyBoxProductsRepository.findAllSellerProductsInStore(keycloakId);
+
 
         Map<Pair<Long, Long>, ProductWithCount> productWithCountMap = new HashMap<>();
 
         supplyBoxProducts.forEach(supplyBoxProduct -> {
             var product = supplyBoxProduct.getProduct();
             var store = supplyBoxProduct.getSupplyBox().getSupply().getKaspiStore();
-
             var key = Pair.of(store.getId(), product.getId());
 
             if (!productWithCountMap.containsKey(key)) {
@@ -118,7 +118,9 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
         });
 
-        return new PageImpl<>(new ArrayList<>(productWithCountMap.values()), pageable, supplyBoxProducts.getTotalElements());
+        var sorted = (productWithCountMap.values().stream().sorted((a, b) -> Math.toIntExact(a.getCount() - b.getCount())).toList());
+
+        return new PageImpl<>(sorted.stream().limit(pageable.getPageSize()).toList(), pageable, sorted.size());
     }
 
     @Override
@@ -129,6 +131,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId,
                 getTimeStampFromLocalDateTime(start),
                 getTimeStampFromLocalDateTime(end),
+                null,
                 null,
                 null,
                 false,

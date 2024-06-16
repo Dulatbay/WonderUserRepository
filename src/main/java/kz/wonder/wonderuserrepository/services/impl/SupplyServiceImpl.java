@@ -6,6 +6,8 @@ import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
@@ -394,9 +396,15 @@ public class SupplyServiceImpl implements SupplyService {
                     var storeCell = storeCellRepository.findByKaspiStoreIdAndCode(kaspiStore.getId(), cellCode)
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Ячейка магазина не существует"));
 
-                    List<StoreCellProduct> storeCellProducts = productArticles
-                            .stream()
-                            .map(article -> {
+
+                    Map<String, StoreCellProduct> storeCellProductsMap = new HashMap<>();
+
+                    productArticles
+                            .forEach(article -> {
+
+                                if(storeCellProductsMap.containsKey(article))
+                                    throw new IllegalArgumentException("Введите уникальные артикли");
+
                                 var supplyBoxProduct = supplyBoxProductsRepository.findByArticle(article)
                                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
 
@@ -412,10 +420,11 @@ public class SupplyServiceImpl implements SupplyService {
                                 storeCellProduct.setSupplyBoxProduct(supplyBoxProduct);
                                 storeCellProduct.setBusy(true);
 
-                                return storeCellProduct;
-                            }).toList();
+                                storeCellProductsMap.put(article, storeCellProduct);
 
-                    storeCellProductRepository.saveAll(storeCellProducts);
+                            });
+
+                    storeCellProductRepository.saveAll(storeCellProductsMap.values());
                 });
 
         supply.setAcceptedTime(now);

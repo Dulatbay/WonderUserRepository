@@ -15,8 +15,10 @@ public class KaspiToken extends AbstractEntity<Long> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "token", unique = true, nullable = false)
     private String token;
+
     @Column(name = "seller_name", nullable = false)
     private String sellerName;
 

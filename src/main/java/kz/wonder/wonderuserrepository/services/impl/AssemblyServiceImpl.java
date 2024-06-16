@@ -7,6 +7,8 @@ import kz.wonder.wonderuserrepository.dto.request.AssembleProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.OrderAssembleMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
@@ -93,11 +95,11 @@ public class AssemblyServiceImpl implements AssemblyService {
     }
 
     @Override
-    public AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest) {
+    public AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest, String orderCode) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
-        var order = kaspiOrderRepository.findByCode(assembleProductRequest.getOrderCode())
+        var order = kaspiOrderRepository.findByCode(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
 
         var store = validateEmployeeWithStore(storeEmployee, order);
@@ -212,6 +214,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 });
     }
 
+    // todo: duplicate in packageService
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
         var storeEmployeeKaspiStore = storeEmployee.getKaspiStore();
         var orderStore = order.getKaspiStore();

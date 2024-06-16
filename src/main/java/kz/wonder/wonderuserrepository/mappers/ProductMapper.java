@@ -5,6 +5,7 @@ import kz.wonder.wonderuserrepository.dto.response.ProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductSearchResponse;
 import kz.wonder.wonderuserrepository.dto.response.ProductWithSize;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductSizeRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.entities;
+package kz.wonder.wonderuserrepository.entities.enums;
 
 public enum ProductStateInStore {
     ACCEPTED,
@@ -7,5 +7,9 @@ public enum ProductStateInStore {
     WAITING_FOR_ASSEMBLY,
     ASSEMBLED,
     READY_FOR_PACKAGE,
+    PACKED,
+    READY_TO_SENDING,
+    SENT,
     SOLD
 }
+

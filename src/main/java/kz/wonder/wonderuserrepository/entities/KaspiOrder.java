@@ -2,6 +2,7 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import kz.wonder.kaspi.client.model.PaymentMode;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -131,5 +132,17 @@ public class KaspiOrder extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private OrderAssemble orderAssemble;
+
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "kaspiOrder",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private OrderPackage orderPackage;
+
+    @OneToOne(fetch = FetchType.LAZY,
+            mappedBy = "kaspiOrder",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private OrderTransmission orderTransmission;
 
 }

@@ -12,7 +12,7 @@ public interface AssemblyService {
 
     AssembleProcessResponse startAssemble(JwtAuthenticationToken starterToken, String orderId);
 
-    AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest);
+    AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest, String orderCode);
 
     AssembleProcessResponse getAssemble(JwtAuthenticationToken token, String orderCode);
 

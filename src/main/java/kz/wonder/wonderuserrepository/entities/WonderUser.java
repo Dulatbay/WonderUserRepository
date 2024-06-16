@@ -17,6 +17,7 @@ public class WonderUser extends AbstractEntity<Long> {
 
     @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
+
     @Column(name = "keycloak_id", unique = true, nullable = false)
     private String keycloakId;
 

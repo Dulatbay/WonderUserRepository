@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.repositories;
 
-import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,19 +24,32 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
 
     Optional<SupplyBoxProduct> findByArticle(String productArticle);
 
+    boolean existsByKaspiOrderCode(String kaspiOrderCode);
+
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.kaspiStore.wonderUser.keycloakId = :keycloakId and (sbp.state = 'SOLD' OR sbp.state = 'WAITING_FOR_ASSEMBLY' OR sbp.state = 'ASSEMBLED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllAdminSells(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN SupplyBox sb ON sb.id = sbp.supplyBox.id " +
+            "LEFT JOIN Supply s ON s.id = sb.supply.id " +
+            "where s.author.keycloakId = :keycloakId and (sbp.state != 'DECLINED') and sbp.createdAt BETWEEN :start AND :end")
     List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
-            "JOIN FETCH sbp.kaspiOrder " +
-            "WHERE sbp.supplyBox.supply.author.keycloakId = :keycloakId and (sbp.state = 'ACCEPTED')")
-    Page<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId, Pageable pageable);
+            "LEFT JOIN FETCH sbp.supplyBox sb " +
+            "LEFT JOIN FETCH sb.supply s " +
+            "LEFT JOIN FETCH s.author a " +
+            "LEFT JOIN FETCH sbp.storeCellProduct scp " +
+            "LEFT JOIN FETCH sbp.kaspiOrderProducts kop " +
+            "LEFT JOIN FETCH sbp.product p  " +
+            "WHERE s.author.keycloakId = :keycloakId AND sbp.state = 'ACCEPTED' ")
+    List<SupplyBoxProduct> findAllSellerProductsInStore(@Param("keycloakId") String keycloakId);
 
-    @Query("SELECT sbp FROM SupplyBoxProduct sbp where sbp.article = :article and sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
+    @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
+            "LEFT JOIN SupplyBox sb ON sb.id = sbp.supplyBox.id " +
+            "LEFT JOIN Supply s ON s.id = sb.supply.id " +
+            "where sbp.article = :article and s.kaspiStore.id = :kaspiStoreId")
     Optional<SupplyBoxProduct> findByArticleAndStore(@Param("article") String article, @Param("kaspiStoreId") Long kaspiStoreId);
 
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +

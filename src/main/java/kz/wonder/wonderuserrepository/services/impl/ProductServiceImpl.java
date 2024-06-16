@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.ProductMapper;
 import kz.wonder.wonderuserrepository.mappers.ProductXmlMapper;

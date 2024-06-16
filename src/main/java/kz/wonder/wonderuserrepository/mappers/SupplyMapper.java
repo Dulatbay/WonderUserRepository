@@ -6,6 +6,8 @@ import kz.wonder.wonderuserrepository.dto.response.SupplyAdminResponse;
 import kz.wonder.wonderuserrepository.dto.response.SupplyProductResponse;
 import kz.wonder.wonderuserrepository.dto.response.SupplySellerResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +16,9 @@ import java.util.ArrayList;
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
 
 @Component
+@RequiredArgsConstructor
 public class SupplyMapper {
-    @Value("${application.file-api.url}")
-    private String fileApiUrl;
+    private final BarcodeMapper barcodeMapper;
 
     public Supply toSupplyEntity(SupplyCreateRequest createRequest, WonderUser user, KaspiStore store) {
         Supply supply = new Supply();
@@ -34,7 +36,7 @@ public class SupplyMapper {
         supplyAdminResponse.setSupplyState(supply.getSupplyState());
         supplyAdminResponse.setSupplyAcceptTime(supply.getAcceptedTime());
         supplyAdminResponse.setSupplyCreatedTime(supply.getCreatedAt());
-        supplyAdminResponse.setPathToReport(getPathToReport(supply));
+        supplyAdminResponse.setPathToReport(barcodeMapper.getPathToReport(supply));
         supplyAdminResponse.setSeller(new SupplyAdminResponse.Seller(userId, fullName));
         return supplyAdminResponse;
     }
@@ -52,8 +54,8 @@ public class SupplyMapper {
         supplyProductResponse.setStoreAddress(supply.getKaspiStore().getFormattedAddress());
         supplyProductResponse.setBoxTypeName(supplyBox.getBoxType().getName());
         supplyProductResponse.setShopName(shopName);
-        supplyProductResponse.setPathToProductBarcode(getPathToProductBarcode(supplyBoxProduct));
-        supplyProductResponse.setPathToBoxBarcode(getPathToBoxBarcode(supplyBox));
+        supplyProductResponse.setPathToProductBarcode(barcodeMapper.getPathToProductBarcode(supplyBoxProduct));
+        supplyProductResponse.setPathToBoxBarcode(barcodeMapper.getPathToBoxBarcode(supplyBox));
 
 
         return supplyProductResponse;
@@ -64,7 +66,7 @@ public class SupplyMapper {
                 .supplyCreatedTime(supply.getCreatedAt())
                 .supplyAcceptTime(supply.getAcceptedTime())
                 .supplyState(supply.getSupplyState())
-                .pathToReport(getPathToReport(supply))
+                .pathToReport(barcodeMapper.getPathToReport(supply))
                 .id(supply.getId())
                 .formattedAddress(supply.getKaspiStore().getFormattedAddress())
                 .build();
@@ -78,8 +80,8 @@ public class SupplyMapper {
                 .vendorCodeOfBox(supplyBox.getVendorCode())
                 .vendorCode(supplyBoxProduct.getProduct().getVendorCode())
                 .name(supplyBoxProduct.getProduct().getName())
-                .pathToBoxBarcode(getPathToBoxBarcode(supplyBox))
-                .pathToProductBarcode(getPathToProductBarcode(supplyBoxProduct))
+                .pathToBoxBarcode(barcodeMapper.getPathToBoxBarcode(supplyBox))
+                .pathToProductBarcode(barcodeMapper.getPathToProductBarcode(supplyBoxProduct))
                 .build();
     }
 
@@ -89,7 +91,7 @@ public class SupplyMapper {
                 .supplyId(supply.getId())
                 .products(buildProducts(supply))
                 .storeAddress(supply.getKaspiStore().getFormattedAddress())
-                .pathToSupplyReport(getPathToReport(supply))
+                .pathToSupplyReport(barcodeMapper.getPathToReport(supply))
                 .build();
     }
 
@@ -106,16 +108,5 @@ public class SupplyMapper {
         return products;
     }
 
-    private String getPathToReport(Supply supply) {
-        return fileApiUrl + "/" + FILE_MANAGER_SUPPLY_REPORT_DIR + "/retrieve/files/supply_report_" + supply.getId() + ".pdf";
-    }
-
-    private String getPathToProductBarcode(SupplyBoxProduct supplyBoxProduct) {
-        return fileApiUrl + "/" + FILE_MANAGER_PRODUCT_BARCODE_DIR + "/retrieve/files/" + supplyBoxProduct.getPathToBarcode();
-    }
-
-    private String getPathToBoxBarcode(SupplyBox supplyBox) {
-        return fileApiUrl + "/" + FILE_MANAGER_BOX_BARCODE_DIR + "/retrieve/files/" + supplyBox.getPathToBarcode();
-    }
 
 }

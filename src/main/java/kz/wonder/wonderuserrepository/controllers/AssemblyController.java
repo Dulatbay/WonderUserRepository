@@ -1,36 +1,23 @@
 package kz.wonder.wonderuserrepository.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
-import kz.wonder.wonderuserrepository.dto.base.PaginatedResponse;
-import kz.wonder.wonderuserrepository.dto.params.AssemblySearchParameters;
 import kz.wonder.wonderuserrepository.dto.request.AssembleProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
-import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
-import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
 import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.AssemblyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @StoreEmployeeAuthorization
-@RequestMapping("/employee/assemblies")
+@RequestMapping("/assemblies")
 public class AssemblyController {
     private final AssemblyService assemblyService;
 
@@ -59,7 +46,7 @@ public class AssemblyController {
 //        return ResponseEntity.ok(new PaginatedResponse<>(assemblyResponse));
 //    }
 
-    @PatchMapping("/finish-assemble/{orderCode}")
+    @PatchMapping("/{orderCode}/finish")
     public ResponseEntity<Void> finishAssembly(@PathVariable("orderCode") String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
@@ -69,7 +56,7 @@ public class AssemblyController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/start-assemble/{orderCode}")
+    @PostMapping("/{orderCode}/start")
     public ResponseEntity<AssembleProcessResponse> startAssemble(@PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
@@ -92,11 +79,11 @@ public class AssemblyController {
 //
 //    }
 
-    @PostMapping("/assemble-product")
-    public ResponseEntity<AssembleProcessResponse> assembleProduct(@RequestBody @Valid AssembleProductRequest assembleProductRequest) {
+    @PostMapping("/{orderCode}/assemble-product")
+    public ResponseEntity<AssembleProcessResponse> assembleProduct(@RequestBody @Valid AssembleProductRequest assembleProductRequest, @PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-        AssembleProcessResponse assembleProductResponse = assemblyService.assembleProduct(token, assembleProductRequest);
+        AssembleProcessResponse assembleProductResponse = assemblyService.assembleProduct(token, assembleProductRequest, orderCode);
 
         return ResponseEntity.ok(assembleProductResponse);
     }

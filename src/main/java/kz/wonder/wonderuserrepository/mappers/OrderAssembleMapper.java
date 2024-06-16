@@ -4,6 +4,8 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;

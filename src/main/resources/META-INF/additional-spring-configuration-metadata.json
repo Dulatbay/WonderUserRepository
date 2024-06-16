@@ -27,7 +27,7 @@
     },
     {
       "name": "application.mode",
-      "type": "kz.wonder.wonderuserrepository.entities.ApplicationMode",
+      "type": "kz.wonder.wonderuserrepository.entities.enums.ApplicationMode",
       "description": "Description for application.mode."
     },
     {
