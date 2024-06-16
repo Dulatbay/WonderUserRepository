@@ -11,7 +11,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 
 @Data
 @Entity
-@Table(name = "supply_box_products", schema = schemaName)
+@Table(name = "supply_box_product", schema = schemaName)
 public class SupplyBoxProduct extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_box_id")

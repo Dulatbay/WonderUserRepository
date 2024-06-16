@@ -1,9 +1,9 @@
 package kz.wonder.wonderuserrepository.controllers;
 
+import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
-import kz.wonder.wonderuserrepository.dto.params.PackageSearchParams;
+import kz.wonder.wonderuserrepository.dto.request.PackageProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.OrderPackageDetailResponse;
-import kz.wonder.wonderuserrepository.dto.response.OrderPackageResponse;
 import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.PackageService;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -30,9 +28,9 @@ public class PackageController {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        OrderPackageDetailResponse orderPackageDetailResponse = packageService.packageOrderByCode(orderCode, keycloakId);
+        packageService.startPackaging(orderCode, keycloakId);
 
-        return ResponseEntity.ok(orderPackageDetailResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/{orderCode}/finish")
@@ -40,19 +38,19 @@ public class PackageController {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        packageService.packageOrderByCode(orderCode, keycloakId);
+        packageService.finishPackaging(orderCode, keycloakId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @PostMapping("/{orderCode}/package-product/{productArticle}")
-    public ResponseEntity<OrderPackageDetailResponse> packageProduct(@PathVariable String orderCode, @PathVariable String productArticle) {
+    @PostMapping("/{orderCode}/package-product")
+    public ResponseEntity<OrderPackageDetailResponse> packageProduct(@PathVariable String orderCode, @RequestBody @Valid PackageProductRequest packageProductRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        OrderPackageDetailResponse orderPackageDetailResponse = packageService.packageProduct(orderCode, productArticle, keycloakId);
+        packageService.packageProduct(orderCode, packageProductRequest, keycloakId);
 
-        return ResponseEntity.ok(orderPackageDetailResponse);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 

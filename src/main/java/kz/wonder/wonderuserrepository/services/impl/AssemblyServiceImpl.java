@@ -95,11 +95,11 @@ public class AssemblyServiceImpl implements AssemblyService {
     }
 
     @Override
-    public AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest) {
+    public AssembleProcessResponse assembleProduct(JwtAuthenticationToken starterToken, AssembleProductRequest assembleProductRequest, String orderCode) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(Utils.extractIdFromToken(starterToken))
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
-        var order = kaspiOrderRepository.findByCode(assembleProductRequest.getOrderCode())
+        var order = kaspiOrderRepository.findByCode(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
 
         var store = validateEmployeeWithStore(storeEmployee, order);
@@ -214,6 +214,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 });
     }
 
+    // todo: duplicate in packageService
     private KaspiStore validateEmployeeWithStore(StoreEmployee storeEmployee, KaspiOrder order) {
         var storeEmployeeKaspiStore = storeEmployee.getKaspiStore();
         var orderStore = order.getKaspiStore();

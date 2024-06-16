@@ -7,8 +7,8 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 
 @Data
 @Entity
-@Table(name = "package_order_process", schema = schemaName)
-public class PackageOrderProcess extends AbstractEntity<Long>{
+@Table(name = "order_package_process", schema = schemaName)
+public class OrderPackageProcess extends AbstractEntity<Long>{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
     private StoreEmployee employee;

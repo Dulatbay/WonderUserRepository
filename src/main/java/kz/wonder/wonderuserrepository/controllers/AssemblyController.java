@@ -79,11 +79,11 @@ public class AssemblyController {
 //
 //    }
 
-    @PostMapping("/assemble-product")
-    public ResponseEntity<AssembleProcessResponse> assembleProduct(@RequestBody @Valid AssembleProductRequest assembleProductRequest) {
+    @PostMapping("/{orderCode}/assemble-product")
+    public ResponseEntity<AssembleProcessResponse> assembleProduct(@RequestBody @Valid AssembleProductRequest assembleProductRequest, @PathVariable String orderCode) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-        AssembleProcessResponse assembleProductResponse = assemblyService.assembleProduct(token, assembleProductRequest);
+        AssembleProcessResponse assembleProductResponse = assemblyService.assembleProduct(token, assembleProductRequest, orderCode);
 
         return ResponseEntity.ok(assembleProductResponse);
     }

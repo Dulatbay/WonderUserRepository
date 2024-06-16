@@ -5,6 +5,6 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class AssembleProductRequest {
+public class PackageProductRequest {
     private List<String> productArticles;
 }
