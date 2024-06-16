@@ -1,11 +1,16 @@
 package kz.wonder.wonderuserrepository.dto.enums;
 
-import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.KaspiOrder;
+import kz.wonder.wonderuserrepository.entities.OrderAssemble;
+import kz.wonder.wonderuserrepository.entities.OrderPackage;
+import kz.wonder.wonderuserrepository.entities.OrderTransmission;
 import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.enums.OrderTransmissionState;
 import kz.wonder.wonderuserrepository.entities.enums.PackageState;
 import lombok.Getter;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Getter
@@ -17,9 +22,13 @@ public enum OrderStateInStore {
     PACKAGING_IN_PROGRESS("Идет упаковка", OrderAvailableAction.PACK_PRODUCT),
     READY_TO_FINISH_PACKAGING("Готов к завершению упаковки", OrderAvailableAction.FINISH_PACKING),
     READY_TO_SHIP_TO_COURIER("Готов к отправке, ожидание курьера", OrderAvailableAction.HANDLE_TO_COURIER),
+    READY_TO_SHIP_TO_COURIER_EXPRESS("Готов к отправке экспресс, ожидание курьера", OrderAvailableAction.HANDLE_TO_COURIER_EXPRESS),
+    READY_TO_SHIP_TO_ZAMMLER("Готов к отправке, ожидание замлера", OrderAvailableAction.HANDLE_TO_ZAMMLER),
     READY_TO_SHIP_TO_CLIENT("Готов к отправке, ожидание клииента", OrderAvailableAction.HANDLE_TO_CLIENT),
+    READY_TO_SHIP("Готов к отправке, наша доставка", OrderAvailableAction.HANDLE),
     HANDED_TO_COURIER("Передан курьеру", OrderAvailableAction.NOTHING),
     HANDED_TO_CLIENT("Передан клиенту", OrderAvailableAction.NOTHING),
+    HANDED_TO_ZAMMLER("Передан замлеру", OrderAvailableAction.NOTHING),
     UNKNOWN_STATUS("Невозможно определить статус", OrderAvailableAction.NOTHING);
 
     private final String description;
@@ -31,10 +40,11 @@ public enum OrderStateInStore {
     }
 
     public static OrderStateInStore getOrderStatus(KaspiOrder kaspiOrder) {
-        return getOrderStatus(getAssembleState(kaspiOrder), getPackageState(kaspiOrder), getOrderTransmissionState(kaspiOrder));
+        return getOrderStatus(getAssembleState(kaspiOrder), getPackageState(kaspiOrder), getOrderTransmissionState(kaspiOrder), kaspiOrder);
     }
 
-    private static OrderStateInStore getOrderStatus(AssembleState assembleState, PackageState packageState, OrderTransmissionState orderTransmissionState) {
+
+    private static OrderStateInStore getOrderStatus(AssembleState assembleState, PackageState packageState, OrderTransmissionState orderTransmissionState, KaspiOrder kaspiOrder) {
         if (assembleState == null) {
             return OrderStateInStore.ASSEMBLY_NOT_STARTED;
         }
@@ -53,14 +63,29 @@ public enum OrderStateInStore {
         if (packageState == PackageState.READY_TO_FINISH) {
             return OrderStateInStore.READY_TO_FINISH_PACKAGING;
         }
-        if (orderTransmissionState == null) {
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getExpress(), true))) {
+            return OrderStateInStore.READY_TO_SHIP_TO_COURIER_EXPRESS;
+        }
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_REGIONAL_PICKUP))) {
+            return OrderStateInStore.READY_TO_SHIP_TO_ZAMMLER;
+        }
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_PICKUP))) {
+            return OrderStateInStore.READY_TO_SHIP_TO_CLIENT;
+        }
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELiVERY_POSTOMAT))) {
             return OrderStateInStore.READY_TO_SHIP_TO_COURIER;
+        }
+        if (orderTransmissionState == null && (Objects.equals(kaspiOrder.getDeliveryMode(), DeliveryMode.DELIVERY_LOCAL))) {
+            return OrderStateInStore.READY_TO_SHIP;
         }
         if (orderTransmissionState == OrderTransmissionState.HANDED_TO_COURIER) {
             return OrderStateInStore.HANDED_TO_COURIER;
         }
         if (orderTransmissionState == OrderTransmissionState.HANDED_TO_CLIENT) {
             return OrderStateInStore.HANDED_TO_CLIENT;
+        }
+        if (orderTransmissionState == OrderTransmissionState.HANDED_TO_ZAMLER) {
+            return OrderStateInStore.HANDED_TO_ZAMMLER;
         }
         return OrderStateInStore.UNKNOWN_STATUS;
     }
