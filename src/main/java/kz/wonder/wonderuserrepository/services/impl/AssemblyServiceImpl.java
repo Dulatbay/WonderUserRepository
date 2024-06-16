@@ -44,21 +44,6 @@ public class AssemblyServiceImpl implements AssemblyService {
     private final OrderAssembleProcessRepository orderAssembleProcessRepository;
     private final MessageSource messageSource;
 
-    private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order) {
-        var assemble = order.getOrderAssemble();
-
-        if (assemble == null) {
-            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
-        }
-
-        if (assemble.getAssembleState() == AssembleState.FINISHED) {
-            throw new IllegalArgumentException("Состояние сборки уже завершено");
-        } else if (assemble.getAssembleState() != AssembleState.READY_TO_FINISH) {
-            throw new IllegalArgumentException("Состояние сборки не готово к завершению");
-        }
-        return assemble;
-    }
-
     @Override
     public Page<EmployeeAssemblyResponse> findAssembliesByParams(String keycloakId, AssemblySearchParameters assemblySearchParameters) {
         long startUnixTimestamp = Utils.getTimeStampFromLocalDateTime(assemblySearchParameters.getOrderCreationStartDate().atStartOfDay());
@@ -88,7 +73,6 @@ public class AssemblyServiceImpl implements AssemblyService {
                         "services-impl.assembly-service-impl.order-not-found",
                         null,
                         LocaleContextHolder.getLocale())));
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Заказ не найден"));
 
         validateEmployeeWithStore(storeEmployee, order);
 
@@ -125,9 +109,7 @@ public class AssemblyServiceImpl implements AssemblyService {
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.assembly-is-already-finished", null, LocaleContextHolder.getLocale()));
         }
 
-        var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.assembly-service-impl.incorrect-article", null, LocaleContextHolder.getLocale())));
-        assembleProductRequest.getProductArticles()
+         assembleProductRequest.getProductArticles()
                 .forEach(productArticle -> {
                     var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndStore(productArticle, store.getId())
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Incorrect article"));
@@ -206,7 +188,7 @@ public class AssemblyServiceImpl implements AssemblyService {
         var order = kaspiOrderRepository.findByCode(orderCode)
                 .orElseThrow(() -> new IllegalArgumentException(messageSource.getMessage("services-impl.assembly-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
-        var assemble = validateAssembleToFinish(order, messageSource, LocaleContextHolder.getLocale());
+        var assemble = validateAssembleToFinish(order, LocaleContextHolder.getLocale());
 
         validateEmployeeWithStore(storeEmployee, order);
 
@@ -227,7 +209,7 @@ public class AssemblyServiceImpl implements AssemblyService {
                 });
     }
 
-    private static @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order, MessageSource messageSource, Locale locale) {
+    private @NotNull OrderAssemble validateAssembleToFinish(KaspiOrder order, Locale locale) {
         var assemble = order.getOrderAssemble();
 
         if (assemble == null) {

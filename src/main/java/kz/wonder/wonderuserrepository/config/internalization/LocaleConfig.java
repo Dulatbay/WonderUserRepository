@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.config;
+package kz.wonder.wonderuserrepository.config.internalization;
 
 import org.springframework.web.servlet.LocaleResolver;
 
@@ -14,7 +14,7 @@ public class LocaleConfig {
     @Bean
     public LocaleResolver localeResolver() {
         SessionLocaleResolver localeResolver = new SessionLocaleResolver();
-        localeResolver.setDefaultLocale(Locale.ENGLISH);
+        localeResolver.setDefaultLocale(Locale.of("RU"));
         return localeResolver;
     }
 }

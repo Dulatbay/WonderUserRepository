@@ -3,6 +3,7 @@ package kz.wonder.wonderuserrepository.dto.request;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -16,5 +17,6 @@ public class SupplyScanRequest {
     public static class ProductCell {
         @NotNull(message = "{requests.supply-scan-request.cell-code-must-not-be-null}")
         private String cellCode;
+        private List<String> productArticles = new ArrayList<>();
     }
 }

@@ -1,4 +1,4 @@
-package kz.wonder.wonderuserrepository.config;
+package kz.wonder.wonderuserrepository.config.internalization;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

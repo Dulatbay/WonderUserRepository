@@ -41,7 +41,6 @@ public class KaspiStoreMapper {
     @Value("${application.admin-keycloak-id}")
     private String adminKeycloakId;
     private WonderUser admin;
-    private final UserService userService;
     private final MessageSource messageSource;
 
     public static String getFormattedAddress(KaspiStore kaspiStore, KaspiCity selectedCity) {
