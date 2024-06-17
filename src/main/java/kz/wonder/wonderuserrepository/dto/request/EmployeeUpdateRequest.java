@@ -8,18 +8,18 @@ import lombok.Data;
 
 @Data
 public class EmployeeUpdateRequest {
-    @Size(min = 10, max = 20, message = "Phone number must be in range 10-20")
+    @Size(min = 10, max = 20, message = "{requests.employee-update-request.phone-number-must-be-in-range-10-20}")
     private String phoneNumber;
 
-    @NotNull(message = "Store id must not be null")
+    @NotNull(message = "{requests.employee-update-request.store-id-must-not-be-null}")
     private Long storeId;
 
-    @NotNull(message = "Please provide a first name")
+    @NotNull(message = "{requests.employee-update-request.please-provide-a-first-name}")
     private String firstName;
 
-    @NotNull(message = "Please provide a last name")
+    @NotNull(message = "{requests.employee-update-request.please-provide-a-last-name}")
     private String lastName;
 
-    @Email(message = "Please provide a valid email address")
+    @Email(message = "{requests.employee-update-request.please-provide-a-valid-email-address}")
     private String email;
 }

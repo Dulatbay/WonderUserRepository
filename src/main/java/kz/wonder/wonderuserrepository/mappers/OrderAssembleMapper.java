@@ -4,11 +4,15 @@ import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.response.AssembleProcessResponse;
 import kz.wonder.wonderuserrepository.dto.response.EmployeeAssemblyResponse;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.AssembleState;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderAssembleMapper {
     private final StoreCellProductRepository storeCellProductRepository;
-
+    private final MessageSource messageSource;
     public OrderAssemble toEntity(StoreEmployee storeEmployee, KaspiOrder kaspiOrder, AssembleState assembleState) {
         OrderAssemble orderAssemble = new OrderAssemble();
         orderAssemble.setAssembleState(assembleState);
@@ -36,9 +40,8 @@ public class OrderAssembleMapper {
         assembleProcessResponse.setDeadline(Utils.getLocalDateTimeFromTimestamp(kaspiOrder.getCourierTransmissionPlanningDate()));
         assembleProcessResponse.setDeliveryMode(kaspiOrder.getDeliveryMode());
         assembleProcessResponse.setStartedEmployeeName(starterName);
-        assembleProcessResponse.setAssembleId(orderAssemble.getId());
         assembleProcessResponse.setOrderCode(kaspiOrder.getCode());
-        assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState());
+        assembleProcessResponse.setAssembleState(orderAssemble.getAssembleState() == null ? AssembleState.WAITING_TO_ASSEMBLE : orderAssemble.getAssembleState());
 
 
         assembleProcessResponse.setProductsToProcess(productsToProcess);
@@ -56,7 +59,11 @@ public class OrderAssembleMapper {
                     var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
                     var product = kaspiOrderProduct.getProduct();
                     var storeCellProduct = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Something get wrong"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage(
+                                    "mappers.order-assemble-mapper.something-get-wrong",
+                                    null,
+                                    LocaleContextHolder.getLocale()
+                            )));
 
                     if (supplyBoxProduct.getState() == ProductStateInStore.WAITING_FOR_ASSEMBLY) {
                         var productResponse = new AssembleProcessResponse.Product();
@@ -75,7 +82,6 @@ public class OrderAssembleMapper {
                         processedProduct.setCellCode(storeCellProduct.getStoreCell().getCode());
                         processedProduct.setProcessedDate(LocalDateTime.now());
                         processedProduct.setProcessedEmployeeName(assembleProcess != null ? assembleProcess.getStoreEmployee().getWonderUser().getUsername() : "N\\A");
-                        processedProduct.setWaybill(kaspiOrder.getWaybill());
                         processedProducts.add(processedProduct);
                     }
                 });

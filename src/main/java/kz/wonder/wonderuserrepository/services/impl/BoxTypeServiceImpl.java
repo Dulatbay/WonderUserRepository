@@ -13,6 +13,8 @@ import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.services.BoxTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     private final KaspiStoreRepository storeRepository;
     private final BoxTypeMapper boxTypeMapper;
     private final FileManagerApi fileManagerApi;
+    private final MessageSource messageSource;
 
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
@@ -57,7 +60,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     @Override
     public List<BoxTypeResponse> getAllByStore(Long storeId) {
         final var store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Склада не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.box-type-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         return store
                 .getAvailableBoxTypes()
@@ -71,7 +74,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
     @Override
     public void deleteById(Long id) {
         var boxTypeToDelete = boxTypeRepository.findById(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Тип коробки не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.box-type-service-impl.box-type-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         boxTypeToDelete.getImages()
                 .forEach(image -> fileManagerApi.deleteFile(FILE_MANAGER_IMAGE_DIR, image.imageUrl));

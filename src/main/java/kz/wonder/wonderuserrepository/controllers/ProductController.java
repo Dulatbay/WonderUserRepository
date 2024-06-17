@@ -53,7 +53,7 @@ public class ProductController {
     @SellerAuthorization
     public ResponseEntity<PaginatedResponse<ProductResponse>> getProducts(@RequestParam(defaultValue = "0") int page,
                                                                           @RequestParam(defaultValue = "10") int size,
-                                                                          @RequestParam(name = "searchValue", required = false) String searchValue,
+                                                                          @RequestParam(name = "searchValue", required = false, defaultValue = "") String searchValue,
                                                                           @RequestParam(name = "isPublished", required = false) Boolean isPublished,
                                                                           @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
@@ -65,9 +65,9 @@ public class ProductController {
 
     @GetMapping("/prices")
     @SellerAuthorization
-    public ResponseEntity<PaginatedResponse<ProductPriceResponse>> getProductPrices(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<ProductPriceResponse> getProductPrices(@RequestParam(defaultValue = "0") int page,
                                                                                     @RequestParam(defaultValue = "10") int size,
-                                                                                    @RequestParam(name = "searchValue", required = false) String searchValue,
+                                                                                    @RequestParam(name = "searchValue", required = false, defaultValue = "") String searchValue,
                                                                                     @RequestParam(name = "isPublished", required = false) Boolean isPublished,
                                                                                     @RequestParam(name = "sortBy", defaultValue = "id") String sortBy) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
@@ -76,11 +76,9 @@ public class ProductController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
 
-
         var productsPrices = productService.getProductsPrices(keycloakId, isSuperAdmin, pageable, isPublished, searchValue);
-        var response = new PaginatedResponse<>(productsPrices);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(productsPrices);
     }
 
     @PatchMapping("/publish")

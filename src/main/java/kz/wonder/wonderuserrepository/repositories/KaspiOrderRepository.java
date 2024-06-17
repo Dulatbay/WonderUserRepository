@@ -1,8 +1,8 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.KaspiOrder;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,9 +16,18 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
 
     @Query("select ko from KaspiOrder ko " +
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
+            "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
+            "LEFT JOIN OrderAssemble oa ON oa.kaspiOrder.id = ko.id " +
+            "LEFT JOIN OrderPackage op ON op.kaspiOrder.id = ko.id " +
+            "LEFT JOIN OrderTransmission ot ON ot.kaspiOrder.id = ko.id " +
             "WHERE ko.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:orderBaseStatus IS NULL " +
+            "OR (:orderBaseStatus = 'ASSEMBLING' AND (oa is null OR (oa.assembleState != 'FINISHED'))) " +
+            "OR (:orderBaseStatus = 'PACKAGING' AND (op.packageState != 'FINISHED')) " +
+            "OR (:orderBaseStatus = 'SENDING' AND (ot.orderTransmissionState != 'FINISHED')) " +
+            ")" +
             "AND (" +
             "(:byOrderCode = FALSE AND :byShopName = FALSE AND :byStoreAddress = FALSE AND :byProductName = FALSE AND :byProductArticle = FALSE AND :byProductVendorCode = FALSE) " +
             "OR " +
@@ -32,6 +41,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
                                          Long from,
                                          Long to,
                                          DeliveryMode deliveryMode,
+                                         String orderBaseStatus,
                                          String searchValue,
                                          boolean byOrderCode,
                                          boolean byShopName,
@@ -43,9 +53,18 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
 
     @Query("select ko from KaspiOrder ko " +
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
+            "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
+            "LEFT JOIN OrderAssemble oa ON oa.kaspiOrder.id = ko.id " +
+            "LEFT JOIN OrderPackage op ON op.kaspiOrder.id = ko.id " +
+            "LEFT JOIN OrderTransmission ot ON ot.kaspiOrder.id = ko.id " +
             "WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode is null OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:orderBaseStatus IS NULL " +
+            "OR (:orderBaseStatus = 'ASSEMBLING' AND (oa is null OR (oa.assembleState != 'FINISHED'))) " +
+            "OR (:orderBaseStatus = 'PACKAGING' AND (op.packageState != 'FINISHED')) " +
+            "OR (:orderBaseStatus = 'SENDING' AND (ot.orderTransmissionState != 'FINISHED')) " +
+            ")" +
             "AND (" +
             "(:byOrderCode = FALSE AND :byShopName = FALSE AND :byStoreAddress = FALSE AND :byProductName = FALSE AND :byProductArticle = FALSE AND :byProductVendorCode = FALSE) " +
             "OR " +
@@ -60,6 +79,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
                                         Long from,
                                         Long to,
                                         DeliveryMode deliveryMode,
+                                        String orderBaseStatus,
                                         String searchValue,
                                         boolean byOrderCode,
                                         boolean byShopName,
@@ -72,18 +92,26 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
     @Query("select ko from KaspiOrder ko " +
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "LEFT JOIN WonderUser w ON w.id = ko.wonderUser.id " +
-            "WHERE w.keycloakId = :keycloakId AND ko.creationDate BETWEEN :from AND :to")
+            "WHERE w.keycloakId = :keycloakId AND (ko.creationDate BETWEEN :from AND :to)")
     List<KaspiOrder> findAllSellerOrders(String keycloakId, Long from, Long to);
 
-    @Query("select ko from KaspiOrder ko WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId AND ko.creationDate BETWEEN :from AND :to ORDER BY ko.creationDate ASC")
+    @Query("select ko from KaspiOrder ko WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId AND (ko.creationDate BETWEEN :from AND :to)  ORDER BY ko.creationDate ASC")
     List<KaspiOrder> findAllAdminOrders(String keycloakId, Long from, Long to);
 
     @Query("SELECT ko FROM KaspiOrder ko " +
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
             "LEFT JOIN StoreEmployee se ON se.kaspiStore.id = ko.kaspiStore.id " +
+            "LEFT JOIN OrderAssemble oa ON oa.kaspiOrder.id = ko.id " +
+            "LEFT JOIN OrderPackage op ON op.kaspiOrder.id = ko.id " +
+            "LEFT JOIN OrderTransmission ot ON ot.kaspiOrder.id = ko.id " +
             "WHERE se.wonderUser.keycloakId = :keycloakId " +
             "AND ko.creationDate BETWEEN :from AND :to " +
             "AND (:deliveryMode IS NULL OR ko.deliveryMode = :deliveryMode) " +
+            "AND (:orderBaseStatus IS NULL " +
+            "OR (:orderBaseStatus = 'ASSEMBLING' AND (oa is null OR (oa.assembleState != 'FINISHED'))) " +
+            "OR (:orderBaseStatus = 'PACKAGING' AND (op.packageState != 'FINISHED')) " +
+            "OR (:orderBaseStatus = 'SENDING' AND (ot.orderTransmissionState != 'FINISHED')) " +
+            ")" +
             "AND (" +
             "(:byOrderCode = FALSE AND :byShopName = FALSE AND :byStoreAddress = FALSE AND :byProductName = FALSE AND :byProductArticle = FALSE AND :byProductVendorCode = FALSE) " +
             "OR " +
@@ -98,6 +126,7 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
                                            Long from,
                                            Long to,
                                            DeliveryMode deliveryMode,
+                                           String orderBaseStatus,
                                            String searchValue,
                                            boolean byOrderCode,
                                            boolean byShopName,

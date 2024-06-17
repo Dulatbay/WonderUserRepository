@@ -15,7 +15,7 @@ RUN ./gradlew dependencies
 
 COPY src src
 
-RUN ./gradlew bootJar
+RUN ./gradlew bootJar --info
 
 FROM openjdk:21-slim
 
@@ -23,4 +23,4 @@ WORKDIR /app
 
 COPY --from=build /app/build/libs/*.jar app.jar
 
-ENTRYPOINT ["java", "-Dvertx.disableDnsResolver=true", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dvertx.disableDnsResolver=true", "-Djava.net.preferIPv4Stack=true", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]

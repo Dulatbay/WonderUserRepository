@@ -6,27 +6,27 @@ import lombok.Data;
 
 @Data
 public class StoreCellCreateRequest {
-    @NotNull(message = "Please provide store id")
-    @Positive(message = "Store id must be positive")
+    @NotNull(message = "{requests.store-cell-create-request.please-provide-store-id}")
+    @Positive(message = "{requests.store-cell-create-request.store-id-must-be-positive}")
     private Long storeId;
 
-    @NotNull(message = "Row cannot be null")
+    @NotNull(message = "{requests.store-cell-create-request.row-cannot-be-null}")
     private Long row;
 
-    @NotNull(message = "Column cannot be null")
+    @NotNull(message = "{requests.store-cell-create-request.column-cannot-be-null}")
     private Long col;
 
-    @NotNull(message = "Cell cannot be null")
+    @NotNull(message = "{requests.store-cell-create-request.cell-cannot-be-null}")
     private Long cell;
 
     private String comment;
 
-    @NotNull(message = "Please provide width")
+    @NotNull(message = "{requests.store-cell-create-request.please-provide-width}")
     private Double width;
 
-    @NotNull(message = "Please provide height")
+    @NotNull(message = "{requests.store-cell-create-request.please-provide-height}")
     private Double height;
 
-    @NotNull(message = "Please provide Depth")
+    @NotNull(message = "{requests.store-cell-create-request.please-provide-depth}")
     private Double depth;
 }

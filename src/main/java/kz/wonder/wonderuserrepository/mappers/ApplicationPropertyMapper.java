@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.mappers;
 
-import kz.wonder.wonderuserrepository.entities.ApplicationMode;
+import kz.wonder.wonderuserrepository.entities.enums.ApplicationMode;
 import kz.wonder.wonderuserrepository.entities.ApplicationProperty;
 import org.springframework.stereotype.Component;
 

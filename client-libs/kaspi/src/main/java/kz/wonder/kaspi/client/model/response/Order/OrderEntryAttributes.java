@@ -1,4 +1,4 @@
-package kz.wonder.kaspi.client.model.Order;
+package kz.wonder.kaspi.client.model.response.Order;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;

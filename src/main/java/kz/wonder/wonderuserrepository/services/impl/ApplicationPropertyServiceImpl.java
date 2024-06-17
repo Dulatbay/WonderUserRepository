@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
-import kz.wonder.wonderuserrepository.entities.ApplicationMode;
+import kz.wonder.wonderuserrepository.entities.enums.ApplicationMode;
 import kz.wonder.wonderuserrepository.entities.ApplicationProperty;
 import kz.wonder.wonderuserrepository.mappers.ApplicationPropertyMapper;
 import kz.wonder.wonderuserrepository.repositories.ApplicationPropertyRepository;

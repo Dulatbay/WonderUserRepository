@@ -1,6 +1,6 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
-import kz.wonder.wonderuserrepository.entities.ProductStateInStore;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Builder;
 import lombok.Data;
 

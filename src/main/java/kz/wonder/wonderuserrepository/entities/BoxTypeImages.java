@@ -10,7 +10,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Table(name = "box_type_images", schema = schemaName)
 public class BoxTypeImages extends AbstractEntity<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "box_type_id", nullable = false, columnDefinition = "integer")
+    @JoinColumn(name = "box_type_id", nullable = false)
     public BoxType boxType;
 
     @Column(name = "image_url", nullable = false, unique = true)

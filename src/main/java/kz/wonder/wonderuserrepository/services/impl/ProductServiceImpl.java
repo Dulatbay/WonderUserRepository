@@ -8,6 +8,7 @@ import kz.wonder.wonderuserrepository.dto.request.ProductSizeChangeRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.dto.xml.KaspiCatalog;
 import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.ProductMapper;
 import kz.wonder.wonderuserrepository.mappers.ProductXmlMapper;
@@ -18,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.xmlbeans.impl.store.Locale;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -55,6 +58,7 @@ public class ProductServiceImpl implements ProductService {
     private final FileManagerApi fileManagerApi;
     private final ProductMapper productMapper;
     private final ProductXmlMapper productXmlMapper;
+    private final MessageSource messageSource;
 
     @Transactional
     @Override
@@ -65,13 +69,13 @@ public class ProductServiceImpl implements ProductService {
 
 
             var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakUserId)
-                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+                    .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.access-denied", null, LocaleContextHolder.getLocale())));
 
 
             log.info("{} sheets loaded", workbook.getNumberOfSheets());
 
             if (workbook.getNumberOfSheets() == 0) {
-                throw new IllegalArgumentException("В файле должна быть хотя бы одна страница!");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-must-have-at-least-one-page", null, LocaleContextHolder.getLocale()));
             }
 
             // get products page
@@ -84,7 +88,7 @@ public class ProductServiceImpl implements ProductService {
             }
 
             if (!rowIterator.hasNext()) {
-                throw new IllegalArgumentException("Отправить файл по требованиям!!");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.send-file-according-to-requirements", null, LocaleContextHolder.getLocale()));
             }
 
             List<Row> rows = StreamSupport.stream(
@@ -112,10 +116,10 @@ public class ProductServiceImpl implements ProductService {
         } catch (ExecutionException | InterruptedException e) {
             log.error("Parallel processing error: ", e);
             Thread.currentThread().interrupt();
-            throw new IllegalArgumentException("Обработка файла не удалась");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-processing-failed", null, LocaleContextHolder.getLocale()));
         } catch (Exception e) {
             log.error("Exception: ", e);
-            throw new IllegalArgumentException("Обработка файла не удалась");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-processing-failed", null, LocaleContextHolder.getLocale()));
         }
     }
 
@@ -161,15 +165,15 @@ public class ProductServiceImpl implements ProductService {
 
 
     private Boolean getBooleanFromString(String isPublic) {
-        if (isPublic.equalsIgnoreCase("да")) return Boolean.TRUE;
-        if (isPublic.equalsIgnoreCase("нет")) return Boolean.FALSE;
+        if (isPublic.equalsIgnoreCase(messageSource.getMessage("services-impl.product-service-impl.yes", null, LocaleContextHolder.getLocale()))) return Boolean.TRUE;
+        if (isPublic.equalsIgnoreCase(messageSource.getMessage("services-impl.product-service-impl.no", null, LocaleContextHolder.getLocale()))) return Boolean.FALSE;
         return Boolean.parseBoolean(isPublic);
     }
 
     private void processProductPrices(Product product, double priceAlmaty, double priceAstana, double priceShymkent, Map<String, KaspiCity> cityCache) {
-        final String CITY_ALMATY = "Алматы";
-        final String CITY_ASTANA = "Астана";
-        final String CITY_SHYMKENT = "Шымкент";
+        final String CITY_ALMATY = messageSource.getMessage("services-impl.product-service-impl.almaty", null, LocaleContextHolder.getLocale());
+        final String CITY_ASTANA = messageSource.getMessage("services-impl.product-service-impl.astana", null, LocaleContextHolder.getLocale());
+        final String CITY_SHYMKENT = messageSource.getMessage("services-impl.product-service-impl.shymkent", null ,LocaleContextHolder.getLocale());
 
         var cityAlmaty = getCachedCity(CITY_ALMATY, cityCache);
         var cityAstana = getCachedCity(CITY_ASTANA, cityCache);
@@ -189,7 +193,7 @@ public class ProductServiceImpl implements ProductService {
 
     private KaspiCity getCityByName(String cityName) {
         return kaspiCityRepository.findByName(cityName)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.city-not-found", null, LocaleContextHolder.getLocale())));
     }
 
     private ProductPrice processProductPrice(Product product, KaspiCity city, Double priceValue) {
@@ -203,9 +207,28 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
-        log.info("Retrieving products with keycloak id: {}", keycloakUserId);
-        return productRepository.findByParams(keycloakUserId, searchValue, searchValue, isPublished, pageable)
-                .map(productMapper::mapToResponse);
+        var products = productRepository.findAllByKeycloakId(keycloakUserId, searchValue, searchValue, isPublished, pageable);
+
+        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
+
+        if (!productIds.isEmpty()) {
+            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
+
+            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
+
+            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+
+            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+
+            products.forEach(product -> {
+                product.setPrices(pricesMap.getOrDefault(product.getId(), new ArrayList<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.getOrDefault(product.getId(), new ArrayList<>()));
+            });
+        }
+
+        return products.map(productMapper::mapToResponse);
     }
 
 
@@ -213,8 +236,8 @@ public class ProductServiceImpl implements ProductService {
     public String generateOfProductsXmlByKeycloakId(String keycloakId) {
         final var kaspiToken = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
-                        "Kaspi токен не существует",
-                        "Создай свой kaspi токен перед запросом"));
+                        messageSource.getMessage("services-impl.product-service-impl.kaspi-token-not-found", null, LocaleContextHolder.getLocale()),
+                        messageSource.getMessage("services-impl.product-service-impl.create-your-kaspi-token-before-requesting", null, LocaleContextHolder.getLocale())));
 
 
         if (kaspiToken.isXmlUpdated())
@@ -227,17 +250,13 @@ public class ProductServiceImpl implements ProductService {
     private String generateAndUpload(KaspiToken kaspiToken) {
         try {
             final var wonderUser = kaspiToken.getWonderUser();
-            final var listOfProducts = productRepository.findAllSellerProductsWithPrices(wonderUser.getKeycloakId());
-
-            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalog(listOfProducts, kaspiToken);
+            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalogInChunks(wonderUser.getKeycloakId(), kaspiToken);
 
             Marshaller marshaller = productXmlMapper.initJAXBContextAndProperties();
             String xmlContent = productXmlMapper.marshalObjectToXML(kaspiCatalog, marshaller);
 
             var fileName = wonderUser.getKeycloakId() + ".xml";
-
             MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
-
             var resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
 
             kaspiToken.setPathToXml(fileName);
@@ -248,49 +267,92 @@ public class ProductServiceImpl implements ProductService {
             return resultOfUploading.get(0);
         } catch (Exception e) {
             log.error("Exception: ", e);
-            throw new IllegalStateException("Error when generating xml");
+            throw new IllegalStateException(messageSource.getMessage("services-impl.product-service-impl.error-generating-xml", null, LocaleContextHolder.getLocale()));
         }
-
     }
 
     @Override
     public void deleteProductById(String keycloakId, Long productId) {
         final var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(productId, keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "Товар не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
         log.info("Product with id {} was deleted", productId);
 
         product.setDeleted(true);
         product.setEnabled(false);
         productRepository.save(product);
+
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
 
     // todo: refactoring
     @Override
-    public Page<ProductPriceResponse> getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
+    public ProductPriceResponse getProductsPrices(String keycloakId, boolean isSuperAdmin, Pageable pageable, Boolean isPublished, String searchValue) {
         Page<Product> products;
         Map<Long, CityResponse> cityResponseMap = new HashMap<>();
-
 
         if (isSuperAdmin) {
             products = productRepository.findAllBy(searchValue, searchValue, isPublished, pageable);
         } else {
+            log.info("FETCH PRODUCTS STARTED");
             products = productRepository.findAllByKeycloakId(keycloakId, searchValue, searchValue, isPublished, pageable);
+            log.info("FETCH PRODUCTS ENDED");
         }
 
-        List<ProductPriceResponse.ProductInfo> response = new ArrayList<>();
+        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
+
+        if (!productIds.isEmpty()) {
+            log.info("FETCH ProductPrice STARTED");
+            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
+            log.info("FETCH ProductPrice ENDED");
+            log.info("FETCH SupplyBoxProduct STARTED");
+            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
+            log.info("FETCH SupplyBoxProduct ENDED");
+
+            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+
+            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+
+            products.forEach(product -> {
+                product.setPrices(pricesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+            });
+        }
+
+        ProductPriceResponse.Content response = new ProductPriceResponse.Content();
+
 
         products
                 .forEach(product -> {
-                    var count = product.getSupplyBoxes().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
+                    var mainCityPrice = Optional.ofNullable(product.getMainCityPrice()).orElse(new ProductPrice());
 
-                    var productInfo = ProductPriceResponse.ProductInfo.builder()
+                    if (mainCityPrice.getId() != null) {
+                        cityResponseMap.computeIfAbsent(mainCityPrice.getId(), k -> {
+                            CityResponse cityResponse = new CityResponse();
+                            cityResponse.setId(mainCityPrice.getId());
+                            cityResponse.setName(mainCityPrice.getKaspiCity().getName());
+                            cityResponse.setCode(mainCityPrice.getKaspiCity().getCode());
+                            cityResponse.setEnabled(mainCityPrice.getKaspiCity().isEnabled());
+                            return cityResponse;
+                        });
+                    }
+
+
+                    var count = product.getSupplyBoxProducts().stream().filter(p -> p.getState() == ProductStateInStore.ACCEPTED).count();
+
+                    var productInfo = ProductPriceResponse.Content.ProductInfo.builder()
                             .id(product.getId())
                             .name(product.getName())
                             .vendorCode(product.getVendorCode())
                             .count(count)
                             .isPublished(product.isEnabled())
-                            // todo: improve tl
                             .prices(product.getPrices().stream().map(price -> {
                                 var city = price.getKaspiCity();
 
@@ -303,28 +365,34 @@ public class ProductServiceImpl implements ProductService {
                                     return cityResponse;
                                 });
 
-
                                 return ProductMapper.mapProductPrice(product, price, city);
                             }).toList())
+                            .mainPriceCityId(mainCityPrice.getId())
                             .build();
 
-                    response.add(productInfo);
+                    response.getProducts().add(productInfo);
                 });
 
-        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
-        productPriceResponse.setProducts(response);
-        productPriceResponse.setCities(cityResponseMap.values().stream().toList());
+        response.setCities(cityResponseMap.values().stream().toList());
 
-        return new PageImpl<>(new ArrayList<>(Collections.singleton(productPriceResponse)), pageable, products.getTotalElements());
+        ProductPriceResponse productPriceResponse = new ProductPriceResponse();
+        productPriceResponse.setContent(response);
+        productPriceResponse.setPage(pageable.getPageNumber());
+        productPriceResponse.setSize(pageable.getPageSize());
+        productPriceResponse.setLast(products.isLast());
+        productPriceResponse.setTotalPages(products.getTotalPages());
+        productPriceResponse.setTotalElements(products.getTotalElements());
+
+        return productPriceResponse;
     }
 
     @Override
     public void changePublish(String keycloakId, Long productId, Boolean isPublished) {
         var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(productId, keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
 
         if (product.isEnabled() == isPublished) {
-            throw new IllegalArgumentException("Товар уже имеет такое же состояние публикации");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.product-already-has-same-publication-status", null, LocaleContextHolder.getLocale()));
         }
 
 
@@ -333,7 +401,7 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(product);
 
         var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.your-account-does-not-have-access-to-the-resource", null, LocaleContextHolder.getLocale())));
 
         token.setXmlUpdated(false);
         kaspiTokenRepository.save(token);
@@ -350,14 +418,15 @@ public class ProductServiceImpl implements ProductService {
         }
 
         var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.access-denied", null, LocaleContextHolder.getLocale())));
 
         token.setXmlUpdated(false);
         kaspiTokenRepository.save(token);
     }
 
     @Override
-    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest pageRequest, String employeeKeycloakId) {
+    public Page<ProductSearchResponse> searchByParams(ProductSearchParams productSearchParams, PageRequest
+            pageRequest, String employeeKeycloakId) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(employeeKeycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -375,7 +444,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String keycloakId) {
+    public void changeSize(String originVendorCode, ProductSizeChangeRequest productSizeChangeRequest, String
+            keycloakId) {
         final var wonderUser = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -383,7 +453,7 @@ public class ProductServiceImpl implements ProductService {
 
 
         if (!productExists) {
-            throw new IllegalArgumentException("Товар не существует");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale()));
         }
 
         var productSize = productSizeRepository.findByOriginVendorCode(originVendorCode)
@@ -398,10 +468,16 @@ public class ProductServiceImpl implements ProductService {
         productSize.setComment(productSizeChangeRequest.getComment());
 
         productSizeRepository.save(productSize);
+
+        var token = kaspiTokenRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Ваш аккаунт не имеет доступа к ресурсу"));
+        token.setXmlUpdated(false);
+        kaspiTokenRepository.save(token);
     }
 
     @Override
-    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean isSizeScanned, String keycloakId, PageRequest pageRequest) {
+    public Page<ProductWithSize> getProductsSizes(ProductSearchParams productSearchParams, Boolean
+            isSizeScanned, String keycloakId, PageRequest pageRequest) {
         final var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new ForbiddenException(HttpStatus.FORBIDDEN.getReasonPhrase()));
 
@@ -425,7 +501,7 @@ public class ProductServiceImpl implements ProductService {
 
         log.info("Found tokens to generating: {}", tokens.size());
 
-        tokens.parallelStream()
+        tokens
                 .forEach(this::generateAndUpload);
         log.info("Generated xmls: {}", tokens.size());
     }
@@ -435,13 +511,13 @@ public class ProductServiceImpl implements ProductService {
                 .forEach(price -> {
 
                     var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(price.getProductId(), keycloakId)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
 
 
                     if (price.getMainCityId() == -1) {
                         var priceToDelete = product.getMainCityPrice();
                         if (priceToDelete == null)
-                            throw new IllegalArgumentException("Цена уже не выбрана");
+                            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.price-already-not-selected", null, LocaleContextHolder.getLocale()));
 
                         product.setMainCityPrice(null);
                         productRepository.save(product);
@@ -450,10 +526,11 @@ public class ProductServiceImpl implements ProductService {
                     }
 
                     var city = kaspiCityRepository.findById(price.getMainCityId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.city-not-found", null, LocaleContextHolder.getLocale())));
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
+
 
                     product.setMainCityPrice(productPrice);
                     productRepository.save(product);
@@ -464,13 +541,14 @@ public class ProductServiceImpl implements ProductService {
         prices
                 .forEach(price -> {
                     var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(price.getProductId(), keycloakId)
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
 
                     var city = kaspiCityRepository.findById(price.getCityId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Город не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.city-not-found", null, LocaleContextHolder.getLocale())));
 
                     var productPrice = productPriceRepository.findByProductIdAndKaspiCityName(product.getId(), city.getName())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Товар не существует"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.product-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
+
 
                     productPrice.setPrice(price.getPrice());
                     productPriceRepository.save(productPrice);

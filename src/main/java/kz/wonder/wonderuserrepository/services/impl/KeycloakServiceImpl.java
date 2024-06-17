@@ -22,6 +22,8 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.InternalServerErrorException;
@@ -42,6 +44,7 @@ public class KeycloakServiceImpl implements KeycloakService {
     private String clintId;
     @Value("${application.keycloak-url}")
     private String keycloakUrl;
+    private final MessageSource messageSource;
 
     @Override
     public UserRepresentation createUserByRole(KeycloakBaseUser sellerRegistrationRequest, KeycloakRole keycloakRole) {
@@ -56,7 +59,7 @@ public class KeycloakServiceImpl implements KeycloakService {
                 sendEmail(userId);
             } catch (Exception e) {
                 log.error("Exception: ", e);
-                throw new IllegalArgumentException("Электронная почта неверна");
+                throw new IllegalArgumentException(messageSource.getMessage("services-impl.keycloak-service-impl.invalid-email", null, LocaleContextHolder.getLocale()));
             }
 
             return userResource.toRepresentation();
@@ -84,7 +87,7 @@ public class KeycloakServiceImpl implements KeycloakService {
                 var object = response.readEntity(KeycloakError.class);
                 throw new IllegalArgumentException(object.getErrorMessage());
             } else {
-                throw new InternalServerErrorException("Неизвестная ошибка");
+                throw new InternalServerErrorException(messageSource.getMessage("services-impl.keycloak-service-impl.unknown-error", null, LocaleContextHolder.getLocale()));
             }
         }
     }
@@ -155,7 +158,7 @@ public class KeycloakServiceImpl implements KeycloakService {
                     .refreshToken(refreshToken)
                     .build();
         } catch (NotAuthorizedException notAuthorizedException) {
-            throw new IllegalArgumentException("Неверные учетные данные");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.keycloak-service-impl.invalid-credentials", null, LocaleContextHolder.getLocale()));
         } catch (Exception e) {
             log.error("Error occurred in getting tokens: ", e);
             throw e;
@@ -194,7 +197,7 @@ public class KeycloakServiceImpl implements KeycloakService {
         List<UserRepresentation> users = usersResource.search(keycloakBaseUser.getEmail(), 0, 1);
 
         if (users.isEmpty()) {
-            throw new IllegalArgumentException("Пользователь по электронной почте не найден");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.keycloak-service-impl.user-not-found-by-email", null, LocaleContextHolder.getLocale()));
         }
         UserRepresentation userToUpdate = users.get(0);
         userToUpdate.setFirstName(keycloakBaseUser.getFirstName());
@@ -226,7 +229,7 @@ public class KeycloakServiceImpl implements KeycloakService {
             userResource.resetPassword(newPassword);
         } catch (NotAuthorizedException e) {
             log.error("Old password is incorrect for user with ID: {}", keycloakId);
-            throw new IllegalArgumentException("Старый пароль неверен");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.keycloak-service-impl.incorrect-old-password", null, LocaleContextHolder.getLocale()));
         }
     }
 }

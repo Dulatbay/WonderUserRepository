@@ -1,7 +1,7 @@
 package kz.wonder.wonderuserrepository.dto.response;
 
 import kz.wonder.kaspi.client.model.PaymentMode;
-import kz.wonder.wonderuserrepository.entities.DeliveryMode;
+import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import lombok.Builder;
 import lombok.Data;
 
