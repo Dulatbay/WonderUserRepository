@@ -23,7 +23,7 @@ public class KeycloakAuthService {
 
     private String accessToken;
 
-    private Instant tokenExpiration = Instant.now();  // Добавление времени истечения токена
+    private Instant tokenExpiration = Instant.now();
 
 
     public String getAccessToken() {
