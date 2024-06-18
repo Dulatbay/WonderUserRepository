@@ -113,7 +113,7 @@ public class KaspiOrderMapper {
         orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
         orderResponse.setPickUpPerson(kaspiOrder.getFirstMileCourier());
         orderResponse.setPrice(kaspiOrder.getTotalPrice());
-        orderResponse.setProductsCount(kaspiOrder.getProducts().size());
+        orderResponse.setProductsCount(Optional.ofNullable(kaspiOrder.getProducts()).map(List::size).orElse(0));
 
         return orderResponse;
     }

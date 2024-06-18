@@ -95,8 +95,17 @@ public interface KaspiOrderRepository extends JpaRepository<KaspiOrder, Long> {
             "WHERE w.keycloakId = :keycloakId AND (ko.creationDate BETWEEN :from AND :to)")
     List<KaspiOrder> findAllSellerOrders(String keycloakId, Long from, Long to);
 
-    @Query("select ko from KaspiOrder ko WHERE ko.kaspiStore.wonderUser.keycloakId = :keycloakId AND (ko.creationDate BETWEEN :from AND :to)  ORDER BY ko.creationDate ASC")
-    List<KaspiOrder> findAllAdminOrders(String keycloakId, Long from, Long to);
+    @Query("SELECT ko FROM KaspiOrder ko " +
+            "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
+            "LEFT JOIN FETCH ko.products " +
+            "LEFT JOIN FETCH ko.kaspiStore ks " +
+            "LEFT JOIN FETCH ks.wonderUser wu " +
+            "LEFT JOIN FETCH ko.orderAssemble oa " +
+            "LEFT JOIN FETCH ko.orderPackage op " +
+            "LEFT JOIN FETCH ko.orderTransmission ot " +
+            "WHERE wu.keycloakId = :keycloakId AND ko.creationDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY ko.creationDate")
+    List<KaspiOrder> findAllAdminOrders(String keycloakId, Long startDate, Long endDate);
 
     @Query("SELECT ko FROM KaspiOrder ko " +
             "RIGHT JOIN KaspiOrderProduct kop ON kop.order.id = ko.id " +
