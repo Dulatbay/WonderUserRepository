@@ -101,14 +101,16 @@ public interface SupplyBoxProductsRepository extends JpaRepository<SupplyBoxProd
             "LEFT JOIN Product p ON p.id = sbp.product.id " +
             "  WHERE " +
             " (((:byProductName = TRUE AND lower(p.name) LIKE '%' || lower(:searchValue) || '%') OR " +
-            "  (:byVendorCode = TRUE AND p.vendorCode LIKE '%' || lower(:searchValue) || '%')) " +
+            "  (:byVendorCode = TRUE AND p.vendorCode LIKE '%' || lower(:searchValue) || '%') OR " +
+            "  (:byArticle = TRUE AND sbp.article LIKE '%' || lower(:searchValue) || '%')) " +
             "  OR " +
-            "   (:byVendorCode = FALSE AND :byProductName = FALSE)) " +
+            "   (:byVendorCode = FALSE AND :byProductName = FALSE AND :byArticle = FALSE)) " +
             "  AND sbp.supplyBox.supply.kaspiStore.id = :kaspiStoreId")
     Page<SupplyBoxProduct> findByParams(@Param("kaspiStoreId") Long kaspiStoreId,
                                         @Param("searchValue") String searchValue,
                                         @Param("byProductName") Boolean byProductName,
                                         @Param("byVendorCode") Boolean byVendorCode,
+                                        @Param("byArticle") Boolean byArticle,
                                         Pageable pageable);
     @Query("SELECT sbp FROM SupplyBoxProduct sbp " +
             "LEFT JOIN sbp.product p ON p.id = sbp.id " +

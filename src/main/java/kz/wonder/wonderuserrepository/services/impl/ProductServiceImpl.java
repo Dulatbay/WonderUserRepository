@@ -209,25 +209,6 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductResponse> findAllByKeycloakId(String keycloakUserId, Pageable pageable, Boolean isPublished, String searchValue) {
         var products = productRepository.findAllByKeycloakId(keycloakUserId, searchValue, searchValue, isPublished, pageable);
 
-        List<Long> productIds = products.getContent().stream().map(Product::getId).collect(Collectors.toList());
-
-        if (!productIds.isEmpty()) {
-            List<ProductPrice> prices = productPriceRepository.findPricesByProductIds(productIds);
-
-            List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
-
-            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
-                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
-
-            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
-                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
-
-            products.forEach(product -> {
-                product.setPrices(pricesMap.getOrDefault(product.getId(), new ArrayList<>()));
-                product.setSupplyBoxProducts(supplyBoxesMap.getOrDefault(product.getId(), new ArrayList<>()));
-            });
-        }
-
         return products.map(productMapper::mapToResponse);
     }
 
@@ -437,6 +418,7 @@ public class ProductServiceImpl implements ProductService {
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
                 productSearchParams.isByVendorCode(),
+                productSearchParams.isByArticle(),
                 pageRequest
         );
 

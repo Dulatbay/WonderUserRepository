@@ -74,7 +74,7 @@ public class SupplyServiceImpl implements SupplyService {
 
                 var product = productRepository.findByVendorCodeAndKeycloakIdAndDeletedIsFalse(vendorCode, userId)
                         .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                                messageSource.getMessage("services-impl.supply-service-impl.product-with-id", null, LocaleContextHolder.getLocale()) + " " + vendorCode +" " + messageSource.getMessage("services-impl.supply-service-impl.does-not-exist", null, LocaleContextHolder.getLocale())));
+                                messageSource.getMessage("services-impl.supply-service-impl.product-with-id", null, LocaleContextHolder.getLocale()) + " " + vendorCode + " " + messageSource.getMessage("services-impl.supply-service-impl.does-not-exist", null, LocaleContextHolder.getLocale())));
 
                 response.add(
                         SupplyProcessFileResponse.builder()
@@ -125,8 +125,8 @@ public class SupplyServiceImpl implements SupplyService {
         for (var time : availableTimes) {
             if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
 //                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
-                    isAvailableToSupply = true;
-                    break;
+                isAvailableToSupply = true;
+                break;
 //                }
             }
         }
@@ -201,7 +201,7 @@ public class SupplyServiceImpl implements SupplyService {
                                         .forEach(supplyBoxProduct -> {
                                             var product = supplyBoxProduct.getProduct();
                                             var productAdditionalText = List.of(
-                                                    product.getName().substring(0, 30),
+                                                    product.getName().length() < 30 ? product.getName() : product.getName().substring(0, 30),
                                                     messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName()
                                             );
                                             multipartFilesProducts.add(barcodeService.generateBarcode(supplyBoxProduct.getArticle(), productAdditionalText));
@@ -391,7 +391,8 @@ public class SupplyServiceImpl implements SupplyService {
 
         boolean employeeWorkHere = supply.getKaspiStore().getId().equals(kaspiStore.getId());
 
-        if (!employeeWorkHere) throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale()));
+        if (!employeeWorkHere)
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale()));
 
         var now = LocalDateTime.now(ZONE_ID);
 
@@ -403,13 +404,12 @@ public class SupplyServiceImpl implements SupplyService {
                             .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-slot-does-not-exist", null, LocaleContextHolder.getLocale())));
 
 
-
                     Map<String, StoreCellProduct> storeCellProductsMap = new HashMap<>();
 
                     productArticles
                             .forEach(article -> {
 
-                                if(storeCellProductsMap.containsKey(article))
+                                if (storeCellProductsMap.containsKey(article))
                                     throw new IllegalArgumentException("Введите уникальные артикли");
 
                                 var supplyBoxProduct = this.validateProduct(article, kaspiStore.getId());

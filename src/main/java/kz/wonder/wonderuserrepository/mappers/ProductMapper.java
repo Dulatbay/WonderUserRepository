@@ -7,6 +7,7 @@ import kz.wonder.wonderuserrepository.dto.response.ProductWithSize;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
+import kz.wonder.wonderuserrepository.repositories.ProductPriceRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductSizeRepository;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +15,16 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class ProductMapper {
     private final ProductSizeRepository productSizeRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
     private final MessageSource messageSource;
+    private final ProductPriceRepository productPriceRepository;
 
     public static @NotNull ProductPriceResponse.Content.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
         var productPrice = new ProductPriceResponse.Content.ProductPrice();
@@ -47,20 +52,26 @@ public class ProductMapper {
                 .vendorCode(product.getVendorCode())
                 .keycloakUserId(product.getKeycloakId())
                 .mainPriceCityId(product.getMainCityPrice() == null ? null : product.getMainCityPrice().getId())
-                .counts(product.getPrices().stream().map(price -> {
-                    var city = price.getKaspiCity();
-                    var count = (product.getSupplyBoxProducts()
-                            .stream()
-                            .filter(p ->
-                                    p.getState() == ProductStateInStore.ACCEPTED
-                                            && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
-                            )
-                            .count());
-
-                    return new ProductResponse.ProductCount(city.getName(), count);
-                }).toList())
+                .counts(getProductCountsPerCity(product))
 
                 .build();
+    }
+
+    private List<ProductResponse.ProductCount> getProductCountsPerCity(Product product) {
+        var prices = productPriceRepository.findPricesByProductIds(Collections.singletonList(product.getId()));
+
+        return prices.stream().map(price -> {
+            var city = price.getKaspiCity();
+            var count = (product.getSupplyBoxProducts()
+                    .stream()
+                    .filter(p ->
+                            p.getState() == ProductStateInStore.ACCEPTED
+                                    && p.getSupplyBox().getSupply().getKaspiStore().getKaspiCity().getId().equals(city.getId())
+                    )
+                    .count());
+
+            return new ProductResponse.ProductCount(city.getName(), count);
+        }).toList();
     }
 
     public ProductWithSize mapProductsSizesResponse(SupplyBoxProduct supplyBoxProduct) {
