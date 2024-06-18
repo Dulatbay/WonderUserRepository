@@ -7,4 +7,5 @@ public class ProductSearchParams {
     private String searchValue = "";
     private boolean byVendorCode;
     private boolean byProductName;
+    private boolean byArticle;
 }

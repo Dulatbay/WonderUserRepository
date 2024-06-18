@@ -418,6 +418,7 @@ public class ProductServiceImpl implements ProductService {
                 productSearchParams.getSearchValue() != null ? productSearchParams.getSearchValue().toLowerCase().trim() : "",
                 productSearchParams.isByProductName(),
                 productSearchParams.isByVendorCode(),
+                productSearchParams.isByArticle(),
                 pageRequest
         );
 
