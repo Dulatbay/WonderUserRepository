@@ -12,30 +12,30 @@ import java.util.List;
 
 @Data
 public class SupplyCreateRequest {
-    @NotNull(message = "Please provide store id")
-    @Positive(message = "Store id must be positive")
+    @NotNull(message = "{requests.supply-create-request.please-provide-store-id}")
+    @Positive(message = "{requests.supply-create-request.store-id-must-be-positive}")
     private Long storeId;
 
     @Convert(converter = LocalDateTimeAttributeConverter.class)
     private LocalDateTime selectedTime;
 
-    @NotEmpty(message = "Please provide selected boxes")
+    @NotEmpty(message = "{requests.supply-create-request.please-provide-selected-boxes}")
     private List<SelectedBox> selectedBoxes;
 
     @Data
     public static class SelectedBox {
-        @NotNull(message = "Please provide selected box id")
+        @NotNull(message = "{requests.supply-create-request.please-provide-selected-box-id}")
         private Long selectedBoxId;
-        @NotEmpty(message = "Please provide product quantities")
+        @NotEmpty(message = "{requests.supply-create-request.please-provide-product-quantities}")
         private List<ProductQuantity> productQuantities;
     }
 
     @Data
     public static class ProductQuantity {
-        @NotNull(message = "Please provide product it")
-        @Positive(message = "Product id must be positive")
+        @NotNull(message = "{requests.supply-create-request.please-provide-product-id}")
+        @Positive(message = "{requests.supply-create-request.product-id-must-be-positive}")
         private Long productId;
-        @NotNull(message = "Please provide quantity")
+        @NotNull(message = "{requests.supply-create-request.please-provide-quantity}")
         private Integer quantity;
     }
 }

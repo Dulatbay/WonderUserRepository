@@ -10,6 +10,8 @@ import kz.wonder.wonderuserrepository.repositories.KaspiTokenRepository;
 import kz.wonder.wonderuserrepository.repositories.ProductSizeRepository;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class ProductMapper {
     private final ProductSizeRepository productSizeRepository;
     private final KaspiTokenRepository kaspiTokenRepository;
+    private final MessageSource messageSource;
 
     public static @NotNull ProductPriceResponse.Content.ProductPrice mapProductPrice(Product product, ProductPrice price, KaspiCity city) {
         var productPrice = new ProductPriceResponse.Content.ProductPrice();
@@ -82,7 +85,7 @@ public class ProductMapper {
     public ProductSearchResponse mapProductSearchResponse(SupplyBoxProduct supplyBoxProduct) {
         var product = supplyBoxProduct.getProduct();
         var token = kaspiTokenRepository.findByWonderUserKeycloakId(product.getKeycloakId())
-                .orElseThrow(() -> new IllegalArgumentException("Возможно, пользователь был удален"));
+                .orElseThrow(() -> new IllegalArgumentException(messageSource.getMessage("mappers.product-mapper.the-user-may-have-been-deleted", null, LocaleContextHolder.getLocale())));
         var storeCellProduct = supplyBoxProduct.getStoreCellProduct();
 
         ProductSearchResponse productSearchResponse = new ProductSearchResponse();

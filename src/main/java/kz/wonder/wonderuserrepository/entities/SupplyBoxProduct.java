@@ -43,12 +43,12 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private StoreCellProduct storeCellProduct;
-
-    @OneToOne(fetch = FetchType.LAZY,
-            mappedBy = "supplyBoxProduct",
-            orphanRemoval = true,
-            cascade = CascadeType.ALL)
-    private KaspiOrderProduct kaspiOrderProducts;
+//
+//    @OneToOne(fetch = FetchType.LAZY,
+//            mappedBy = "supplyBoxProduct",
+//            orphanRemoval = true,
+//            cascade = CascadeType.ALL)
+//    private KaspiOrderProduct kaspiOrderProduct;
 
     @Override
     protected void onCreate() {

@@ -19,11 +19,14 @@ import kz.wonder.wonderuserrepository.services.SellerService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Locale;
 
 @RequiredArgsConstructor
 @RestController
@@ -34,6 +37,7 @@ public class SellerController {
     private final KeycloakService keycloakService;
     private final UserMapper userMapper;
     private final SellerService sellerService;
+    private final MessageSource messageSource;
 
     @GetMapping("/me")
     @Operation(summary = "Get seller user by session", description = "This endpoint returns the seller by session")
@@ -96,7 +100,8 @@ public class SellerController {
     @PostMapping("/registration")
     public ResponseEntity<MessageResponse> registrationAsSeller(@RequestBody
                                                                 @Valid
-                                                                SellerRegistrationRequest registrationRequestBody) {
+                                                                SellerRegistrationRequest registrationRequestBody,
+                                                                Locale locale) {
         var userRepresentation = keycloakService.createUserByRole(registrationRequestBody, KeycloakRole.SELLER);
         registrationRequestBody.setKeycloakId(userRepresentation.getId());
         try {
@@ -106,7 +111,7 @@ public class SellerController {
             keycloakService.deleteUserById(userRepresentation.getId());
             throw e;
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Подтвердите почту чтобы продолжить"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(messageSource.getMessage("controllers.seller-controller.confirm-your-email-to-continue", null, locale)));
     }
 
 }

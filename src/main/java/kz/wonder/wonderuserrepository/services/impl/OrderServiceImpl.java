@@ -19,6 +19,9 @@ import kz.wonder.wonderuserrepository.services.OrderParseService;
 import kz.wonder.wonderuserrepository.services.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContext;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -43,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderParseService orderParseService;
     private final KaspiTokenRepository kaspiTokenRepository;
     private final KaspiOrderMapper kaspiOrderMapper;
+    private final MessageSource messageSource;
 
 
     @Override
@@ -172,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderDetailResponse> getAdminOrderDetails(String keycloakId, String orderCode) {
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.order-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
         // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
 
@@ -186,7 +191,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderDetailResponse> getSellerOrderDetails(String keycloakId, String orderCode) {
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.order-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
         // todo: сделать проверку на то, что этот keycloak user имеет доступ к этому ордеру
 
@@ -200,18 +205,20 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderEmployeeDetailResponse getEmployeeOrderDetails(String keycloakId, String orderCode) {
         var employee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), "Вы не являетесь сотрудником пользователя"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), messageSource.getMessage("services-impl.order-service-impl.you-are-not-an-employee-of-the-user", null, LocaleContextHolder.getLocale())));
 
         var order = kaspiOrderRepository.findByCode(orderCode)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Заказ не найден"));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.order-service-impl.order-not-found", null, LocaleContextHolder.getLocale())));
 
         var isEmployeeWorkInThisStore = order.getKaspiStore().getId().equals(employee.getKaspiStore().getId());
 
         if (!isEmployeeWorkInThisStore) {
-            throw new IllegalArgumentException("Заказ не найден");
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.order-service-impl.order-not-found", null, LocaleContextHolder.getLocale()));
         }
 
-        var orderProducts = order.getProducts()
+        var products = Optional.ofNullable(order.getProducts()).orElse(new ArrayList<>());
+
+        var orderProducts = products
                 .stream()
                 .map(kaspiOrderProduct -> {
                     var productOptional = Optional.ofNullable(kaspiOrderProduct.getProduct());
@@ -271,6 +278,4 @@ public class OrderServiceImpl implements OrderService {
     private EmployeeOrderResponse getEmployeeOrderResponse(KaspiOrder kaspiOrder) {
         return kaspiOrderMapper.mapToEmployeeOrderResponse(kaspiOrder);
     }
-
-
 }

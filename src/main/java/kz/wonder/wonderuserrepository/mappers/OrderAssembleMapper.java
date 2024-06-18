@@ -11,18 +11,22 @@ import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OrderAssembleMapper {
     private final StoreCellProductRepository storeCellProductRepository;
+    private final MessageSource messageSource;
 
     public OrderAssemble toEntity(StoreEmployee storeEmployee, KaspiOrder kaspiOrder, AssembleState assembleState) {
         OrderAssemble orderAssemble = new OrderAssemble();
@@ -51,13 +55,22 @@ public class OrderAssembleMapper {
     public Pair<List<AssembleProcessResponse.Product>, List<AssembleProcessResponse.ProcessedProduct>> divideProducts(KaspiOrder kaspiOrder) {
         List<AssembleProcessResponse.Product> productsToProcess = new ArrayList<>();
         List<AssembleProcessResponse.ProcessedProduct> processedProducts = new ArrayList<>();
+
+        if (kaspiOrder.getProducts() == null) {
+            return Pair.of(productsToProcess, processedProducts);
+        }
+
         kaspiOrder.getProducts()
                 .forEach(kaspiOrderProduct -> {
 
                     var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
                     var product = kaspiOrderProduct.getProduct();
                     var storeCellProduct = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Something get wrong"));
+                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage(
+                                    "mappers.order-assemble-mapper.something-get-wrong",
+                                    null,
+                                    LocaleContextHolder.getLocale()
+                            )));
 
                     if (supplyBoxProduct.getState() == ProductStateInStore.WAITING_FOR_ASSEMBLY) {
                         var productResponse = new AssembleProcessResponse.Product();
@@ -91,20 +104,38 @@ public class OrderAssembleMapper {
         return orderAssembleProcess;
     }
 
+    public static final String NO_ORDER_CODE = "N\\A";
+
     public EmployeeAssemblyResponse mapToEmployeeAssemblyResponse(SupplyBoxProduct supplyBoxProduct, AssembleState assembleState) {
+        if (supplyBoxProduct == null || assembleState == null)
+            return new EmployeeAssemblyResponse();
+
         var sellerName = supplyBoxProduct.getSupplyBox().getSupply().getAuthor().getKaspiToken().getSellerName();
         var order = supplyBoxProduct.getKaspiOrder();
+
         EmployeeAssemblyResponse response = new EmployeeAssemblyResponse();
         response.setShopName(sellerName);
         response.setAssembleState(assembleState);
-        response.setOrderCode(order == null ? "N\\A" : order.getCode());
-        response.setDeliveryMode(order == null ? null : order.getDeliveryMode());
-        response.setOrderId(order == null ? null : order.getId());
-        response.setOrderDate(Utils.getLocalDateTimeFromTimestamp(order != null ? order.getCreationDate() : 0));
-        if (order != null && order.getPlannedDeliveryDate() != null)
-            response.setDeliveryDate(Utils.getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
-        response.setProductsCount(order != null ? order.getProducts().size() : 0);
+        setResponseWithOrderData(response, order);
         return response;
+    }
+
+    private void setResponseWithOrderData(EmployeeAssemblyResponse response, KaspiOrder order) {
+        if (order == null) {
+            response.setOrderCode(NO_ORDER_CODE);
+            response.setOrderId(null);
+            response.setOrderDate(Utils.getLocalDateTimeFromTimestamp(0L));
+            response.setProductsCount(0);
+        } else {
+            response.setOrderCode(order.getCode());
+            response.setDeliveryMode(order.getDeliveryMode());
+            response.setOrderId(order.getId());
+            response.setOrderDate(Utils.getLocalDateTimeFromTimestamp(order.getCreationDate()));
+            if (order.getPlannedDeliveryDate() != null) {
+                response.setDeliveryDate(Utils.getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
+            }
+            response.setProductsCount(Optional.ofNullable(order.getProducts()).map(List::size).orElse(0));
+        }
     }
 
 }

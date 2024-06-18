@@ -41,13 +41,16 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         // filter work
         // startPast -------> startCurrent --------> end
-        var end = LocalDate.now().plusDays(1).atStartOfDay();
-        var startCurrent = end.minus(duration);
+        var end = LocalDate.now().atStartOfDay();
+        var startCurrent = end.minus(duration).minusDays(1);
         var startPast = startCurrent.minus(duration);
 
 
+        log.info("START");
         var supplyBoxProducts = supplyBoxProductsRepository.findAllAdminSells(keycloakId, startPast, end);
+        log.info("supplyBoxProducts size: {}", supplyBoxProducts.size());
         var supplies = supplyRepository.findAllAdminSupplies(startPast, end, keycloakId);
+        log.info("supplies size: {}",supplies.size());
 
         log.info("startPast: {}, startCurrent: {}, end: {}, supplyBoxProducts size: {}, supplies size: {}",
                 startPast, startCurrent, end, supplyBoxProducts.size(), supplies.size());
@@ -69,8 +72,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         // filter work
         // startPast -------> startCurrent --------> end
-        var end = LocalDate.now().plusDays(1).atStartOfDay();
-        var startCurrent = end.minus(duration);
+        var end = LocalDate.now().atStartOfDay();
+        var startCurrent = end.minus(duration).minusDays(1);
         var startPast = startCurrent.minus(duration);
 
         // todo: too long
@@ -151,8 +154,12 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Page<SellerTopProductInformation> getSellerTopProductsInformation(String keycloakId, Pageable pageable) {
-        var kaspiOrderProducts = kaspiOrderProductRepository.findTopSellerProducts(keycloakId);
+    public Page<SellerTopProductInformation> getSellerTopProductsInformation(String keycloakId, DurationParams durationParams, Pageable pageable) {
+        var end = LocalDateTime.now();
+        var start = end.minus(durationParams.getDuration());
+
+
+        var kaspiOrderProducts = kaspiOrderProductRepository.findTopSellerProducts(keycloakId, Utils.getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
 
         Map<Long, SellerTopProductInformation> sellerTopProductInformationHashMap = new HashMap<>();
 
@@ -186,37 +193,37 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Page<AdminTopSellerInformation> getAdminTopSellersInformation(String keycloakId, Pageable pageable) {
+    public Page<AdminTopSellerInformation> getAdminTopSellersInformation(String keycloakId, DurationParams durationParams, Pageable pageable) {
         var end = LocalDateTime.now();
-        var start = end.minusDays(7);
+        var start = end.minus(durationParams.getDuration());
 
-        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end))
-                .stream()
-                .filter(order -> order.getProducts() != null && !order.getProducts().isEmpty())
-                .toList();
+        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
+
+        log.info("orders count: {}", orders.size());
 
         Map<Long, AdminTopSellerInformation> adminTopSellerInformationHashMap = new HashMap<>();
-
 
         orders
                 .forEach(order -> {
                     var seller = order.getWonderUser();
+                    var topSeller = adminTopSellerInformationHashMap.get(seller.getId());
 
-                    adminTopSellerInformationHashMap.computeIfAbsent(seller.getId(), k -> {
+                    if (topSeller == null) {
                         AdminTopSellerInformation sellerTopSellerInformation = new AdminTopSellerInformation();
                         sellerTopSellerInformation.setShopName(seller.getKaspiToken().getSellerName());
                         sellerTopSellerInformation.setTotalIncome(0.);
-                        return sellerTopSellerInformation;
-                    });
-
-                    adminTopSellerInformationHashMap.get(seller.getId()).setTotalIncome(order.getTotalPrice());
+                        adminTopSellerInformationHashMap.put(seller.getId(), sellerTopSellerInformation);
+                    } else {
+                        topSeller.setTotalIncome(topSeller.getTotalIncome() + order.getTotalPrice());
+                    }
                 });
 
         var values = adminTopSellerInformationHashMap.values()
                 .stream()
-                .sorted((a, b) -> (int) (a.getTotalIncome() - b.getTotalIncome()));
+                .sorted((a, b) -> (int) (a.getTotalIncome() - b.getTotalIncome()))
+                .toList();
 
-        return new PageImpl<>(values.toList(), pageable, orders.size());
+        return new PageImpl<>(values.stream().limit(pageable.getPageSize()).toList(), pageable, values.size());
     }
 
     @Override
@@ -236,8 +243,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             stepDate = nextStepDate(stepDate, durationParams);
         }
 
-        orders.stream()
-                .filter(order -> order.getProducts() != null && !order.getProducts().isEmpty())
+        orders
                 .forEach(order -> {
                     String orderDate = getOrderDateForDuration(Utils.getLocalDateTimeFromTimestamp(order.getCreationDate()), durationParams);
                     dailyStatsMap.computeIfPresent(orderDate, (k, v) -> {
@@ -256,8 +262,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         var end = LocalDate.now().atStartOfDay().plusDays(1);
         var start = end.minus(duration);
 
-        var orders = kaspiOrderRepository.findAllSellerOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
-
+        var orders = kaspiOrderRepository.findAllAdminOrders(keycloakId, getTimeStampFromLocalDateTime(start), getTimeStampFromLocalDateTime(end));
 
         Map<String, DailyStats> dailyStatsMap = new TreeMap<>();
         LocalDateTime stepDate = start;
@@ -267,8 +272,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             stepDate = nextStepDate(stepDate, durationParams);
         }
 
-        orders.stream()
-                .filter(order -> order.getProducts() != null && !order.getProducts().isEmpty())
+        orders
                 .forEach(order -> {
                     String orderDate = getOrderDateForDuration(Utils.getLocalDateTimeFromTimestamp(order.getCreationDate()), durationParams);
                     dailyStatsMap.computeIfPresent(orderDate, (k, v) -> {
@@ -292,7 +296,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private String getOrderDateForDuration(LocalDateTime orderDate, DurationParams durationParams) {
         LocalDateTime periodStart = LocalDate.now().atStartOfDay().minus(durationParams.getDuration());
 
-        if(durationParams != DurationParams.DAY){
+        if (durationParams != DurationParams.DAY) {
             orderDate = orderDate.toLocalDate().atStartOfDay();
         }
 
@@ -474,6 +478,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             suppliesInfo.setPercent(null);
         } else if (countOfCurrent.get() == 0) {
             suppliesInfo.setPercent(-100.0);
+        } else {
             suppliesInfo.setPercent(getPercent(countOfCurrent.get(), countOfPast.get()));
         }
 

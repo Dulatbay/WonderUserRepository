@@ -25,19 +25,19 @@ public class WonderUser extends AbstractEntity<Long> {
     @Column(name = "username")
     private String username;
 
-    @OneToOne(fetch = FetchType.LAZY,
+    @OneToOne(fetch = FetchType.EAGER,
             mappedBy = "wonderUser",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private KaspiToken kaspiToken;
 
-    @OneToOne(fetch = FetchType.LAZY,
+    @OneToOne(fetch = FetchType.EAGER,
             mappedBy = "wonderUser",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private StoreEmployee storeEmployee;
 
-    @OneToOne(fetch = FetchType.LAZY,
+    @OneToOne(fetch = FetchType.EAGER,
             mappedBy = "wonderUser",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
