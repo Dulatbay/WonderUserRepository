@@ -4,7 +4,6 @@ import jakarta.transaction.Transactional;
 import kz.wonder.filemanager.client.api.FileManagerApi;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
-import kz.wonder.wonderuserrepository.dto.request.SupplyStateToRejectRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
@@ -100,14 +99,18 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public SupplySellerResponse updateSupplyStateToReject(SupplyStateToRejectRequest stateUpdateToRejectRequest){
-        final var supply = findSupplyById(stateUpdateToRejectRequest.getSupplyId());
+    public void rejectSupplyById(Long supplyId){
+        final var supply = findSupplyById(supplyId);
 
-        if(supply.getSupplyState() == SupplyState.START || supply.getSupplyState() == SupplyState.ACCEPTED) supply.setSupplyState(SupplyState.REJECTED);
+        if(supply.getSupplyState() == SupplyState.REJECTED) {
+            throw new IllegalArgumentException("Поставка уже отклонена");
+        }
+        else if(supply.getSupplyState() != SupplyState.START && supply.getSupplyState() != SupplyState.IN_PROGRESS){
+            throw new IllegalArgumentException("Поставку невозможно отклонить");
+        }
+        else supply.setSupplyState(SupplyState.REJECTED);
 
-        var updatedSupply = supplyRepository.save(supply);
-
-        return supplyMapper.toSupplySellerResponse(updatedSupply);
+        supplyRepository.save(supply);
     }
 
     @Override

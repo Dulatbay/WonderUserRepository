@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
-import kz.wonder.wonderuserrepository.dto.request.SupplyStateToRejectRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdmins;
 import kz.wonder.wonderuserrepository.security.authorizations.AccessForAdminsAndEmployee;
@@ -71,12 +70,11 @@ public class SupplyController {
     }
 
 
-    @PutMapping("/change-state")
+    @PutMapping("/supplies/{supplyId}/reject")
     @AccessForAdminsAndSellers
-        public ResponseEntity<SupplySellerResponse> changeStateToReject(@RequestBody @Valid SupplyStateToRejectRequest stateUpdateRequest){
-        var supplyUpdatedResponse = supplyService.updateSupplyStateToReject(stateUpdateRequest);
-
-        return ResponseEntity.status(HttpStatus.OK).body(supplyUpdatedResponse);
+        public ResponseEntity<SupplySellerResponse> rejectSupply(@PathVariable("supplyId") Long supplyId){
+        supplyService.rejectSupplyById(supplyId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/admin")
