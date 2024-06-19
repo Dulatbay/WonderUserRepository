@@ -25,6 +25,7 @@ repositories {
 }
 
 extra["springCloudVersion"] = "2023.0.0"
+extra["zeebeVersion"] = "8.5.3"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -91,6 +92,10 @@ dependencies {
 
     // iTextPDF dependencies
     implementation("com.itextpdf:itextpdf:5.5.13.2")
+
+    // camunda
+    implementation("io.camunda:zeebe-client-java:${property("zeebeVersion")}")
+    implementation("io.camunda:spring-zeebe-starter:${property("zeebeVersion")}")
 }
 
 dependencyManagement {
