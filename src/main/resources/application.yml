@@ -49,8 +49,16 @@ server:
     context-path: '/api/'
   error:
     include-message: always
-  port: ${PORT:8080}
+  port: ${PORT:8888}
   address: 0.0.0.0
-  
+
+## https://github.com/camunda-community-hub/spring-zeebe
+
+camunda:
+  client:
+    mode: simple
+
+
+
 
 
