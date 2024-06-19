@@ -43,7 +43,20 @@ public class PackageController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @PostMapping("/{orderCode}/package-product")
+    // 1) start package
+    // 2.1.1) package product start -> startAt
+    // 2.1.2) package product end -> endedAt?
+    // const time = (endedAt == null ? now() : endedAt)- startAt = duration
+    // time.addSecond(1)
+    // 2.2.1)
+    // 2.2.2)
+    // 2.3.1)
+    // 2.3.2)
+    // 2.n.1)
+    // 2.n.2)
+    // 3) finish package
+
+    @PostMapping("/{orderCode}/package-product-start")
     public ResponseEntity<Void> packageProduct(@PathVariable String orderCode, @RequestBody @Valid PackageProductRequest packageProductRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);

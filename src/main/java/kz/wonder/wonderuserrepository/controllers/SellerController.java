@@ -9,7 +9,7 @@ import kz.wonder.wonderuserrepository.dto.request.SellerRegistrationRequest;
 import kz.wonder.wonderuserrepository.dto.request.SellerUserUpdateRequest;
 import kz.wonder.wonderuserrepository.dto.request.UpdatePasswordRequest;
 import kz.wonder.wonderuserrepository.dto.response.MessageResponse;
-import kz.wonder.wonderuserrepository.dto.response.SellerUserResponse;
+import kz.wonder.wonderuserrepository.dto.response.SellerUserDetailResponse;
 import kz.wonder.wonderuserrepository.mappers.UserMapper;
 import kz.wonder.wonderuserrepository.security.authorizations.base.SellerAuthorization;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakBaseUser;
@@ -45,14 +45,14 @@ public class SellerController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved the seller user by session")
     })
     @SellerAuthorization
-    public ResponseEntity<SellerUserResponse> getSellerUserBySession() {
+    public ResponseEntity<SellerUserDetailResponse> getSellerUserBySession() {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
         var wonderUser = userService.getUserByKeycloakId(keycloakId);
         var keycloakUser = keycloakService.getUserById(wonderUser.getKeycloakId());
 
-        var result = userMapper.toUserResponse(wonderUser, keycloakUser.toRepresentation(), wonderUser.getKaspiToken());
+        var result = userMapper.toUserDetailResponse(wonderUser, keycloakUser.toRepresentation(), wonderUser.getKaspiToken());
 
         return ResponseEntity.ok(result);
     }
@@ -81,7 +81,7 @@ public class SellerController {
             @ApiResponse(responseCode = "200", description = "Successfully updated the seller's account details")
     })
     @SellerAuthorization
-    public ResponseEntity<SellerUserResponse> updateSellerUserById(@PathVariable Long id, @RequestBody @Valid SellerUserUpdateRequest sellerUserUpdateRequest) {
+    public ResponseEntity<SellerUserDetailResponse> updateSellerUserById(@PathVariable Long id, @RequestBody @Valid SellerUserUpdateRequest sellerUserUpdateRequest) {
         var keycloakBaseUser = new KeycloakBaseUser();
         keycloakBaseUser.setEmail(sellerUserUpdateRequest.getEmail());
         keycloakBaseUser.setFirstName(sellerUserUpdateRequest.getFirstName());
@@ -91,7 +91,7 @@ public class SellerController {
 
         var seller = sellerService.updateUser(id, sellerUserUpdateRequest);
 
-        var result = userMapper.toUserResponse(seller, userResource, seller.getKaspiToken());
+        var result = userMapper.toUserDetailResponse(seller, userResource, seller.getKaspiToken());
 
         return ResponseEntity.ok(result);
     }

@@ -31,5 +31,19 @@ public class OrderEmployeeDetailResponse extends OrderWithStatus {
         private String pathToBoxBarcode;
         private ProductStateInStore productStateInStore;
         private String productCell;
+        private PackageInfo packageInfo;
+        private Double width;
+        private Double length;
+        private Double height;
+        private Double weight;
+        private Double sizeComment;
     }
+
+    @Data
+    public static class PackageInfo {
+        private LocalDateTime startedAt;
+        private LocalDateTime endedAt;
+        private String employeeName;
+    }
+
 }

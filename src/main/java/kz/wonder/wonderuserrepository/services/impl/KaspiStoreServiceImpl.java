@@ -81,7 +81,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void deleteById(Long id, String keycloakUserId) {
         final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakUserId, id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
         if (!tokens.isEmpty())
@@ -97,7 +97,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void deleteById(Long id) {
         final var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         log.info("Store with id {} was deleted", id);
 
@@ -112,7 +112,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id) {
         final var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         if (!changeRequest.isEnabled()) {
             var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
@@ -131,7 +131,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void changeStore(KaspiStoreChangeRequest changeRequest, Long id, String userId) {
         final var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(userId, id)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         if (!changeRequest.isEnabled()) {
             var tokens = kaspiTokenRepository.findAllSellersInStoreWithProducts(kaspiStore.getId());
@@ -148,7 +148,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void addBoxTypeToStore(Long boxTypeId, Long storeId) {
         var kaspiStore = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         addBoxTypeToStoreWithValidating(boxTypeId, kaspiStore);
     }
@@ -156,7 +156,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void addBoxTypeToStoreWithValidating(Long boxTypeId, Long storeId, String keycloakUserId) {
         var kaspiStore = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakUserId, storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         addBoxTypeToStoreWithValidating(boxTypeId, kaspiStore);
     }
@@ -191,7 +191,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId) {
         var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var itemsToDelete = store.getAvailableBoxTypes()
                 .stream()
@@ -215,7 +215,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
     @Override
     public void removeBoxType(Long boxTypeId, Long storeId, String keycloakId) {
         var store = kaspiStoreRepository.findByWonderUserKeycloakIdAndIdAndDeletedIsFalse(keycloakId, storeId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         store.getAvailableBoxTypes()
                 .removeIf(i -> Objects.equals(i.getId(), storeId));
@@ -228,7 +228,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(id)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND,
                         HttpStatus.NOT_FOUND.getReasonPhrase(),
-                        messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                        messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var isHisStore = store
                 .getWonderUser()
@@ -249,7 +249,7 @@ public class KaspiStoreServiceImpl implements KaspiStoreService {
         var store = kaspiStoreRepository.findByIdAndDeletedIsFalse(storeId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST,
                         HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                        messageSource.getMessage("services-impl.kaspi-store-service-impl.warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
+                        messageSource.getMessage("warehouse-does-not-exist", null, LocaleContextHolder.getLocale())));
 
         var isHisStore = store.getWonderUser().getKeycloakId().equals(keycloakId);
 

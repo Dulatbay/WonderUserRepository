@@ -19,6 +19,13 @@ public interface BoxTypeRepository extends JpaRepository<BoxType, Long> {
             """)
     Optional<BoxType> findByIdInStore(@Param("boxTypeId") Long boxTypeId, @Param("storeId") Long storeId);
 
+
+    @Query(nativeQuery = true, value="select bt.* " +
+            "from schema_wonder.box_type as bt " +
+            "LEFT JOIN schema_wonder.kaspi_store_available_box_types sbt ON sbt.box_type = bt.id " +
+            "WHERE sbt.kaspi_store = :storeId AND bt.id IN :boxTypeIds AND bt.deleted = false")
+    List<BoxType> findByIdsInStore(@Param("boxTypeIds") List<Long> boxTypeId, @Param("storeId") Long storeId);
+
     Optional<BoxType> findByIdAndDeletedIsFalse(Long id);
 
     List<BoxType> findAllByDeletedIsFalse();

@@ -133,7 +133,7 @@ public class SupplyServiceImpl implements SupplyService {
 
 
         if (!isAvailableToSupply) {
-            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.store-not-operational-in-this-period", null, LocaleContextHolder.getLocale()));
+            throw new IllegalArgumentException(messageSource.getMessage("store-not-operational-in-this-period", null, LocaleContextHolder.getLocale()));
         }
 
 

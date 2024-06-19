@@ -55,7 +55,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
             if (!isHisStore)
                 throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.store-not-found", null, LocaleContextHolder.getLocale()));
             if (!store.isEnabled())
-                throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.store-disabled", null, LocaleContextHolder.getLocale()));
+                throw new IllegalArgumentException(messageSource.getMessage("store-disabled", null, LocaleContextHolder.getLocale()));
         }
 
 

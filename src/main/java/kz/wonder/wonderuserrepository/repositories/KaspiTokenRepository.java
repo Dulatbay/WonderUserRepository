@@ -14,6 +14,15 @@ public interface KaspiTokenRepository extends JpaRepository<KaspiToken, Long> {
 
     Optional<KaspiToken> findByWonderUserKeycloakId(String keycloakId);
 
+
+    @Query("select kt from KaspiToken kt " +
+            "LEFT JOIN fetch WonderUser wu ON wu.id = kt.wonderUser.id " +
+            "WHERE wu.keycloakId = :keycloakId")
+    Optional<KaspiToken> findByWonderUserKeycloakIdWithFetch(String keycloakId);
+
+
+
+
     @Query("SELECT t FROM KaspiToken t " +
             "JOIN FETCH t.wonderUser")
     List<KaspiToken> findAllWithFetching();
