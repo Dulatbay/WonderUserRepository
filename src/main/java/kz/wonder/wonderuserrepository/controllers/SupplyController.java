@@ -63,12 +63,12 @@ public class SupplyController {
             @ApiResponse(responseCode = "200", description = "Successfully created new supply")
     })
     @SellerAuthorization
-    public ResponseEntity<SupplySellerResponse> createSupply(@RequestBody @Valid SupplyCreateRequest createRequest) {
+    public ResponseEntity<Void> createSupply(@RequestBody @Valid SupplyCreateRequest createRequest) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var userId = extractIdFromToken(token);
-        var supplyCreatedResponse = supplyService.createSupply(createRequest, userId);
+        supplyService.createSupply(createRequest, userId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(supplyCreatedResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/admin")

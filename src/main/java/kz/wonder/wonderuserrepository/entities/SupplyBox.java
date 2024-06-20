@@ -3,11 +3,15 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "supply_box", schema = schemaName)
@@ -24,7 +28,7 @@ public class SupplyBox extends AbstractEntity<Long> {
             mappedBy = "supplyBox",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<SupplyBoxProduct> supplyBoxProducts;
+    private Set<SupplyBoxProduct> supplyBoxProducts = new HashSet<>();
 
     @Column(name = "vendor_code", nullable = false, unique = true)
     private String vendorCode;

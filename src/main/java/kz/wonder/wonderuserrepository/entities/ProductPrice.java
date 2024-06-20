@@ -3,10 +3,12 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data

@@ -11,7 +11,7 @@ import java.util.List;
 public interface SupplyService {
     List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId);
 
-    SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId);
+    void createSupply(SupplyCreateRequest createRequest, String userId);
 
     List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username, String id);
 

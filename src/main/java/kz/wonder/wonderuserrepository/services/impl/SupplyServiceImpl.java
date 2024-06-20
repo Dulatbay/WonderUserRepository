@@ -2,15 +2,20 @@ package kz.wonder.wonderuserrepository.services.impl;
 
 import jakarta.transaction.Transactional;
 import kz.wonder.filemanager.client.api.FileManagerApi;
+import kz.wonder.wonderuserrepository.constants.ProcessKey;
 import kz.wonder.wonderuserrepository.dto.request.SupplyCreateRequest;
 import kz.wonder.wonderuserrepository.dto.request.SupplyScanRequest;
 import kz.wonder.wonderuserrepository.dto.response.*;
-import kz.wonder.wonderuserrepository.entities.*;
+import kz.wonder.wonderuserrepository.entities.StoreCellProduct;
+import kz.wonder.wonderuserrepository.entities.StoreEmployee;
+import kz.wonder.wonderuserrepository.entities.Supply;
+import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
+import kz.wonder.wonderuserrepository.services.AppZeebeClient;
 import kz.wonder.wonderuserrepository.services.BarcodeService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +33,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getStringFromExcelCell;
-import static kz.wonder.wonderuserrepository.constants.ValueConstants.*;
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @Slf4j
@@ -54,6 +58,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final BarcodeService barcodeService;
     private final FileManagerApi fileManagerApi;
     private final MessageSource messageSource;
+    private final AppZeebeClient appZeebeClient;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -99,140 +104,65 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId) {
-        final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-not-found", null, LocaleContextHolder.getLocale())));
+    public void createSupply(SupplyCreateRequest createRequest, String userId) {
 
-        if (!store.isEnabled())
-            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.store-not-enabled", null, LocaleContextHolder.getLocale()));
+        Map<String, Object> variables = new HashMap<>();
 
+        variables.put("storeId", createRequest.getStoreId());
+        variables.put("supplyCreateRequest", createRequest);
 
-        final var user = userRepository.findByKeycloakId(userId)
-                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.user-not-found", null, LocaleContextHolder.getLocale())));
+        var vars = appZeebeClient.startInstance(ProcessKey.CREATE_SUPPLY, variables).getVariables();
 
+        log.info("vars: {}", vars);
 
-        log.info("Found store id: {}", store.getId());
-
-
-        var availableTimes = store.getAvailableTimes();
-        var selectedTime = createRequest.getSelectedTime();
-        var dayOfWeekOfSelectedTime = selectedTime.getDayOfWeek();
-
-
-        var isAvailableToSupply = false;
-
-
-        for (var time : availableTimes) {
-            if (time.getDayOfWeek().ordinal() == dayOfWeekOfSelectedTime.ordinal()) {
-//                if (time.getCloseTime().isAfter(selectedTime.toLocalTime().minusMinutes(1)) && time.getOpenTime().isBefore(selectedTime.toLocalTime().plusMinutes(1))) {
-                isAvailableToSupply = true;
-                break;
+//        var generateBarCodes = CompletableFuture.runAsync(() -> {
+//                    log.info("Generating barcodes started, supply id: {}", createdSupply.getId());
+//                    final List<MultipartFile> multipartFilesBox = new ArrayList<>();
+//                    final List<MultipartFile> multipartFilesProducts = new ArrayList<>();
+//
+//                    createdSupply.getSupplyBoxes()
+//                            .parallelStream()
+//                            .forEach(box -> {
+//                                var boxAdditionalText = List.of(
+//                                        messageSource.getMessage("services-impl.supply-service-impl.box", null, LocaleContextHolder.getLocale()) + ": " + box.getBoxType().getName(),
+//                                        messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName());
+//                                multipartFilesBox.add(barcodeService.generateBarcode(box.getVendorCode(), boxAdditionalText));
+//                                box.getSupplyBoxProducts()
+//                                        .parallelStream()
+//                                        .forEach(supplyBoxProduct -> {
+//                                            var product = supplyBoxProduct.getProduct();
+//                                            var productAdditionalText = List.of(
+//                                                    product.getName().length() < 30 ? product.getName() : product.getName().substring(0, 30),
+//                                                    messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName()
+//                                            );
+//                                            multipartFilesProducts.add(barcodeService.generateBarcode(supplyBoxProduct.getArticle(), productAdditionalText));
+//                                        });
+//                            });
+//                    log.info("Barcodes to generating, boxes: {}, products:{}", multipartFilesBox.size(), multipartFilesProducts.size());
+//
+//                    int batch = 50;
+//                    for (int i = 0; i < multipartFilesBox.size(); i += batch) {
+//                        var sublist = multipartFilesBox.subList(i, Math.min(multipartFilesBox.size(), i + batch));
+//                        fileManagerApi.uploadFiles(FILE_MANAGER_BOX_BARCODE_DIR, sublist, false);
+//                    }
+//
+//                    for (int i = 0; i < multipartFilesProducts.size(); i += batch) {
+//                        var sublist = multipartFilesProducts.subList(i, Math.min(multipartFilesProducts.size(), i + batch));
+//                        fileManagerApi.uploadFiles(FILE_MANAGER_PRODUCT_BARCODE_DIR, sublist, false);
+//                    }
+//
+//                    log.info("All barcodes generated uploaded");
 //                }
-            }
-        }
+//        );
+//
+//        var generateSupply = CompletableFuture.runAsync(() -> {
+//            var generatedSupplyReport = barcodeService.generateSupplyReport(this.getSellerSupplyReport(createdSupply));
+//            fileManagerApi.uploadFiles(FILE_MANAGER_SUPPLY_REPORT_DIR, List.of(generatedSupplyReport), false);
+//        });
+//
+//        CompletableFuture.allOf(generateSupply, generateBarCodes)
+//                .join();
 
-
-        if (!isAvailableToSupply) {
-            throw new IllegalArgumentException(messageSource.getMessage("store-not-operational-in-this-period", null, LocaleContextHolder.getLocale()));
-        }
-
-
-        Supply supply = supplyMapper.toSupplyEntity(createRequest, user, store);
-
-
-        createRequest.getSelectedBoxes()
-                .forEach(selectedBox -> {
-                    final var boxType = boxTypeRepository.findByIdInStore(selectedBox.getSelectedBoxId(), store.getId())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale())));
-
-                    var supplyBox = new SupplyBox();
-                    supplyBox.setBoxType(boxType);
-                    supplyBox.setSupplyBoxProducts(new ArrayList<>());
-                    supplyBox.setSupply(supply);
-
-
-                    var selectedProducts = selectedBox.getProductQuantities();
-                    selectedProducts.forEach(selectedProduct -> {
-                        var product = productRepository.findByIdAndKeycloakIdAndDeletedIsFalse(selectedProduct.getProductId(), userId)
-                                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.product-not-found", null, LocaleContextHolder.getLocale())));
-
-                        for (int i = 0; i < selectedProduct.getQuantity(); i++) {
-                            SupplyBoxProduct boxProducts = new SupplyBoxProduct();
-                            boxProducts.setSupplyBox(supplyBox);
-                            boxProducts.setProduct(product);
-                            boxProducts.setState(ProductStateInStore.PENDING);
-
-                            supplyBox.getSupplyBoxProducts().add(boxProducts);
-                        }
-
-                        if (supplyBox.getSupplyBoxProducts().isEmpty()) {
-                            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale()));
-                        }
-
-                    });
-
-                    supply.getSupplyBoxes().add(supplyBox);
-                });
-
-        if (supply.getSupplyBoxes().isEmpty()) {
-            throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.supply-boxes-are-empty", null, LocaleContextHolder.getLocale()));
-        }
-
-        var createdSupply = supplyRepository.save(supply);
-
-        log.info("Created supply id: {}", createdSupply.getId());
-        log.info("Boxes count in created supply: {}", createdSupply.getSupplyBoxes().size());
-
-
-        var generateBarCodes = CompletableFuture.runAsync(() -> {
-                    log.info("Generating barcodes started, supply id: {}", createdSupply.getId());
-                    final List<MultipartFile> multipartFilesBox = new ArrayList<>();
-                    final List<MultipartFile> multipartFilesProducts = new ArrayList<>();
-
-                    createdSupply.getSupplyBoxes()
-                            .parallelStream()
-                            .forEach(box -> {
-                                var boxAdditionalText = List.of(
-                                        messageSource.getMessage("services-impl.supply-service-impl.box", null, LocaleContextHolder.getLocale()) + ": " + box.getBoxType().getName(),
-                                        messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName());
-                                multipartFilesBox.add(barcodeService.generateBarcode(box.getVendorCode(), boxAdditionalText));
-                                box.getSupplyBoxProducts()
-                                        .parallelStream()
-                                        .forEach(supplyBoxProduct -> {
-                                            var product = supplyBoxProduct.getProduct();
-                                            var productAdditionalText = List.of(
-                                                    product.getName().length() < 30 ? product.getName() : product.getName().substring(0, 30),
-                                                    messageSource.getMessage("services-impl.supply-service-impl.seller", null, LocaleContextHolder.getLocale()) + ": " + createdSupply.getAuthor().getKaspiToken().getSellerName()
-                                            );
-                                            multipartFilesProducts.add(barcodeService.generateBarcode(supplyBoxProduct.getArticle(), productAdditionalText));
-                                        });
-                            });
-                    log.info("Barcodes to generating, boxes: {}, products:{}", multipartFilesBox.size(), multipartFilesProducts.size());
-
-                    int batch = 50;
-                    for (int i = 0; i < multipartFilesBox.size(); i += batch) {
-                        var sublist = multipartFilesBox.subList(i, Math.min(multipartFilesBox.size(), i + batch));
-                        fileManagerApi.uploadFiles(FILE_MANAGER_BOX_BARCODE_DIR, sublist, false);
-                    }
-
-                    for (int i = 0; i < multipartFilesProducts.size(); i += batch) {
-                        var sublist = multipartFilesProducts.subList(i, Math.min(multipartFilesProducts.size(), i + batch));
-                        fileManagerApi.uploadFiles(FILE_MANAGER_PRODUCT_BARCODE_DIR, sublist, false);
-                    }
-
-                    log.info("All barcodes generated uploaded");
-                }
-        );
-
-        var generateSupply = CompletableFuture.runAsync(() -> {
-            var generatedSupplyReport = barcodeService.generateSupplyReport(this.getSellerSupplyReport(createdSupply));
-            fileManagerApi.uploadFiles(FILE_MANAGER_SUPPLY_REPORT_DIR, List.of(generatedSupplyReport), false);
-        });
-
-        CompletableFuture.allOf(generateSupply, generateBarCodes)
-                .join();
-
-        return supplyMapper.toSupplySellerResponse(supply);
     }
 
     @Override

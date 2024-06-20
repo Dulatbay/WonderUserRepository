@@ -2,11 +2,20 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "kaspi_store", schema = schemaName)
@@ -16,7 +25,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "streetName")
+    @Column(name = "street_name")
     private String streetName;
 
     @Column(name = "origin_address_id", unique = true, nullable = false)
@@ -49,7 +58,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private WonderUser wonderUser;
 
@@ -57,39 +66,41 @@ public class KaspiStore extends AbstractEntity<Long> {
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<StoreEmployee> employees;
+    private Set<StoreEmployee> employees = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<StoreCell> storeCells;
+    private Set<StoreCell> storeCells = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<KaspiOrder> orders;
+    private Set<KaspiOrder> orders = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
-    @OneToMany(fetch = FetchType.LAZY,
+    @OneToMany(
+            fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<KaspiStoreAvailableTimes> availableTimes;
+    private Set<KaspiStoreAvailableTimes> availableTimes = new HashSet<>();
+
+    @OneToMany(
+            fetch = FetchType.LAZY,
+            mappedBy = "kaspiStore",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
+    private Set<KaspiStoreAvailableBoxTypes> availableBoxTypes = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<KaspiStoreAvailableBoxTypes> availableBoxTypes;
-
-    @OneToMany(fetch = FetchType.LAZY,
-            mappedBy = "kaspiStore",
-            orphanRemoval = true,
-            cascade = CascadeType.ALL)
-    private List<Supply> supplies;
+    private Set<Supply> supplies = new HashSet<>();
 }

@@ -25,6 +25,18 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
 
     List<KaspiStore> findAllByDeletedIsFalse();
 
+    @Query("select ks from KaspiStore ks " +
+            "LEFT JOIN FETCH ks.availableTimes kst " +
+            "where ks.id = :id AND ks.deleted = false")
+    Optional<KaspiStore> findByIdAndWithFetchingTime(Long id);
+
+//    @Query("select ks from KaspiStore ks " +
+//            "LEFT JOIN FETCH ks.availableBoxTypes " +
+//            "where ks.id = :id AND ks.deleted = false")
+//    Optional<KaspiStore> findByIdAndWithFetchingAvailableBox(Long id);
+//
+
+
     @Query("SELECT ks FROM KaspiStore ks " +
             "WHERE (:streetName is null  or ks.streetName = :streetName) and " +
             "      (:streetNumber is null or ks.streetNumber = :streetNumber) and " +

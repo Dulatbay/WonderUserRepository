@@ -2,11 +2,13 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(schema = schemaName, name = "wonder_user")
@@ -25,22 +27,25 @@ public class WonderUser extends AbstractEntity<Long> {
     @Column(name = "username")
     private String username;
 
-    @OneToOne(fetch = FetchType.EAGER,
+    @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private KaspiToken kaspiToken;
 
-    @OneToOne(fetch = FetchType.EAGER,
+    @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private StoreEmployee storeEmployee;
 
-    @OneToOne(fetch = FetchType.EAGER,
+    @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "wonderUser",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private TelegramAccount telegramAccount;
 
     @OneToMany(fetch = FetchType.LAZY,

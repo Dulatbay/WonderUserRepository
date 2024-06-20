@@ -7,10 +7,12 @@ import kz.wonder.wonderuserrepository.dto.base.OrderWithStatus;
 import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 public class OrderEmployeeDetailResponse extends OrderWithStatus {
     private List<Product> products;

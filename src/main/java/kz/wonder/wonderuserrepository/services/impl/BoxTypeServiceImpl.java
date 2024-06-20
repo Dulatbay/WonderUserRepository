@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.FILE_MANAGER_IMAGE_DIR;
@@ -37,7 +38,7 @@ public class BoxTypeServiceImpl implements BoxTypeService {
 
     @Override
     public void createBoxType(BoxTypeCreateRequest boxTypeCreateRequest) {
-        var images = new ArrayList<BoxTypeImages>();
+        var images = new HashSet<BoxTypeImages>();
 
         var boxType = new BoxType();
         boxType.setName(boxTypeCreateRequest.getName());

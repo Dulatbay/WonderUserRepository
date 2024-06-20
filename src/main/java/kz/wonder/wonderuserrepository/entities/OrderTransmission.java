@@ -3,15 +3,18 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.entities.enums.OrderTransmissionState;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
 @Data
+@EqualsAndHashCode(callSuper=true)
 @Entity
 @Table(name = "order_transmission", schema = schemaName)
 public class OrderTransmission extends AbstractEntity<Long> {
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false)
+    @MapsId
     private KaspiOrder kaspiOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,10 +1,12 @@
 package kz.wonder.wonderuserrepository.workers.store;
 
+import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
 import io.camunda.zeebe.spring.client.annotation.Variable;
-import io.camunda.zeebe.spring.client.annotation.VariablesAsType;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
+import kz.wonder.wonderuserrepository.entities.AbstractEntity;
 import kz.wonder.wonderuserrepository.mappers.KaspiStoreMapper;
+import kz.wonder.wonderuserrepository.repositories.KaspiCityRepository;
 import kz.wonder.wonderuserrepository.repositories.KaspiStoreRepository;
 import kz.wonder.wonderuserrepository.workers.store.dto.StoreAddress;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +22,10 @@ import java.util.Map;
 public class StoreWorkers {
     private final KaspiStoreRepository kaspiStoreRepository;
     private final KaspiStoreMapper kaspiStoreMapper;
+    private final KaspiCityRepository kaspiCityRepository;
 
     @JobWorker(type = "findStoreByAddress")
-    public Map<String, Object> findStoreByAddress(@VariablesAsType StoreAddress storeAddress) {
+    public Map<String, Object> findStoreByAddress(@Variable StoreAddress storeAddress) {
         log.info("Find store by address {}", storeAddress);
         Map<String, Object> result = new HashMap<>();
 
@@ -34,16 +37,20 @@ public class StoreWorkers {
     }
 
     @JobWorker(type = "getStoreById")
-    public Map<String, Object> getStoreById(@Variable Long storeId) {
+    public Map<String, Object> getStoreById(final ActivatedJob job) {
+        Map<String, Object> variables = job.getVariablesAsMap();
+
+        var storeId = Long.parseLong(variables.get("storeId").toString());
+
         log.info("Get store by id {}", storeId);
-        Map<String, Object> result = new HashMap<>();
 
-        var kaspiStore = kaspiStoreRepository.findById(storeId)
-                .orElseThrow(() -> new ZeebeBpmnError("400", "store-disabled"));
+        var kaspiStoreWithTime = kaspiStoreRepository.findByIdAndWithFetchingTime(storeId)
+                .orElseThrow(() -> new ZeebeBpmnError("400", "store-does-not-exist"));
 
-        result.put("storeDto", kaspiStoreMapper.mapToDetailResponse(kaspiStore));
 
-        return result;
+        variables.put("storeDto", kaspiStoreMapper.mapToDetailResponse(kaspiStoreWithTime));
+
+        return variables;
     }
 
     @JobWorker(type = "PrintHelloWorld")

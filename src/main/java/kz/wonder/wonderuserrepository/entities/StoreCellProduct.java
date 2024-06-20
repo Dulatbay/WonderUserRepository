@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "store_cell_product", schema = schemaName)
@@ -15,15 +16,20 @@ public class StoreCellProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "store_cell_id", nullable = false)
     private StoreCell storeCell;
 
-    @EqualsAndHashCode.Exclude
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            optional = false)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
+    @MapsId
     private SupplyBoxProduct supplyBoxProduct;
 
-    @OneToOne(fetch = FetchType.LAZY,
+    @OneToOne(
+            fetch = FetchType.LAZY,
             mappedBy = "storeCellProduct",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private OrderAssembleProcess assembleProcess;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

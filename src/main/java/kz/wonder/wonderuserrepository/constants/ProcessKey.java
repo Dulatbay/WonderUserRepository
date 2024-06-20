@@ -4,6 +4,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ProcessKeys {
-
+public class ProcessKey {
+    public static final String CREATE_SUPPLY = "create-supply";
 }

@@ -3,11 +3,13 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "store_cell", schema = schemaName)
@@ -37,7 +39,7 @@ public class StoreCell extends AbstractEntity<Long> {
             mappedBy = "storeCell",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
-    private List<StoreCellProduct> storeCellProducts;
+    private Set<StoreCellProduct> storeCellProducts;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_store_id", nullable = false)

@@ -3,12 +3,14 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.config.converters.DayOfWeekIntegerConverter;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "kaspi_store_available_times", schema = schemaName)

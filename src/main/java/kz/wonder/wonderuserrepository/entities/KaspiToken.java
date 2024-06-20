@@ -3,11 +3,13 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(schema = schemaName, name = "kaspi_token")
@@ -40,5 +42,6 @@ public class KaspiToken extends AbstractEntity<Long> {
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", nullable = false)
+    @MapsId
     private WonderUser wonderUser;
 }

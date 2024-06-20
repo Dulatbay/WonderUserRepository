@@ -25,12 +25,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+
     generate-ddl: true
     defer-datasource-initialization: true
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+#        generate_statistics: true
   sql:
     init:
       mode: always
@@ -58,7 +60,12 @@ camunda:
   client:
     mode: simple
 
-
+logging:
+  level:
+    org:
+      hibernate:
+        type: debug
+        stat: debug
 
 
 

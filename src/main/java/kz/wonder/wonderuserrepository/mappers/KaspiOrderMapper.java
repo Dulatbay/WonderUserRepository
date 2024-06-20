@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.getLocalDateTimeFromTimestamp;
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
@@ -113,7 +114,7 @@ public class KaspiOrderMapper {
         orderResponse.setDeliveryType(kaspiOrder.getDeliveryMode());
         orderResponse.setPickUpPerson(kaspiOrder.getFirstMileCourier());
         orderResponse.setPrice(kaspiOrder.getTotalPrice());
-        orderResponse.setProductsCount(Optional.ofNullable(kaspiOrder.getProducts()).map(List::size).orElse(0));
+        orderResponse.setProductsCount(Optional.ofNullable(kaspiOrder.getProducts()).map(Set::size).orElse(0));
 
         return orderResponse;
     }

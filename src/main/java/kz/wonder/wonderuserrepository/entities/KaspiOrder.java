@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import kz.wonder.kaspi.client.model.PaymentMode;
 import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "kaspi_order", schema = schemaName)
@@ -33,7 +35,7 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_store_id")
     private KaspiStore kaspiStore;
 
@@ -77,8 +79,9 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @Column(name = "status")
     private String status;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
     @JoinColumn(name = "kaspi_delivery_address")
+    @MapsId
     private KaspiDeliveryAddress deliveryAddress;
 
     @Column(name = "waybill")
@@ -119,29 +122,32 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @Column(name = "delivery_cost")
     private Double deliveryCost;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wonder_user_id")
     private WonderUser wonderUser;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
-    private List<KaspiOrderProduct> products;
+    private Set<KaspiOrderProduct> products = new HashSet<>();
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "kaspiOrder",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private OrderAssemble orderAssemble;
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "kaspiOrder",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private OrderPackage orderPackage;
 
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "kaspiOrder",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private OrderTransmission orderTransmission;
 
 }

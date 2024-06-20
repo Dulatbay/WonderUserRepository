@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xmlbeans.impl.store.Locale;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -165,15 +164,17 @@ public class ProductServiceImpl implements ProductService {
 
 
     private Boolean getBooleanFromString(String isPublic) {
-        if (isPublic.equalsIgnoreCase(messageSource.getMessage("services-impl.product-service-impl.yes", null, LocaleContextHolder.getLocale()))) return Boolean.TRUE;
-        if (isPublic.equalsIgnoreCase(messageSource.getMessage("services-impl.product-service-impl.no", null, LocaleContextHolder.getLocale()))) return Boolean.FALSE;
+        if (isPublic.equalsIgnoreCase(messageSource.getMessage("services-impl.product-service-impl.yes", null, LocaleContextHolder.getLocale())))
+            return Boolean.TRUE;
+        if (isPublic.equalsIgnoreCase(messageSource.getMessage("services-impl.product-service-impl.no", null, LocaleContextHolder.getLocale())))
+            return Boolean.FALSE;
         return Boolean.parseBoolean(isPublic);
     }
 
     private void processProductPrices(Product product, double priceAlmaty, double priceAstana, double priceShymkent, Map<String, KaspiCity> cityCache) {
         final String CITY_ALMATY = messageSource.getMessage("services-impl.product-service-impl.almaty", null, LocaleContextHolder.getLocale());
         final String CITY_ASTANA = messageSource.getMessage("services-impl.product-service-impl.astana", null, LocaleContextHolder.getLocale());
-        final String CITY_SHYMKENT = messageSource.getMessage("services-impl.product-service-impl.shymkent", null ,LocaleContextHolder.getLocale());
+        final String CITY_SHYMKENT = messageSource.getMessage("services-impl.product-service-impl.shymkent", null, LocaleContextHolder.getLocale());
 
         var cityAlmaty = getCachedCity(CITY_ALMATY, cityCache);
         var cityAstana = getCachedCity(CITY_ASTANA, cityCache);
@@ -184,7 +185,7 @@ public class ProductServiceImpl implements ProductService {
         var priceAtShymkent = processProductPrice(product, cityShymkent, priceShymkent);
 
 
-        product.setPrices(new ArrayList<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
+        product.setPrices(new HashSet<>(Arrays.asList(priceAtAlmaty, priceAtAstana, priceAtShymkent)));
     }
 
     private KaspiCity getCachedCity(String cityName, Map<String, KaspiCity> cityCache) {
@@ -295,15 +296,15 @@ public class ProductServiceImpl implements ProductService {
             List<SupplyBoxProduct> supplyBoxes = supplyBoxProductsRepository.findSupplyBoxesByProductIds(productIds);
             log.info("FETCH SupplyBoxProduct ENDED");
 
-            Map<Long, List<ProductPrice>> pricesMap = prices.stream()
-                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId()));
+            Map<Long, Set<ProductPrice>> pricesMap = prices.stream()
+                    .collect(Collectors.groupingBy(pp -> pp.getProduct().getId(), Collectors.toSet()));
 
-            Map<Long, List<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
-                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId()));
+            Map<Long, Set<SupplyBoxProduct>> supplyBoxesMap = supplyBoxes.stream()
+                    .collect(Collectors.groupingBy(sbp -> sbp.getProduct().getId(), Collectors.toSet()));
 
             products.forEach(product -> {
-                product.setPrices(pricesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
-                product.setSupplyBoxProducts(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new ArrayList<>()));
+                product.setPrices(pricesMap.computeIfAbsent(product.getId(), k -> new HashSet<>()));
+                product.setSupplyBoxProducts(supplyBoxesMap.computeIfAbsent(product.getId(), k -> new HashSet<>()));
             });
         }
 
