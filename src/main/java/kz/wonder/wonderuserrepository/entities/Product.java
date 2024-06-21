@@ -11,8 +11,8 @@ import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=false)
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper=true)
 @NoArgsConstructor
 @Data
 @Entity

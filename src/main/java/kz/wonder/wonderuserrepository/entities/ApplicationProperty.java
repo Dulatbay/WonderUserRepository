@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "application_property",

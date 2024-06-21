@@ -9,7 +9,7 @@ import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "store_cell", schema = schemaName)

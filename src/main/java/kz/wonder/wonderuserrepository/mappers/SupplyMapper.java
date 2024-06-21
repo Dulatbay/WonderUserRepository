@@ -25,7 +25,7 @@ public class SupplyMapper {
         supply.setAuthor(user);
         supply.setKaspiStore(store);
         supply.setSupplyState(SupplyState.START);
-        supply.setSelectedTime(createRequest.getSelectedTime());
+        supply.setSelectedTime(createRequest.getSelectedTime().atStartOfDay());
         return supply;
     }
 

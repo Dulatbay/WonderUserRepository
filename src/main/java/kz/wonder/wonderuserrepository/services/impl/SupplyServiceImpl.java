@@ -110,6 +110,7 @@ public class SupplyServiceImpl implements SupplyService {
 
         variables.put("storeId", createRequest.getStoreId());
         variables.put("supplyCreateRequest", createRequest);
+        variables.put("keycloakId", userId);
 
         var vars = appZeebeClient.startInstance(ProcessKey.CREATE_SUPPLY, variables).getVariables();
 

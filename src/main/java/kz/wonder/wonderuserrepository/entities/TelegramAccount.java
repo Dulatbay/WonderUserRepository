@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Entity
 @Data
 @Table(schema = schemaName, name = "telegram_account")
@@ -29,7 +29,6 @@ public class TelegramAccount extends AbstractEntity<Long> {
     private boolean enabled;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
     @MapsId
     private WonderUser wonderUser;
 }

@@ -11,7 +11,7 @@ import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "store_employee", schema = schemaName)
@@ -21,7 +21,6 @@ public class StoreEmployee extends AbstractEntity<Long> {
     private KaspiStore kaspiStore;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, optional = false)
-    @JoinColumn(name = "wonder_user_id", nullable = false, unique = true)
     @MapsId
     private WonderUser wonderUser;
 

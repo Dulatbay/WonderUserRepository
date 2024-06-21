@@ -11,7 +11,7 @@
       <bpmn:incoming>Flow_0vd12qf</bpmn:incoming>
       <bpmn:incoming>Flow_0yhwmvu</bpmn:incoming>
       <bpmn:incoming>Flow_0lmw6x2</bpmn:incoming>
-      <bpmn:errorEventDefinition id="ErrorEventDefinition_1np9qth" errorRef="Error_0cghe68" />
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1np9qth" errorRef="Error_1sgrl8z" />
     </bpmn:endEvent>
     <bpmn:serviceTask id="Activity_1jhcsv4" name="Create Supply">
       <bpmn:extensionElements>
@@ -32,7 +32,7 @@
           </zeebe:ioMapping>
         </bpmn:extensionElements>
         <bpmn:outgoing>Flow_0w6sz7x</bpmn:outgoing>
-        <bpmn:errorEventDefinition id="ErrorEventDefinition_0wswson" errorRef="Error_0cghe68" />
+        <bpmn:errorEventDefinition id="ErrorEventDefinition_0wswson" errorRef="Error_1sgrl8z" />
       </bpmn:startEvent>
       <bpmn:serviceTask id="Activity_06dyjts" name="Get Message">
         <bpmn:extensionElements>
@@ -51,7 +51,7 @@
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="getStoreById" />
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0c94weo</bpmn:incoming>
+      <bpmn:incoming>Flow_0nv9jwz</bpmn:incoming>
       <bpmn:outgoing>Flow_1ek4isj</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:boundaryEvent id="Event_1mjfyih" attachedToRef="Activity_1jhcsv4">
@@ -129,7 +129,7 @@
         </zeebe:ioMapping>
       </bpmn:extensionElements>
       <bpmn:outgoing>Flow_10y3at5</bpmn:outgoing>
-      <bpmn:errorEventDefinition id="ErrorEventDefinition_0jjh1n6" errorRef="Error_0cghe68" />
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_0jjh1n6" errorRef="Error_1sgrl8z" />
     </bpmn:boundaryEvent>
     <bpmn:sequenceFlow id="Flow_10y3at5" sourceRef="Event_1wpiei7" targetRef="Event_0jvwcid" />
     <bpmn:exclusiveGateway id="Gateway_1dmyav0" name="is user enabled?" default="Flow_0wqf9id">
@@ -296,7 +296,7 @@
       <bpmn:sequenceFlow id="Flow_046vogy" sourceRef="Activity_0dqm7v2" targetRef="Gateway_0mxi6ly" />
     </bpmn:subProcess>
     <bpmn:sequenceFlow id="Flow_0tb1b36" sourceRef="Event_04wwn1b" targetRef="Event_02m7z05" />
-    <bpmn:sequenceFlow id="Flow_0c94weo" sourceRef="StartEvent_1" targetRef="Activity_1m2izpz" />
+    <bpmn:sequenceFlow id="Flow_0c94weo" sourceRef="StartEvent_1" targetRef="Activity_04ji7kt" />
     <bpmn:serviceTask id="Activity_1lw62mu" name="Get City By ID">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="getCityById" />
@@ -345,9 +345,18 @@
     <bpmn:sequenceFlow id="Flow_0hjx988" sourceRef="putCityIdToParams" targetRef="Activity_1lw62mu" />
     <bpmn:sequenceFlow id="Flow_0yhwmvu" sourceRef="Event_1g2s44x" targetRef="Event_0jvwcid" />
     <bpmn:sequenceFlow id="Flow_0lmw6x2" sourceRef="Event_178m91c" targetRef="Event_0jvwcid" />
+    <bpmn:serviceTask id="Activity_04ji7kt" name="PrintHelloWorld">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="PrintHelloWorld" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0c94weo</bpmn:incoming>
+      <bpmn:outgoing>Flow_0nv9jwz</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0nv9jwz" sourceRef="Activity_04ji7kt" targetRef="Activity_1m2izpz" />
   </bpmn:process>
   <bpmn:error id="Error_0cghe68" name="Exception" errorCode="any" />
   <bpmn:signal id="Signal_1d3hh8e" name="Signal_1d3hh8e" />
+  <bpmn:error id="Error_1sgrl8z" name="STORE_EXCEPTION" errorCode="400" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="create-supply">
       <bpmndi:BPMNShape id="Event_0jvwcid_di" bpmnElement="Event_0jvwcid">
@@ -433,6 +442,10 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_02m7z05_di" bpmnElement="Event_02m7z05">
         <dc:Bounds x="2462" y="612" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_04ji7kt_di" bpmnElement="Activity_04ji7kt">
+        <dc:Bounds x="250" y="730" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0oka3xh_di" bpmnElement="Activity_0oka3xh" isExpanded="true">
         <dc:Bounds x="390" y="80" width="350" height="200" />
@@ -686,7 +699,9 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0c94weo_di" bpmnElement="Flow_0c94weo">
         <di:waypoint x="188" y="630" />
-        <di:waypoint x="320" y="630" />
+        <di:waypoint x="219" y="630" />
+        <di:waypoint x="219" y="790" />
+        <di:waypoint x="250" y="790" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1ek4isj_di" bpmnElement="Flow_1ek4isj">
         <di:waypoint x="420" y="630" />
@@ -738,6 +753,12 @@
         <di:waypoint x="1000" y="482" />
         <di:waypoint x="1000" y="460" />
         <di:waypoint x="2232" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nv9jwz_di" bpmnElement="Flow_0nv9jwz">
+        <di:waypoint x="300" y="730" />
+        <di:waypoint x="300" y="700" />
+        <di:waypoint x="370" y="700" />
+        <di:waypoint x="370" y="670" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

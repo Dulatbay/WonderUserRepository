@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "store_cell_product", schema = schemaName)
@@ -21,7 +21,6 @@ public class StoreCellProduct extends AbstractEntity<Long> {
             orphanRemoval = true,
             optional = false)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
-    @MapsId
     private SupplyBoxProduct supplyBoxProduct;
 
     @OneToOne(

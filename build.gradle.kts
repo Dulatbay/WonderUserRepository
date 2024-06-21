@@ -96,6 +96,7 @@ dependencies {
     // camunda
     implementation("io.camunda:zeebe-client-java:${property("zeebeVersion")}")
     implementation("io.camunda:spring-zeebe-starter:${property("zeebeVersion")}")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310" )
 }
 
 dependencyManagement {

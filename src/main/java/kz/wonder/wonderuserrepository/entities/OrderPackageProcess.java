@@ -6,8 +6,8 @@ import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=false)
 @Data
-@EqualsAndHashCode(callSuper=true)
 @Entity
 @Table(name = "order_package_process", schema = schemaName)
 public class OrderPackageProcess extends AbstractEntity<Long>{
@@ -21,6 +21,5 @@ public class OrderPackageProcess extends AbstractEntity<Long>{
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
-    @MapsId
     private SupplyBoxProduct supplyBoxProduct;
 }

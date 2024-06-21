@@ -15,10 +15,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "kaspi_store_available_times", schema = schemaName)
 public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_store")
     private KaspiStore kaspiStore;

@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.repositories;
 
 import kz.wonder.wonderuserrepository.entities.KaspiStore;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,10 +26,13 @@ public interface KaspiStoreRepository extends JpaRepository<KaspiStore, Long> {
 
     List<KaspiStore> findAllByDeletedIsFalse();
 
+    @NotNull
+    @Override
     @Query("select ks from KaspiStore ks " +
-            "LEFT JOIN FETCH ks.availableTimes kst " +
-            "where ks.id = :id AND ks.deleted = false")
-    Optional<KaspiStore> findByIdAndWithFetchingTime(Long id);
+            "LEFT JOIN FETCH ks.kaspiCity " +
+            "LEFT JOIN FETCH ks.wonderUser " +
+            "where ks.id = :id AND ks.deleted = false ")
+    Optional<KaspiStore> findById(@NotNull Long id);
 
 //    @Query("select ks from KaspiStore ks " +
 //            "LEFT JOIN FETCH ks.availableBoxTypes " +

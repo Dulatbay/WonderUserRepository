@@ -15,7 +15,7 @@ import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "kaspi_store", schema = schemaName)
@@ -58,22 +58,25 @@ public class KaspiStore extends AbstractEntity<Long> {
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
     private WonderUser wonderUser;
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private Set<StoreEmployee> employees = new HashSet<>();
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private Set<StoreCell> storeCells = new HashSet<>();
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,
@@ -84,6 +87,7 @@ public class KaspiStore extends AbstractEntity<Long> {
     @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(
             fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
@@ -91,6 +95,7 @@ public class KaspiStore extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private Set<KaspiStoreAvailableTimes> availableTimes = new HashSet<>();
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(
             fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
@@ -98,6 +103,7 @@ public class KaspiStore extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private Set<KaspiStoreAvailableBoxTypes> availableBoxTypes = new HashSet<>();
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "kaspiStore",
             orphanRemoval = true,

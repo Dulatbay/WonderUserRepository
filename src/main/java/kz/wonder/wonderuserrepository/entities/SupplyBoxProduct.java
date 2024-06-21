@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "supply_box_product", schema = schemaName)

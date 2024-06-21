@@ -6,7 +6,7 @@ import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "order_assemble_process", schema = schemaName, uniqueConstraints = {@UniqueConstraint(columnNames = {"order_assemble_id", "store_cell_product_id"})})
@@ -21,6 +21,5 @@ public class OrderAssembleProcess extends AbstractEntity<Long> {
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "store_cell_product_id")
-    @MapsId
     private StoreCellProduct storeCellProduct;
 }

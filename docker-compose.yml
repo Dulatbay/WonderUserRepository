@@ -1,5 +1,18 @@
 services:
 
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wonder-user-repository
+      - keycloak
+    networks:
+      - app-platform
+
   zeebe: # https://docs.camunda.io/docs/self-managed/platform-deployment/docker/#zeebe
     image: camunda/zeebe:${CAMUNDA_PLATFORM_VERSION}
     container_name: zeebe
@@ -26,7 +39,7 @@ services:
     volumes:
       - zeebe:/usr/local/zeebe/data
     networks:
-      - camunda-platform
+      - app-platform
     depends_on:
       - elasticsearch
 
@@ -48,7 +61,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - camunda-platform
+      - app-platform
     depends_on:
       - zeebe
       - elasticsearch
@@ -80,7 +93,7 @@ services:
     volumes:
       - elastic:/usr/share/elasticsearch/data
     networks:
-      - camunda-platform
+      - app-platform
 
   kibana:
     image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
@@ -90,36 +103,50 @@ services:
     volumes:
       - kibana:/usr/share/kibana/data
     networks:
-      - camunda-platform
+      - app-platform
     depends_on:
       - elasticsearch
     profiles:
       - kibana
 
-#  zookeeper:
-#    image: "confluentinc/cp-zookeeper:latest"
-#    hostname: zookeeper
-#    networks:
-#      - camunda-platform
-#    ports:
-#      - 2181:2181
-#    environment:
-#      ZOOKEEPER_CLIENT_PORT: 2181
-#
-#  kafka:
-#    image: "confluentinc/cp-kafka:latest"
-#    hostname: kafka
-#    networks:
-#      - camunda-platform
-#    ports:
-#      - 9092:9092
-#      - 29092:29092
-#    environment:
-#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-#      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
-#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  keycloak:
+    image: bitnami/keycloak
+    container_name: keycloak
+    ports:
+      - 8484:8080
+    networks:
+      - app-platform
+    environment:
+      KEYCLOAK_ADMIN_USER: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_DATABASE_HOST: ${KEYCLOAK_DATABASE_HOST}
+      KEYCLOAK_DATABASE_PORT: ${KEYCLOAK_DATABASE_PORT}
+      KEYCLOAK_DATABASE_NAME: ${KEYCLOAK_DATABASE_NAME}
+      KC_DB_SCHEMA: schema_keycloak
+      KEYCLOAK_DATABASE_USER: ${KEYCLOAK_DATABASE_USER}
+      KEYCLOAK_DATABASE_PASSWORD: ${KEYCLOAK_DATABASE_PASSWORD}
+
+  wonder-user-repository:
+    image: qqanly/wonder-user-repository
+    container_name: wonder-user-repository
+    environment:
+      DATABASE_DOMAIN: 34.118.70.161
+      DATABASE_PORT: 5432
+      DATABASE_NAME: wonder
+      DATABASE_USERNAME: user_qit
+      DATABASE_PASSWORD: -C3x7Q.mkn]?h[7_
+      KEYCLOAK_URL: http://keycloak:8484
+      ZEEBE_BASE_URL: http://zeebe:8080
+      ZEEBE_GATEWAY_URL: http://zeebe:26500
+      OPERATE_BASE_URL: http://operate:8081
+      PORT: 8888
+    ports:
+      - "8888:8888"
+    depends_on:
+      - keycloak
+      - zeebe
+    networks:
+      - app-platform
 
 volumes:
   zeebe:
@@ -127,5 +154,5 @@ volumes:
   kibana:
 
 networks:
-  camunda-platform:
+  app-platform:
     driver: bridge

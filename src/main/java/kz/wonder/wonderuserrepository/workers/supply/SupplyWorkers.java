@@ -9,16 +9,12 @@ import kz.wonder.wonderuserrepository.dto.response.StoreDetailResponse;
 import kz.wonder.wonderuserrepository.entities.SupplyBox;
 import kz.wonder.wonderuserrepository.entities.SupplyBoxProduct;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
-import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,8 +33,8 @@ public class SupplyWorkers {
 
     @JobWorker(type = "createSupply")
     public void createSupply(@Variable SupplyCreateRequest supplyCreateRequest,
-                                            @Variable StoreDetailResponse storeDto,
-                                            @Variable SellerUserResponse sellerDto) {
+                             @Variable StoreDetailResponse storeDto,
+                             @Variable SellerUserResponse sellerDto) {
         log.info("Create supply");
 
 
@@ -88,7 +84,7 @@ public class SupplyWorkers {
 
     @JobWorker(type = "checkStoreAndSupplyTime")
     public Map<String, Object> checkStoreAndSupplyTime(@Variable SupplyCreateRequest supplyCreateRequest, @Variable StoreDetailResponse storeDto) {
-        log.info("Check store and supply time");
+        log.info("Check store and supply time, vars:{}", supplyCreateRequest);
         Map<String, Object> result = new HashMap<>();
 
         var availableTimes = storeDto.getAvailableWorkTimes();
@@ -115,12 +111,14 @@ public class SupplyWorkers {
 
     @JobWorker(type = "checkStoreAndSupplyBox")
     public Map<String, Object> checkStoreAndSupplyBox(@Variable SupplyCreateRequest supplyCreateRequest, @Variable StoreDetailResponse storeDto) {
-        log.info("Check store and supply box");
+        log.info("Check store and supply box, vars:{}", supplyCreateRequest);
         Map<String, Object> result = new HashMap<>();
 
-        var boxTypeIds = supplyCreateRequest.getSelectedBoxes().stream().map(SupplyCreateRequest.SelectedBox::getSelectedBoxId).toList();
+        var boxTypeIds = supplyCreateRequest.getSelectedBoxes().stream().map(SupplyCreateRequest.SelectedBox::getSelectedBoxId).distinct().toList();
 
         var foundBoxes = boxTypeRepository.findByIdsInStore(boxTypeIds, storeDto.getId());
+
+        log.info("Found boxes size: {}, requested boxes size: {}", foundBoxes.size(), boxTypeIds.size());
 
         var isAvailableToSupply = (boxTypeIds.size() == foundBoxes.size());
 

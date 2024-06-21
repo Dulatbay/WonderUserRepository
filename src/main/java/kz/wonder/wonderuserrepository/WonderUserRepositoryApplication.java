@@ -1,11 +1,7 @@
 package kz.wonder.wonderuserrepository;
 
-import io.camunda.zeebe.spring.client.EnableZeebeClient;
 import io.camunda.zeebe.spring.client.annotation.Deployment;
 import kz.wonder.kaspi.client.api.KaspiApi;
-import kz.wonder.wonderuserrepository.entities.BoxType;
-import kz.wonder.wonderuserrepository.entities.KaspiProductCategory;
-import kz.wonder.wonderuserrepository.entities.KaspiStoreAvailableTimes;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.AppZeebeClient;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +25,25 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Deployment(resources = "classpath*:/bpmn-diagrams/**/*.bpmn")
 public class WonderUserRepositoryApplication {
 
+    private final KaspiTokenRepository kaspiTokenRepository;
+    private final StoreEmployeeRepository storeEmployeeRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(WonderUserRepositoryApplication.class, args);
     }
 
+    @Bean
+    public CommandLineRunner commandLineRunner(UserRepository userRepository) {
+        return args -> {
+            log.info("Starting command line runner");
+//            userRepository.findAll();
+//            kaspiTokenRepository.findAll();
+//            storeEmployeeRepository.findAll();
+//            userRepository.findById(1L)
+//                    .orElseThrow(() -> new RuntimeException("User not found"));
+            log.info("Finishing command line runner");
+        };
+    }
 
 
     // todo: на некоторые сущности вместо keycloakId написать userId

@@ -22,9 +22,11 @@ public class SellerUserWorkers {
 
     @JobWorker(type = "getSellerUserByKeycloakId")
     public Map<String, Object> getUserByKeycloakId(@Variable("keycloakId") String keycloakId) {
+        log.info("Worker: getUserByKeycloakId {}", keycloakId);
+
         Map<String, Object> result = new HashMap<>();
 
-        var userToken = kaspiTokenRepository.findByWonderUserKeycloakIdWithFetch(keycloakId)
+        var userToken = kaspiTokenRepository.findByKeycloakIdWithFetch(keycloakId)
                 .orElseThrow(() -> new ZeebeBpmnError("403", ""));
 
 

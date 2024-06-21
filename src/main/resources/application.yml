@@ -6,7 +6,7 @@ application:
   client-id: wonder
   username: admin@mail.ru
   password: admin_password
-  mode: ${APP_MODE}
+  mode: ${APP_MODE:DEV}
   admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:99d66d43-e8a1-4fe6-a854-8ce686c73ed6}
   file-api:
     name: file-api
@@ -17,11 +17,14 @@ spring:
   codec:
     max-in-memory-size: 500KB
   datasource:
-    url: jdbc:postgresql://${DATABASE_DOMAIN}:${DATABASE_PORT}/${DATABASE_NAME}
-    #    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: jdbc:postgresql://${DATABASE_DOMAIN:34.118.70.161}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
+    username: ${DATABASE_USERNAME:user_qit}
+    password: ${DATABASE_PASSWORD:-C3x7Q.mkn]?h[7_}
     driver-class-name: ${DRIVER_CLASS_NAME:org.postgresql.Driver}
+#    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
+#    username: ${DATABASE_USERNAME:user_qit}
+#    password: ${DATABASE_PASSWORD:123}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -56,9 +59,16 @@ server:
 
 ## https://github.com/camunda-community-hub/spring-zeebe
 
+
+
 camunda:
   client:
-    mode: simple
+    zeebe:
+      request-timeout: 360s
+      base-url: ${ZEEBE_BASE_URL}
+      gateway-url: ${ZEEBE_GATEWAY_URL}
+    operate:
+      base-url: ${OPERATE_BASE_URL}
 
 logging:
   level:

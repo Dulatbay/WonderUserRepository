@@ -11,7 +11,7 @@ import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "kaspi_order", schema = schemaName)
@@ -81,7 +81,6 @@ public class KaspiOrder extends AbstractEntity<Long> {
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
     @JoinColumn(name = "kaspi_delivery_address")
-    @MapsId
     private KaspiDeliveryAddress deliveryAddress;
 
     @Column(name = "waybill")

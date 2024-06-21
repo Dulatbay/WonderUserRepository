@@ -13,7 +13,6 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 @Slf4j
 public class LocalDateTimeAttributeConverter implements AttributeConverter<LocalDateTime, Long> {
 
-
     @Override
     public Long convertToDatabaseColumn(LocalDateTime locDateTime) {
         if (locDateTime == null) return null;

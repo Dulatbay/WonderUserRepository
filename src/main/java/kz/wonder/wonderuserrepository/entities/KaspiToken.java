@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=true)
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(schema = schemaName, name = "kaspi_token")
@@ -40,8 +40,8 @@ public class KaspiToken extends AbstractEntity<Long> {
     @Column(name = "xml_updated", nullable = false)
     private boolean xmlUpdated;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", nullable = false)
+    @EqualsAndHashCode.Exclude
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = false)
     @MapsId
     private WonderUser wonderUser;
 }

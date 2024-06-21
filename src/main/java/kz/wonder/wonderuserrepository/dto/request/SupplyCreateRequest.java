@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,8 +17,7 @@ public class SupplyCreateRequest {
     @Positive(message = "{requests.supply-create-request.store-id-must-be-positive}")
     private Long storeId;
 
-    @Convert(converter = LocalDateTimeAttributeConverter.class)
-    private LocalDateTime selectedTime;
+    private LocalDate selectedTime;
 
     @NotEmpty(message = "{requests.supply-create-request.please-provide-selected-boxes}")
     private List<SelectedBox> selectedBoxes;
