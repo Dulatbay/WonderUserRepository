@@ -27,6 +27,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.TIME_FORMATTER;
@@ -213,7 +214,7 @@ public class KaspiStoreMapper {
                 .build();
     }
 
-    private List<AvailableWorkTime> getAvailableTimesByStoreId(List<KaspiStoreAvailableTimes> availableTimes) {
+    private List<AvailableWorkTime> getAvailableTimesByStoreId(Set<KaspiStoreAvailableTimes> availableTimes) {
 
         final var awts = new ArrayList<AvailableWorkTime>();
 

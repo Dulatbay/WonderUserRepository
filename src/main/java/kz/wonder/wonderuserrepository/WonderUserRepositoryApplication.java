@@ -18,11 +18,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @EnableFeignClients(basePackages = "kz.wonder.filemanager.client.api")
 public class WonderUserRepositoryApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(WonderUserRepositoryApplication.class, args);
     }
-
-
-    // todo: на некоторые сущности вместо keycloakId написать userId
 }

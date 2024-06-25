@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -134,7 +135,7 @@ public class OrderAssembleMapper {
             if (order.getPlannedDeliveryDate() != null) {
                 response.setDeliveryDate(Utils.getLocalDateTimeFromTimestamp(order.getPlannedDeliveryDate()));
             }
-            response.setProductsCount(Optional.ofNullable(order.getProducts()).map(List::size).orElse(0));
+            response.setProductsCount(Optional.ofNullable(order.getProducts()).map(Set::size).orElse(0));
         }
     }
 

@@ -3,9 +3,11 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=false)
 @Entity
 @Data
 @Table(schema = schemaName, name = "telegram_account")
@@ -26,7 +28,7 @@ public class TelegramAccount extends AbstractEntity<Long> {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @MapsId
     private WonderUser wonderUser;
 }

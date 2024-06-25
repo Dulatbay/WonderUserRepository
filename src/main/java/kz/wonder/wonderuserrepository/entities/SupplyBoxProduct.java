@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.constants.Utils;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "supply_box_product", schema = schemaName)
@@ -41,7 +43,8 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",
             orphanRemoval = true,
-            cascade = CascadeType.ALL)
+            cascade = CascadeType.ALL,
+            optional = false)
     private StoreCellProduct storeCellProduct;
 //
 //    @OneToOne(fetch = FetchType.LAZY,

@@ -91,6 +91,9 @@ dependencies {
 
     // iTextPDF dependencies
     implementation("com.itextpdf:itextpdf:5.5.13.2")
+
+    implementation("com.google.cloud.sql:postgres-socket-factory:1.13.1")
+
 }
 
 dependencyManagement {

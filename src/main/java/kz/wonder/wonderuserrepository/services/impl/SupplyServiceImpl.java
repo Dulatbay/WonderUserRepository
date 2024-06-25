@@ -147,7 +147,6 @@ public class SupplyServiceImpl implements SupplyService {
 
                     var supplyBox = new SupplyBox();
                     supplyBox.setBoxType(boxType);
-                    supplyBox.setSupplyBoxProducts(new ArrayList<>());
                     supplyBox.setSupply(supply);
 
 
