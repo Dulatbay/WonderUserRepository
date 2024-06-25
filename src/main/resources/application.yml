@@ -1,23 +1,23 @@
 application:
   title: Wonder
   version: 1.0.0
-  keycloak-url: ${KEYCLOAK_URL:http://34.118.60.220}
+  keycloak-url: ${KEYCLOAK_URL:https://keycloak-of5r5e4d7a-lm.a.run.app}
   realm: wonder
   client-id: wonder
-  username: admin@mail.ru
-  password: admin_password
-  mode: ${APP_MODE}
-  admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:99d66d43-e8a1-4fe6-a854-8ce686c73ed6}
+  username: ${KEYCLOAK_ADMIN}
+  password: ${KEYCLOAK_ADMIN_PASSWORD}
+  mode: ${APP_MODE:DEV}
+  admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:9e3c01e8-795c-4c85-8af2-91b8b1c481ba}
   file-api:
     name: file-api
-    url: ${FILE_API_URL:https://file-manager-of5r5e4d7a-lm.a.run.app}
+    url: ${FILE_API_URL:https://wonderfilemanagerepository-of5r5e4d7a-el.a.run.app}
   kaspi-api:
     url: ${KASPI_API_URL:https://kaspi.kz/shop/api/v2}
 spring:
   codec:
     max-in-memory-size: 500KB
   datasource:
-    url: jdbc:postgresql://${DATABASE_DOMAIN}:${DATABASE_PORT}/${DATABASE_NAME}
+    url: ${DATABASE_URL}
     #    url: jdbc:postgresql://${DATABASE_DOMAIN:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:wonder}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}

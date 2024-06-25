@@ -3,9 +3,11 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.entities.enums.KaspiProductUnitType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "kaspi_order_product", schema = schemaName)
@@ -18,7 +20,7 @@ public class KaspiOrderProduct extends AbstractEntity<Long> {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "supply_box_product_id")
     private SupplyBoxProduct supplyBoxProduct;
 

@@ -2,9 +2,11 @@ package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=false)
 @Data
 @Entity
 @Table(name = "order_package_process", schema = schemaName)
@@ -17,7 +19,7 @@ public class OrderPackageProcess extends AbstractEntity<Long>{
     @JoinColumn(name = "package_order_id", nullable = false)
     private OrderPackage orderPackage;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
 }

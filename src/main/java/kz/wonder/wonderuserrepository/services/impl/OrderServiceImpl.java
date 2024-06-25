@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -216,9 +217,8 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.order-service-impl.order-not-found", null, LocaleContextHolder.getLocale()));
         }
 
-        var products = Optional.ofNullable(order.getProducts()).orElse(new ArrayList<>());
 
-        var orderProducts = products
+        var orderProducts = order.getProducts()
                 .stream()
                 .map(kaspiOrderProduct -> {
                     var productOptional = Optional.ofNullable(kaspiOrderProduct.getProduct());

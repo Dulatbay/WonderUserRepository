@@ -3,20 +3,19 @@ package kz.wonder.wonderuserrepository.entities;
 import jakarta.persistence.*;
 import kz.wonder.wonderuserrepository.config.converters.DayOfWeekIntegerConverter;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
+@EqualsAndHashCode(callSuper=true)
 @Data
 @Entity
 @Table(name = "kaspi_store_available_times", schema = schemaName)
 public class KaspiStoreAvailableTimes extends AbstractEntity<Long> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_store")
     private KaspiStore kaspiStore;

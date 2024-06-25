@@ -18,10 +18,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.JAXB_SCHEMA_LOCATION;
@@ -88,11 +85,11 @@ public class ProductXmlMapper {
     private List<KaspiCatalog.Offer> getOffers(List<Product> listOfProducts) {
         final var listOfProductPrices = productPriceRepository.findPricesByProductIds(listOfProducts.stream().map(AbstractEntity::getId).toList());
 
-        Map<Long, List<ProductPrice>> pricesMap = listOfProductPrices.stream()
-                .collect(Collectors.groupingBy(price -> price.getProduct().getId()));
+        Map<Long, Set<ProductPrice>> pricesMap = listOfProductPrices.stream()
+                .collect(Collectors.groupingBy(price -> price.getProduct().getId(), Collectors.toSet()));
 
         for (var product : listOfProducts) {
-            product.setPrices(pricesMap.getOrDefault(product.getId(), new ArrayList<>()));
+            product.setPrices(pricesMap.getOrDefault(product.getId(), new HashSet<>()));
         }
 
 
