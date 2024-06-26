@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
                 ),
                 @Server(
                         description = "PROD ENV",
-                        url = "https://wonderuserrepository-of5r5e4d7a-lm.a.run.app/api"
+                        url = "https://wonderuserrepository-of5r5e4d7a-el.a.run.app/api"
                 )
         },
         security = {

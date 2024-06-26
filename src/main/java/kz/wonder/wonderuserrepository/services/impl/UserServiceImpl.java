@@ -11,6 +11,7 @@ import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,13 @@ public class UserServiceImpl implements UserService {
 	private final KeycloakService keycloakService;
 	private final EntityManager entityManager;
 	private final MessageSource messageSource;
+
+
+	@Value("${application.username}")
+	private String keycloakUsername;
+
+	@Value("${application.password}")
+	private String keycloakPassword;
 
 
 
@@ -54,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
 		var usersToDeleteFromKeycloak = usersFromKeycloak.stream()
 				.filter(user -> {
-							if (user.getEmail() != null && user.getEmail().equals("tester@mail.ru")) {
+							if (user.getEmail() != null && user.getEmail().equals(keycloakUsername)) {
 								testerUserId.set(user.getId());
 								return false;
 							}
@@ -64,7 +72,7 @@ public class UserServiceImpl implements UserService {
 									.noneMatch(user1 -> user1.getKeycloakId()
 											.equals(user.getId()))
 									&&
-									!user.getUsername().equals("admin_qit");
+									!user.getUsername().equals(keycloakUsername);
 						}
 				)
 				.toList();
@@ -104,10 +112,10 @@ public class UserServiceImpl implements UserService {
 		if (!testUserExists.get()) {
 			if (testerUserId.get().isEmpty()) {
 				var keycloakUser = new KeycloakBaseUser();
-				keycloakUser.setEmail("tester@mail.ru");
-				keycloakUser.setPassword("test_tester");
-				keycloakUser.setFirstName("test");
-				keycloakUser.setLastName("test");
+				keycloakUser.setEmail(keycloakUsername);
+				keycloakUser.setPassword(keycloakPassword);
+				keycloakUser.setFirstName("Akhan");
+				keycloakUser.setLastName("Dulatbay");
 				var keycloakTester = keycloakService.createUserByRole(keycloakUser,
 						KeycloakRole.SUPER_ADMIN
 				);
@@ -117,7 +125,7 @@ public class UserServiceImpl implements UserService {
 			var wonderUser = new WonderUser();
 			wonderUser.setKeycloakId(testerUserId.get());
 			wonderUser.setPhoneNumber("tester");
-			wonderUser.setUsername("Tester");
+			wonderUser.setUsername(keycloakUsername);
 
 			userRepository.save(wonderUser);
 			log.info("New tester created");

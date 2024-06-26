@@ -43,11 +43,11 @@ public class SellerServiceImpl implements SellerService {
         WonderUser wonderUser = sellerMapper.toCreateWonderUser(sellerRegistrationRequest);
         KaspiToken kaspiToken = sellerMapper.toCreateKaspiToken(sellerRegistrationRequest, wonderUser);
 
-        kaspiToken = kaspiTokenRepository.save(kaspiToken);
-
-        wonderUser.setKaspiToken(kaspiToken);
-
         userRepository.save(wonderUser);
+
+        kaspiTokenRepository.save(kaspiToken);
+
+
 
         log.info("Created User with id {}\tCreated Kaspi token with id {}", wonderUser.getId(), kaspiToken.getId());
     }
