@@ -14,10 +14,6 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(schema = schemaName, name = "kaspi_token")
 public class KaspiToken extends AbstractEntity<Long> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(name = "token", unique = true, nullable = false)
     private String token;
 
