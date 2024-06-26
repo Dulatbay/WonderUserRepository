@@ -43,6 +43,7 @@ ENV GOOGLE_APPLICATION_CREDENTIALS=/app/gcp_service_account.json
 
 COPY gcp_service_account.json /app/gcp_service_account.json
 
+EXPOSE 8080
 
 # Set the entrypoint
 ENTRYPOINT ["java", "-Dvertx.disableDnsResolver=true", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]
