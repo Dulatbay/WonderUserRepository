@@ -14,6 +14,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 public class OrderTransmission extends AbstractEntity<Long> {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false)
+    @MapsId
     private KaspiOrder kaspiOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)

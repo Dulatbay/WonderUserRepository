@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
-@EqualsAndHashCode(callSuper=false)
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -16,11 +16,15 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Table(name = "product_price", schema = schemaName)
 public class ProductPrice extends AbstractEntity<Long> {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY,
+            optional = false)
     @JoinColumn(name = "kaspi_city_id")
     private KaspiCity kaspiCity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY,
+            optional = false)
     @JoinColumn(name = "product_id")
     private Product product;
 

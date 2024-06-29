@@ -18,6 +18,7 @@ public class OrderPackage extends AbstractEntity<Long>{
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false)
+    @MapsId
     private KaspiOrder kaspiOrder;
 
     @JoinColumn(name = "package_state", nullable = false)

@@ -26,6 +26,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.core.Response;
@@ -159,7 +160,11 @@ public class KeycloakServiceImpl implements KeycloakService {
                     .build();
         } catch (NotAuthorizedException notAuthorizedException) {
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.keycloak-service-impl.invalid-credentials", null, LocaleContextHolder.getLocale()));
-        } catch (Exception e) {
+        } catch (BadRequestException e) {
+            log.error("Bad request exception: ", e);
+            throw e;
+        }
+        catch (Exception e) {
             log.error("Error occurred in getting tokens: ", e);
             throw e;
         }
