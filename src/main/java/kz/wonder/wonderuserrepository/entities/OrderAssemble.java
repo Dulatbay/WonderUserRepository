@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
+import java.util.Set;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -16,6 +17,7 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 public class OrderAssemble extends AbstractEntity<Long> {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false)
+    @MapsId
     private KaspiOrder kaspiOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,5 +29,5 @@ public class OrderAssemble extends AbstractEntity<Long> {
     private AssembleState assembleState;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderAssembleProcess> orderAssembleProcesses;
+    private Set<OrderAssembleProcess> orderAssembleProcesses;
 }

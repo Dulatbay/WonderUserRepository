@@ -37,10 +37,12 @@ public class Product extends AbstractEntity<Long> {
     private boolean deleted;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @EqualsAndHashCode.Exclude
     private Set<ProductPrice> prices = new HashSet<>();
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "main_city_price_id")
+    @EqualsAndHashCode.Exclude
     private ProductPrice mainCityPrice;
 
     @Column(name = "keycloak_id", nullable = false)
@@ -53,5 +55,6 @@ public class Product extends AbstractEntity<Long> {
             mappedBy = "product",
             orphanRemoval = true,
             cascade = CascadeType.ALL)
+    @EqualsAndHashCode.Exclude
     private Set<SupplyBoxProduct> supplyBoxProducts = new HashSet<>();
 }
