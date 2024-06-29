@@ -480,6 +480,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public void generateXmls() {
         var tokens = kaspiTokenRepository.findAllXmlsToUpdate();
 
