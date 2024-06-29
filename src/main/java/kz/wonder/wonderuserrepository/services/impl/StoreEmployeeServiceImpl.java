@@ -36,7 +36,7 @@ public class StoreEmployeeServiceImpl implements StoreEmployeeService {
     @Override
     @Transactional
     public void createStoreEmployee(EmployeeCreateRequest employeeCreateRequest, String keycloakIdOfCreator, boolean isSuperAdmin) {
-        var isPhoneNumberUsed = storeEmployeeRepository.existsByWonderUserPhoneNumber(employeeCreateRequest.getPhoneNumber());
+        var isPhoneNumberUsed = userRepository.existsByPhoneNumber(employeeCreateRequest.getPhoneNumber());
 
         if (isPhoneNumberUsed)
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.store-employee-service-impl.phone-already-used", null, LocaleContextHolder.getLocale()));

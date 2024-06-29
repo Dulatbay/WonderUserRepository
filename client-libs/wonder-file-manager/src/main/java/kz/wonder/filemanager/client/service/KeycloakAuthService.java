@@ -21,6 +21,12 @@ public class KeycloakAuthService {
     @Value("${application.client-id}")
     private String clientId;
 
+    @Value("${application.username}")
+    private String username;
+
+    @Value("${application.password}")
+    private String password;
+
     private String accessToken;
 
     private Instant tokenExpiration = Instant.now();  // Добавление времени истечения токена
@@ -45,7 +51,7 @@ public class KeycloakAuthService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
         HttpEntity<String> request = new HttpEntity<>("grant_type=password&client_id=" +
-                clientId + "&username=" + "tester@mail.ru" + "&password=" + "test_tester", headers);
+                clientId + "&username=" + username + "&password=" + password, headers);
 
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<KeycloakTokenResponse> response = restTemplate.exchange(
