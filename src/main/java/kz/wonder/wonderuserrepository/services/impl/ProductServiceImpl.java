@@ -95,12 +95,12 @@ public class ProductServiceImpl implements ProductService {
                     Spliterators.spliteratorUnknownSize(rowIterator, Spliterator.ORDERED), false
             ).toList();
 
-            var products = rows.stream()
-                    .map(row -> processRow(row, keycloakUserId, cityCache))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            var productResponses = products.stream().toList();
+            var productResponses = customThreadPool.submit(() ->
+                    rows.parallelStream()
+                            .map(row -> processRow(row, keycloakUserId, cityCache))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            ).get();
 
             int batchSize = 500;
             for (int i = 0; i < productResponses.size(); i += batchSize) {
@@ -113,13 +113,11 @@ public class ProductServiceImpl implements ProductService {
 
             token.setXmlUpdated(false);
             kaspiTokenRepository.save(token);
-        }
-//        catch (ExecutionException | InterruptedException e) {
-//            log.error("Parallel processing error: ", e);
-//            Thread.currentThread().interrupt();
-//            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-processing-failed", null, LocaleContextHolder.getLocale()));
-//        }
-        catch (Exception e) {
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Parallel processing error: ", e);
+            Thread.currentThread().interrupt();
+            throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-processing-failed", null, LocaleContextHolder.getLocale()));
+        } catch (Exception e) {
             log.error("Exception: ", e);
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-processing-failed", null, LocaleContextHolder.getLocale()));
         }
