@@ -10,6 +10,7 @@ import kz.wonder.wonderuserrepository.dto.response.OrderResponse;
 import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.repositories.KaspiOrderRepository;
+import kz.wonder.wonderuserrepository.repositories.OrderPackageProcessRepository;
 import kz.wonder.wonderuserrepository.repositories.StoreCellProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class KaspiOrderMapper {
     private final StoreCellProductRepository storeCellProductRepository;
     private final KaspiOrderRepository kaspiOrderRepository;
     private final BarcodeMapper barcodeMapper;
+    private final OrderPackageProcessRepository orderPackageProcessRepository;
 
     public KaspiOrder saveKaspiOrder(KaspiToken token, OrdersDataResponse.OrdersDataItem order, OrdersDataResponse.OrderAttributes orderAttributes) {
         KaspiOrder kaspiOrder = new KaspiOrder();
@@ -149,17 +151,30 @@ public class KaspiOrderMapper {
         return orderEmployeeDetailResponse;
     }
 
-    public OrderEmployeeDetailResponse.Product mapToGetOrderEmployeeProduct(Optional<Product> product,
-                                                                            Optional<SupplyBoxProduct> supplyBoxProductOptional,
+    public OrderEmployeeDetailResponse.Product mapToGetOrderEmployeeProduct(Product product,
+                                                                            SupplyBoxProduct supplyBoxProduct,
                                                                             Optional<StoreCellProduct> storeCellProductOptional) {
+        var packageProcessOptional = orderPackageProcessRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
+
+
         OrderEmployeeDetailResponse.Product orderProduct = new OrderEmployeeDetailResponse.Product();
-        orderProduct.setProductName(product.isEmpty() ? "N/A" : product.get().getName());
-        orderProduct.setProductArticle(supplyBoxProductOptional.isEmpty() ? "N/A" : supplyBoxProductOptional.get().getArticle());
+        orderProduct.setProductName(product.getName());
+        orderProduct.setProductArticle(supplyBoxProduct.getArticle());
         orderProduct.setProductCell(storeCellProductOptional.isPresent() ? storeCellProductOptional.get().getStoreCell().getCode() : "N/A");
-        orderProduct.setProductVendorCode(product.isEmpty() ? "N/A" : product.get().getVendorCode());
-        orderProduct.setPathToProductBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : barcodeMapper.getPathToProductBarcode(supplyBoxProductOptional.get()));
-        orderProduct.setPathToBoxBarcode(supplyBoxProductOptional.isEmpty() ? "N/A" : barcodeMapper.getPathToBoxBarcode(supplyBoxProductOptional.get().getSupplyBox()));
-        orderProduct.setProductStateInStore(supplyBoxProductOptional.map(SupplyBoxProduct::getState).orElse(null));
+        orderProduct.setProductVendorCode(product.getVendorCode());
+        orderProduct.setPathToProductBarcode(barcodeMapper.getPathToProductBarcode(supplyBoxProduct));
+        orderProduct.setPathToBoxBarcode(barcodeMapper.getPathToBoxBarcode(supplyBoxProduct.getSupplyBox()));
+        orderProduct.setProductStateInStore(supplyBoxProduct.getState());
+
+        if (packageProcessOptional.isPresent()) {
+            var packageInfo = new OrderEmployeeDetailResponse.PackageInfo();
+
+            packageInfo.setStartedAt(packageProcessOptional.get().getStartedAt());
+            packageInfo.setFinishedAt(packageProcessOptional.get().getFinishedAt());
+
+            orderProduct.setPackageInfo(packageInfo);
+        }
+
         return orderProduct;
     }
 

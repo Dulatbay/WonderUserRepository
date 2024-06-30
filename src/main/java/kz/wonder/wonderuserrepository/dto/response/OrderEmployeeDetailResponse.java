@@ -7,6 +7,7 @@ import kz.wonder.wonderuserrepository.dto.base.OrderWithStatus;
 import kz.wonder.wonderuserrepository.entities.enums.DeliveryMode;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +31,13 @@ public class OrderEmployeeDetailResponse extends OrderWithStatus {
         private String pathToProductBarcode;
         private String pathToBoxBarcode;
         private ProductStateInStore productStateInStore;
+        private PackageInfo packageInfo;
         private String productCell;
+    }
+
+    @Data
+    public static class PackageInfo {
+        private LocalDateTime startedAt;
+        private LocalDateTime finishedAt;
     }
 }
