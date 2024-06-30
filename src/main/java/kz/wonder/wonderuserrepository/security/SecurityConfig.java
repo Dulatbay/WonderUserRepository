@@ -1,6 +1,7 @@
 package kz.wonder.wonderuserrepository.security;
 
 import com.nimbusds.jose.shaded.gson.internal.LinkedTreeMap;
+import jakarta.servlet.Filter;
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,7 +65,7 @@ public class SecurityConfig {
         http.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(new CustomAccessDeniedHandler())
         );
 
-        http.addFilterBefore(new CustomCorsFilter(), ChannelProcessingFilter.class);
+        http.addFilterBefore((Filter) new CustomCorsFilter(), (Class<? extends Filter>) ChannelProcessingFilter.class);
 
 //        authorizeEndpoint(http, HttpMethod.POST, new String[]{"/box-types"}, KeycloakRole.ADMIN);
 //        authorizeEndpoint(http, HttpMethod.DELETE, new String[]{"/box-types/**"}, KeycloakRole.ADMIN);

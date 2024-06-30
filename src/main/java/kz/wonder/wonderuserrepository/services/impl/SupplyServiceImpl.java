@@ -451,6 +451,22 @@ public class SupplyServiceImpl implements SupplyService {
         return getSellerSupplyReport(supply);
     }
 
+    @Override
+    public void uploadPowerOfAttorney(MultipartFile file, Long supplyId, String keycloakId) {
+        var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
+
+        var pathToPOA = fileManagerApi
+                .uploadFiles(UPLOAD_POWER_OF_ATTORNEY_OF_SUPPLY, List.of(file), false).getBody().getFirst();
+
+        log.info("uploaded power of attorney: {}", file.getName());
+
+        supply.setPathToPowerOfAttorney(pathToPOA);
+
+        supplyRepository.save(supply);
+
+    }
+
     public SellerSupplyReport getSellerSupplyReport(Supply supply) {
         var store = supply.getKaspiStore();
 

@@ -16,6 +16,7 @@ import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployee
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
+import kz.wonder.wonderuserrepository.validators.ValidDocument;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -210,5 +211,23 @@ public class SupplyController {
         supplyService.processSupplyByEmployee(keycloakId, supplyScanRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED.value()).build();
+    }
+
+    @PostMapping(value = "/{id}/upload-authority", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload power of attorney", description = "Upload power of attorney for supply")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully uploaded the power of attorney")
+    })
+    @SellerAuthorization
+    public ResponseEntity<Void> uploadPOA(
+            @ValidDocument @RequestParam("file") MultipartFile file,
+            @PathVariable("id") Long supplyId) {
+
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+
+        supplyService.uploadPowerOfAttorney(file, supplyId, keycloakId);
+
+        return ResponseEntity.status(HttpStatus.OK.value()).build();
     }
 }
