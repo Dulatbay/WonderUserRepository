@@ -457,7 +457,7 @@ public class SupplyServiceImpl implements SupplyService {
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
 
         var pathToAuthorityDocument = fileManagerApi
-                .uploadFiles(UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY, List.of(file), false).getBody().getFirst();
+                .uploadFiles(UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY, List.of(file), true).getBody().getFirst();
 
         log.info("uploaded authority document: {}", file.getName());
 
