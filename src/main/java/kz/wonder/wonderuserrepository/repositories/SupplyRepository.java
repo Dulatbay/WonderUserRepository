@@ -33,7 +33,7 @@ public interface SupplyRepository extends JpaRepository<Supply, Long> {
     @Query(nativeQuery = true, value = "SELECT s.* FROM schema_wonder.supply s " +
             "JOIN schema_wonder.kaspi_store ks ON s.store_id = ks.id " +
             "JOIN schema_wonder.store_employee se ON ks.id = se.kaspi_store_id " +
-            "WHERE se.id = :employeeId AND (s.selected_time BETWEEN :start AND :end)" +
+            "WHERE se.wonder_user_id = :employeeId AND (s.selected_time BETWEEN :start AND :end)" +
             "ORDER BY s.selected_time ")
     List<Supply> findAllSuppliesOfStorage(@Param("employeeId")
                                           Long id,

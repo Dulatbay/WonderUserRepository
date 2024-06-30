@@ -1,8 +1,11 @@
 package kz.wonder.wonderuserrepository.entities;
 
 import jakarta.persistence.*;
+import kz.wonder.wonderuserrepository.config.converters.LocalDateTimeAttributeConverter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
 
 import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName;
 
@@ -22,4 +25,12 @@ public class OrderPackageProcess extends AbstractEntity<Long>{
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "supply_box_product_id", nullable = false)
     private SupplyBoxProduct supplyBoxProduct;
+
+    @Column(name = "finished_at", nullable = false)
+    @Convert(converter = LocalDateTimeAttributeConverter.class)
+    private LocalDateTime finishedAt;
+
+    @Column(name = "started_at", nullable = false)
+    @Convert(converter = LocalDateTimeAttributeConverter.class)
+    private LocalDateTime startedAt;
 }

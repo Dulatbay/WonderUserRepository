@@ -18,10 +18,12 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Table(name = "supply", schema = schemaName)
 public class Supply extends AbstractEntity<Long> {
 
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id")
     private WonderUser author;
 
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private KaspiStore kaspiStore;
@@ -39,6 +41,7 @@ public class Supply extends AbstractEntity<Long> {
     @Column(name = "selected_time", nullable = false)
     private LocalDateTime selectedTime;
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supply",
             orphanRemoval = true,
