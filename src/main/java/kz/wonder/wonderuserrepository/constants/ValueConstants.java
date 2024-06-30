@@ -43,4 +43,5 @@ public class ValueConstants {
     public static final String FILE_MANAGER_PRODUCT_BARCODE_DIR = "product-barcode";
     public static final String FILE_MANAGER_BOX_BARCODE_DIR = "box-barcode";
 
+    public static final String UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY = "supply-authority-documents";
 }

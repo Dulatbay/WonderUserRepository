@@ -13,4 +13,5 @@ public class SupplyProductResponse {
     private String shopName;
     private String pathToBoxBarcode;
     private String pathToProductBarcode;
+    private String pathToAuthorityDocument;
 }

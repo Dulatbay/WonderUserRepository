@@ -44,4 +44,7 @@ public class Supply extends AbstractEntity<Long> {
             orphanRemoval = true,
             cascade = CascadeType.ALL)
     private Set<SupplyBox> supplyBoxes = new HashSet<>();
+
+    @Column(name = "path_to_authority_document")
+    private String pathToAuthorityDocument;
 }

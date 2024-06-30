@@ -16,6 +16,7 @@ import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployee
 import kz.wonder.wonderuserrepository.security.keycloak.KeycloakRole;
 import kz.wonder.wonderuserrepository.services.KeycloakService;
 import kz.wonder.wonderuserrepository.services.SupplyService;
+import kz.wonder.wonderuserrepository.validators.ValidDocument;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -210,5 +211,23 @@ public class SupplyController {
         supplyService.processSupplyByEmployee(keycloakId, supplyScanRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED.value()).build();
+    }
+
+    @PostMapping(value = "/{id}/upload-authority-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload authority document", description = "Upload authority document for supply")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully uploaded the authority document")
+    })
+    @SellerAuthorization
+    public ResponseEntity<Void> uploadPOA(
+            @ValidDocument @RequestParam("file") MultipartFile file,
+            @PathVariable("id") Long supplyId) {
+
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = extractIdFromToken(token);
+
+        supplyService.uploadAuthorityDocument(file, supplyId, keycloakId);
+
+        return ResponseEntity.status(HttpStatus.OK.value()).build();
     }
 }

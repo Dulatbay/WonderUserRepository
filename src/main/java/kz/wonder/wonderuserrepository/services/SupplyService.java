@@ -36,4 +36,6 @@ public interface SupplyService {
     void processSupplyByEmployee(String keycloakId, SupplyScanRequest supplyScanRequest);
 
     SellerSupplyReport getSupplySellerReport(Long supplyId, String keycloakId);
+
+    void uploadAuthorityDocument(MultipartFile file, Long supplyId, String keycloakId);
 }
