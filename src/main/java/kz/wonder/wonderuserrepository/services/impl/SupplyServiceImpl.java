@@ -451,6 +451,22 @@ public class SupplyServiceImpl implements SupplyService {
         return getSellerSupplyReport(supply);
     }
 
+    @Override
+    public void uploadAuthorityDocument(MultipartFile file, Long supplyId, String keycloakId) {
+        var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
+
+        var pathToAuthorityDocument = fileManagerApi
+                .uploadFiles(UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY, List.of(file), true).getBody().getFirst();
+
+        log.info("uploaded authority document: {}", file.getName());
+
+        supply.setPathToAuthorityDocument(pathToAuthorityDocument);
+
+        supplyRepository.save(supply);
+
+    }
+
     public SellerSupplyReport getSellerSupplyReport(Supply supply) {
         var store = supply.getKaspiStore();
 
