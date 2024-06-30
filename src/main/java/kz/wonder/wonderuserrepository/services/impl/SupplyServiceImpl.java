@@ -99,6 +99,21 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
+    public void rejectSupplyById(Long supplyId){
+        final var supply = findSupplyById(supplyId);
+
+        if(supply.getSupplyState() == SupplyState.REJECTED) {
+            throw new IllegalArgumentException("Поставка уже отклонена");
+        }
+        else if(supply.getSupplyState() != SupplyState.START && supply.getSupplyState() != SupplyState.IN_PROGRESS){
+            throw new IllegalArgumentException("Поставку невозможно отклонить");
+        }
+        else supply.setSupplyState(SupplyState.REJECTED);
+
+        supplyRepository.save(supply);
+    }
+
+    @Override
     public SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId) {
         final var store = kaspiStoreRepository.findById(createRequest.getStoreId())
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.store-not-found", null, LocaleContextHolder.getLocale())));
@@ -440,7 +455,8 @@ public class SupplyServiceImpl implements SupplyService {
                         .anyMatch(supplyBoxProduct -> supplyBoxProduct.getState() == ProductStateInStore.PENDING));
         supply.setSupplyState(isAccepted ? SupplyState.ACCEPTED : SupplyState.IN_PROGRESS);
 
-
+        var generatedSupplyReport = barcodeService.generateSupplyReport(this.getSellerSupplyReport(supply));
+        fileManagerApi.uploadFiles(FILE_MANAGER_SUPPLY_REPORT_DIR, List.of(generatedSupplyReport), false);
     }
 
     @Override

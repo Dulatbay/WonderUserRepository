@@ -29,9 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static kz.wonder.wonderuserrepository.constants.Utils.extractIdFromToken;
 import static kz.wonder.wonderuserrepository.constants.Utils.getAuthorities;
@@ -70,6 +68,14 @@ public class SupplyController {
         var supplyCreatedResponse = supplyService.createSupply(createRequest, userId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(supplyCreatedResponse);
+    }
+
+
+    @PutMapping("/supplies/{supplyId}/reject")
+    @AccessForAdminsAndSellers
+        public ResponseEntity<SupplySellerResponse> rejectSupply(@PathVariable("supplyId") Long supplyId){
+        supplyService.rejectSupplyById(supplyId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/admin")
@@ -114,6 +120,7 @@ public class SupplyController {
         }
         return ResponseEntity.ok(result);
     }
+
 
     @GetMapping("/seller")
     @Operation(summary = "Get all supplies of seller", description = "Retrieves a list of supplies within the specified date range")
