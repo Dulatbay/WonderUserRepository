@@ -45,6 +45,6 @@ public class Supply extends AbstractEntity<Long> {
             cascade = CascadeType.ALL)
     private Set<SupplyBox> supplyBoxes = new HashSet<>();
 
-    @Column(name = "path_to_POA")
-    private String pathToPowerOfAttorney;
+    @Column(name = "path_to_authority_document")
+    private String pathToAuthorityDocument;
 }

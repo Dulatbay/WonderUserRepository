@@ -37,7 +37,7 @@ public class SupplyMapper {
         supplyAdminResponse.setSupplyCreatedTime(supply.getCreatedAt());
         supplyAdminResponse.setPathToReport(barcodeMapper.getPathToReport(supply));
         supplyAdminResponse.setSeller(new SupplyAdminResponse.Seller(userId, fullName));
-        supplyAdminResponse.setPathToPAO(supply.getPathToPowerOfAttorney());
+        supplyAdminResponse.setPathToAuthorityDocument(supply.getPathToAuthorityDocument());
         return supplyAdminResponse;
     }
 
@@ -56,7 +56,7 @@ public class SupplyMapper {
         supplyProductResponse.setShopName(shopName);
         supplyProductResponse.setPathToProductBarcode(barcodeMapper.getPathToProductBarcode(supplyBoxProduct));
         supplyProductResponse.setPathToBoxBarcode(barcodeMapper.getPathToBoxBarcode(supplyBox));
-        supplyProductResponse.setPathToPOA(supply.getPathToPowerOfAttorney());
+        supplyProductResponse.setPathToAuthorityDocument(supply.getPathToAuthorityDocument());
 
         return supplyProductResponse;
     }
@@ -70,7 +70,7 @@ public class SupplyMapper {
                 .pathToReport(barcodeMapper.getPathToReport(supply))
                 .id(supply.getId())
                 .formattedAddress(supply.getKaspiStore().getFormattedAddress())
-                .pathToPAO(supply.getPathToPowerOfAttorney())
+                .pathToAuthorityDocument(supply.getPathToAuthorityDocument())
                 .build();
     }
 

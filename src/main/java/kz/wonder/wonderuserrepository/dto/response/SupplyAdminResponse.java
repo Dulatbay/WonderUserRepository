@@ -13,7 +13,7 @@ public class SupplyAdminResponse {
     private LocalDateTime supplyAcceptTime;
     private SupplyState supplyState;
     private String pathToReport;
-    private String pathToPAO;
+    private String pathToAuthorityDocument;
 
     public record Seller(String keycloakId, String fullName) {
     }

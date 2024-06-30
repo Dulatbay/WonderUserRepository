@@ -213,10 +213,10 @@ public class SupplyController {
         return ResponseEntity.status(HttpStatus.CREATED.value()).build();
     }
 
-    @PostMapping(value = "/{id}/upload-authority", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload power of attorney", description = "Upload power of attorney for supply")
+    @PostMapping(value = "/{id}/upload-authority-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload authority document", description = "Upload authority document for supply")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully uploaded the power of attorney")
+            @ApiResponse(responseCode = "200", description = "Successfully uploaded the authority document")
     })
     @SellerAuthorization
     public ResponseEntity<Void> uploadPOA(
@@ -226,7 +226,7 @@ public class SupplyController {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = extractIdFromToken(token);
 
-        supplyService.uploadPowerOfAttorney(file, supplyId, keycloakId);
+        supplyService.uploadAuthorityDocument(file, supplyId, keycloakId);
 
         return ResponseEntity.status(HttpStatus.OK.value()).build();
     }

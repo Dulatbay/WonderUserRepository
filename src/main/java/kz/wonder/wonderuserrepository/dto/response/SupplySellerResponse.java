@@ -16,5 +16,5 @@ public class SupplySellerResponse {
     private SupplyState supplyState;
     private String pathToReport;
     private String formattedAddress;
-    private String pathToPAO;
+    private String pathToAuthorityDocument;
 }

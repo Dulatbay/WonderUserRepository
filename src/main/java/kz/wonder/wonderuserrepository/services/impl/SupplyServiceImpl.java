@@ -452,16 +452,16 @@ public class SupplyServiceImpl implements SupplyService {
     }
 
     @Override
-    public void uploadPowerOfAttorney(MultipartFile file, Long supplyId, String keycloakId) {
+    public void uploadAuthorityDocument(MultipartFile file, Long supplyId, String keycloakId) {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
 
-        var pathToPOA = fileManagerApi
-                .uploadFiles(UPLOAD_POWER_OF_ATTORNEY_OF_SUPPLY, List.of(file), false).getBody().getFirst();
+        var pathToAuthorityDocument = fileManagerApi
+                .uploadFiles(UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY, List.of(file), false).getBody().getFirst();
 
-        log.info("uploaded power of attorney: {}", file.getName());
+        log.info("uploaded authority document: {}", file.getName());
 
-        supply.setPathToPowerOfAttorney(pathToPOA);
+        supply.setPathToAuthorityDocument(pathToAuthorityDocument);
 
         supplyRepository.save(supply);
 

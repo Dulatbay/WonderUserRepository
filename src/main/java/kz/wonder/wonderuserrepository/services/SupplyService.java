@@ -37,5 +37,5 @@ public interface SupplyService {
 
     SellerSupplyReport getSupplySellerReport(Long supplyId, String keycloakId);
 
-    void uploadPowerOfAttorney(MultipartFile file, Long supplyId, String keycloakId);
+    void uploadAuthorityDocument(MultipartFile file, Long supplyId, String keycloakId);
 }
