@@ -479,7 +479,6 @@ public class SupplyServiceImpl implements SupplyService {
         sellerSupplyReport.setSupplyDeliveredDate(sellerSupplyReport.getSupplyDeliveredDate());
         sellerSupplyReport.setSupplyAcceptanceDate(supply.getAcceptedTime());
         sellerSupplyReport.setFormattedAddress(store.getFormattedAddress());
-        sellerSupplyReport.setFormattedAddress(barcodeMapper.getPathToAuthorityDocument(supply));
         sellerSupplyReport.setPathToAuthorityDocument(barcodeMapper.getPathToAuthorityDocument(supply));
 
         var supplyBoxes = supply.getSupplyBoxes();
