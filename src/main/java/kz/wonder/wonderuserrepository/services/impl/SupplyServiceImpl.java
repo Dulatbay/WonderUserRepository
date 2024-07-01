@@ -463,7 +463,7 @@ public class SupplyServiceImpl implements SupplyService {
 
         log.info("uploaded authority document: {}", file.getName());
 
-        supply.setPathToAuthorityDocument(barcodeMapper.getPathToAuthorityDocument(authorityDocumentName));
+        supply.setPathToAuthorityDocument(authorityDocumentName);
 
         supplyRepository.save(supply);
 
@@ -479,6 +479,7 @@ public class SupplyServiceImpl implements SupplyService {
         sellerSupplyReport.setSupplyDeliveredDate(sellerSupplyReport.getSupplyDeliveredDate());
         sellerSupplyReport.setSupplyAcceptanceDate(supply.getAcceptedTime());
         sellerSupplyReport.setFormattedAddress(store.getFormattedAddress());
+        sellerSupplyReport.setFormattedAddress(barcodeMapper.getPathToAuthorityDocument(supply));
 
         var supplyBoxes = supply.getSupplyBoxes();
 
