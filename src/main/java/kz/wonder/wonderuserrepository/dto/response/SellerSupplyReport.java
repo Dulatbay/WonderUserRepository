@@ -14,6 +14,8 @@ public class SellerSupplyReport {
     private LocalDateTime supplyDeliveredDate;
     private LocalDateTime supplyAcceptanceDate;
 
+    private String pathToAuthorityDocument;
+
     private String formattedAddress;
     private List<SupplyBoxInfo> supplyBoxInfo;
 

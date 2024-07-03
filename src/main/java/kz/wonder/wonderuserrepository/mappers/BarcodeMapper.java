@@ -17,6 +17,10 @@ public class BarcodeMapper {
         return fileApiUrl + "/" + FILE_MANAGER_SUPPLY_REPORT_DIR + "/retrieve/files/supply_report_" + supply.getId() + ".pdf";
     }
 
+    public String getPathToAuthorityDocument(Supply supply) {
+        return fileApiUrl + "/" + FILE_MANAGER_SUPPLY_AUTHORITY_DOCUMENTS_DIR + "/" + supply.getPathToAuthorityDocument();
+    }
+
     public String getPathToProductBarcode(SupplyBoxProduct supplyBoxProduct) {
         return fileApiUrl + "/" + FILE_MANAGER_PRODUCT_BARCODE_DIR + "/retrieve/files/" + supplyBoxProduct.getPathToBarcode();
     }

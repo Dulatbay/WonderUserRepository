@@ -13,6 +13,7 @@ public class ProductStorageResponse {
     private Long supplyId;
     private Long storeId;
     private String pathToSupplyReport;
+    private String pathToSupplyAuthorityDocument;
     private String storeAddress;
 
     @Data

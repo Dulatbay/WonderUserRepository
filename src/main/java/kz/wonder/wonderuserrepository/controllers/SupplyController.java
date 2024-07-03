@@ -226,7 +226,7 @@ public class SupplyController {
             @ApiResponse(responseCode = "200", description = "Successfully uploaded the authority document")
     })
     @SellerAuthorization
-    public ResponseEntity<Void> uploadPOA(
+    public ResponseEntity<Void> uploadAuthorityDocument(
             @ValidDocument @RequestParam("file") MultipartFile file,
             @PathVariable("id") Long supplyId) {
 

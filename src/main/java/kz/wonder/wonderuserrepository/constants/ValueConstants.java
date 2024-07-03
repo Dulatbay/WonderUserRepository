@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ValueConstants {
-    public static final ZoneId ZONE_ID = ZoneId.of("UTC+05:00"); // Almaty, Kazakhstan
+    public static final ZoneId ZONE_ID = ZoneId.of("UTC+00:00");
     public static final String schemaName = "schema_wonder";
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -43,5 +43,5 @@ public class ValueConstants {
     public static final String FILE_MANAGER_PRODUCT_BARCODE_DIR = "product-barcode";
     public static final String FILE_MANAGER_BOX_BARCODE_DIR = "box-barcode";
 
-    public static final String UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY = "supply-authority-documents";
+    public static final String FILE_MANAGER_SUPPLY_AUTHORITY_DOCUMENTS_DIR = "supply-authority-documents";
 }
