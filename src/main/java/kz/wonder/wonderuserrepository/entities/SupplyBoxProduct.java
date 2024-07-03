@@ -15,10 +15,12 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "supply_box_product", schema = schemaName)
 public class SupplyBoxProduct extends AbstractEntity<Long> {
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_box_id")
     private SupplyBox supplyBox;
 
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
@@ -33,6 +35,7 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @Enumerated(value = EnumType.STRING)
     private ProductStateInStore state;
 
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_order_id")
     private KaspiOrder kaspiOrder;
@@ -40,6 +43,7 @@ public class SupplyBoxProduct extends AbstractEntity<Long> {
     @Column(name = "accepted_time")
     private LocalDateTime acceptedTime;
 
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY,
             mappedBy = "supplyBoxProduct",
             orphanRemoval = true,

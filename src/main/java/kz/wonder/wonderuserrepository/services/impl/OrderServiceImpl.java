@@ -220,20 +220,22 @@ public class OrderServiceImpl implements OrderService {
 
         var orderProducts = order.getProducts()
                 .stream()
+                .filter(kaspiOrderProduct -> kaspiOrderProduct.getProduct() == null || kaspiOrderProduct.getSupplyBoxProduct() == null)
                 .map(kaspiOrderProduct -> {
-                    var productOptional = Optional.ofNullable(kaspiOrderProduct.getProduct());
-                    var supplyBoxProductOptional = Optional.ofNullable(kaspiOrderProduct.getSupplyBoxProduct());
-                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProductOptional.isEmpty() ? -1L : supplyBoxProductOptional.get().getId());
+                    var product = kaspiOrderProduct.getProduct();
+                    var supplyBoxProduct = kaspiOrderProduct.getSupplyBoxProduct();
+                    var storeCellProductOptional = storeCellProductRepository.findBySupplyBoxProductId(supplyBoxProduct.getId());
 
-                    return getOrderEmployeeProduct(productOptional, supplyBoxProductOptional, storeCellProductOptional);
+
+                    return getOrderEmployeeProduct(product, supplyBoxProduct, storeCellProductOptional);
                 })
                 .toList();
 
         return kaspiOrderMapper.toOrderEmployeeDetailResponse(order, orderProducts);
     }
 
-    private OrderEmployeeDetailResponse.Product getOrderEmployeeProduct(Optional<Product> product, Optional<SupplyBoxProduct> supplyBoxProductOptional, Optional<StoreCellProduct> storeCellProductOptional) {
-        return kaspiOrderMapper.mapToGetOrderEmployeeProduct(product, supplyBoxProductOptional, storeCellProductOptional);
+    private OrderEmployeeDetailResponse.Product getOrderEmployeeProduct(Product product, SupplyBoxProduct supplyBoxProduct, Optional<StoreCellProduct> storeCellProductOptional) {
+        return kaspiOrderMapper.mapToGetOrderEmployeeProduct(product, supplyBoxProduct, storeCellProductOptional);
     }
 
     @Override

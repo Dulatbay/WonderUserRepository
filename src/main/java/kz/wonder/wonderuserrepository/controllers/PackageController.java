@@ -2,7 +2,6 @@ package kz.wonder.wonderuserrepository.controllers;
 
 import jakarta.validation.Valid;
 import kz.wonder.wonderuserrepository.constants.Utils;
-import kz.wonder.wonderuserrepository.dto.request.PackageProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.StartPackageResponse;
 import kz.wonder.wonderuserrepository.security.authorizations.base.StoreEmployeeAuthorization;
 import kz.wonder.wonderuserrepository.services.PackageService;
@@ -43,12 +42,22 @@ public class PackageController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @PostMapping("/{orderCode}/package-product")
-    public ResponseEntity<Void> packageProduct(@PathVariable String orderCode, @RequestBody @Valid PackageProductRequest packageProductRequest) {
+    @PostMapping("/{orderCode}/package-product/start")
+    public ResponseEntity<Void> packageProductStart(@PathVariable String orderCode, @RequestParam("product-article") String productArticle) {
         var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         var keycloakId = Utils.extractIdFromToken(token);
 
-        packageService.packageProduct(orderCode, packageProductRequest, keycloakId);
+        packageService.packageProductStart(orderCode, productArticle, keycloakId);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PostMapping("/{orderCode}/package-product/finish")
+    public ResponseEntity<Void> packageProductEnd(@PathVariable String orderCode, @RequestParam("product-article") String productArticle) {
+        var token = (JwtAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        var keycloakId = Utils.extractIdFromToken(token);
+
+        packageService.packageProductFinish(orderCode, productArticle, keycloakId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

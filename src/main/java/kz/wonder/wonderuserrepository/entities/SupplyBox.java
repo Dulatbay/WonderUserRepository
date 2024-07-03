@@ -16,14 +16,18 @@ import static kz.wonder.wonderuserrepository.constants.ValueConstants.schemaName
 @Entity
 @Table(name = "supply_box", schema = schemaName)
 public class SupplyBox extends AbstractEntity<Long> {
+
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "box_type_id")
     private BoxType boxType;
 
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supply_id", nullable = false)
     private Supply supply;
 
+    @EqualsAndHashCode.Exclude
     @OneToMany(fetch = FetchType.LAZY,
             mappedBy = "supplyBox",
             orphanRemoval = true,

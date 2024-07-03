@@ -85,6 +85,7 @@ public class KaspiStore extends AbstractEntity<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kaspi_city_id")
+    @EqualsAndHashCode.Exclude
     private KaspiCity kaspiCity;
 
     @EqualsAndHashCode.Exclude

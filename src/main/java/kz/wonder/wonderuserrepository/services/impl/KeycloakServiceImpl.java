@@ -38,14 +38,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KeycloakServiceImpl implements KeycloakService {
 
-    private final Keycloak keycloak;
     @Value("${application.realm}")
     private String realm;
+
     @Value("${application.client-id}")
     private String clintId;
+
     @Value("${application.keycloak-url}")
     private String keycloakUrl;
+
+    @Value("${application.username}")
+    private String username;
+
+    @Value("${application.password}")
+    private String password;
+
     private final MessageSource messageSource;
+
 
     @Override
     public UserRepresentation createUserByRole(KeycloakBaseUser sellerRegistrationRequest, KeycloakRole keycloakRole) {
@@ -119,8 +128,24 @@ public class KeycloakServiceImpl implements KeycloakService {
                 .roles().get(keycloakRole.name()).toRepresentation();
     }
 
+
+    private Keycloak getAdminKeycloak() {
+        return KeycloakBuilder.builder()
+                .serverUrl(keycloakUrl)
+                .realm(realm)
+                .clientId(clintId)
+                .grantType(OAuth2Constants.PASSWORD)
+                .username(username)
+                .password(password)
+                .resteasyClient(new ResteasyClientBuilderImpl()
+                        .connectionPoolSize(10)
+                        .build())
+                .build();
+    }
+
+
     private RealmResource getRealmResource() {
-        return keycloak.realm(realm);
+        return getAdminKeycloak().realm(realm);
     }
 
     private UsersResource getUsersResource() {
@@ -163,8 +188,7 @@ public class KeycloakServiceImpl implements KeycloakService {
         } catch (BadRequestException e) {
             log.error("Bad request exception: ", e);
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error occurred in getting tokens: ", e);
             throw e;
         }

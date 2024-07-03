@@ -13,6 +13,8 @@ public interface SupplyService {
 
     SupplySellerResponse createSupply(SupplyCreateRequest createRequest, String userId);
 
+    void rejectSupplyById(Long supplyId);
+
     List<SupplyAdminResponse> getSuppliesOfAdmin(LocalDate startDate, LocalDate endDate, String userId, String username, String id);
 
     List<SupplyProductResponse> getSuppliesDetail(Long id);

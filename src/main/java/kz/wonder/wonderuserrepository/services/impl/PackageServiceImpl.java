@@ -1,6 +1,5 @@
 package kz.wonder.wonderuserrepository.services.impl;
 
-import kz.wonder.wonderuserrepository.dto.request.PackageProductRequest;
 import kz.wonder.wonderuserrepository.dto.response.StartPackageResponse;
 import kz.wonder.wonderuserrepository.entities.KaspiOrder;
 import kz.wonder.wonderuserrepository.entities.OrderPackage;
@@ -20,6 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.ws.rs.NotAuthorizedException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import static kz.wonder.wonderuserrepository.constants.ValueConstants.ZONE_ID;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +67,7 @@ public class PackageServiceImpl implements PackageService {
 
     @Override
     @Transactional
-    public void packageProduct(String orderCode, PackageProductRequest packageProductRequest, String keycloakId) {
+    public void packageProductStart(String orderCode, String productArticle, String keycloakId) {
         var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotAuthorizedException(""));
 
@@ -82,23 +86,66 @@ public class PackageServiceImpl implements PackageService {
             throw new IllegalArgumentException("Упаковка уже закончена");
         }
 
-        packageProductRequest.getProductArticles()
-                .forEach(article -> {
-                    var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndOrderCode(article, order.getCode())
-                            .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Неверный артикул"));
+        var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndOrderCode(productArticle, order.getCode())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Неверный артикул"));
+
+        if (supplyBoxProduct.getState() != ProductStateInStore.PACKING) {
+            throw new IllegalArgumentException("Продукт уже в процессе упаковки");
+        }
+
+        if (supplyBoxProduct.getState() != ProductStateInStore.READY_FOR_PACKAGE) {
+            throw new IllegalArgumentException("Продукт не готов к упаковке");
+        }
 
 
-                    supplyBoxProduct.setState(ProductStateInStore.PACKED);
-                    supplyBoxProductsRepository.save(supplyBoxProduct);
+        supplyBoxProduct.setState(ProductStateInStore.PACKING);
+        supplyBoxProductsRepository.save(supplyBoxProduct);
 
-                    var orderPackageProcess = orderPackageProcessRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
-                            .orElse(new OrderPackageProcess());
+        var orderPackageProcess = orderPackageProcessRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
+                .orElse(new OrderPackageProcess());
 
-                    orderPackageProcess.setOrderPackage(orderPackage);
-                    orderPackageProcess.setEmployee(storeEmployee);
-                    orderPackageProcess.setSupplyBoxProduct(supplyBoxProduct);
-                    orderPackageProcessRepository.save(orderPackageProcess);
-                });
+        orderPackageProcess.setOrderPackage(orderPackage);
+        orderPackageProcess.setEmployee(storeEmployee);
+        orderPackageProcess.setSupplyBoxProduct(supplyBoxProduct);
+        orderPackageProcess.setStartedAt(LocalDateTime.now(ZONE_ID));
+        orderPackageProcessRepository.save(orderPackageProcess);
+    }
+
+
+    @Override
+    public void packageProductFinish(String orderCode, String productArticle, String keycloakId) {
+        var storeEmployee = storeEmployeeRepository.findByWonderUserKeycloakId(keycloakId)
+                .orElseThrow(() -> new NotAuthorizedException(""));
+
+        var order = kaspiOrderRepository.findByCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("Заказ не найден"));
+
+        validateEmployeeWithStore(storeEmployee, order);
+
+        var orderPackage = order.getOrderPackage();
+
+        if (orderPackage == null) {
+            throw new IllegalArgumentException("Упаковка еще не началась");
+        }
+
+        if (orderPackage.getPackageState() == PackageState.FINISHED) {
+            throw new IllegalArgumentException("Упаковка уже закончена");
+        }
+
+        var supplyBoxProduct = supplyBoxProductsRepository.findByArticleAndOrderCode(productArticle, order.getCode())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Неверный артикул"));
+
+        if(supplyBoxProduct.getState() != ProductStateInStore.PACKING)
+            throw new IllegalArgumentException("Невозвожно завершить упаковку");
+
+        var orderPackageProcess = orderPackageProcessRepository.findBySupplyBoxProductId(supplyBoxProduct.getId())
+                .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "Невозможно найти процесс упаковки"));
+
+        orderPackageProcess.setFinishedAt(LocalDateTime.now(ZONE_ID));
+        orderPackageProcessRepository.save(orderPackageProcess);
+
+        supplyBoxProduct.setState(ProductStateInStore.PACKED);
+        supplyBoxProductsRepository.save(supplyBoxProduct);
 
         boolean isReadyToFinish = !order.getProducts()
                 .stream()
