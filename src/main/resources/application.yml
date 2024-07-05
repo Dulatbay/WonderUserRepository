@@ -1,13 +1,13 @@
 application:
   title: Wonder
   version: 1.0.0
-  keycloak-url: ${KEYCLOAK_URL:https://keycloak-of5r5e4d7a-lm.a.run.app}
+  keycloak-url: ${KEYCLOAK_URL:https://keycloak-3gn7q5gs6q-lm.a.run.app}
   realm: wonder
   client-id: wonder
-  username: ${KEYCLOAK_ADMIN}
-  password: ${KEYCLOAK_ADMIN_PASSWORD}
+  username: ${KEYCLOAK_ADMIN:k_app@mail.ru}
+  password: ${KEYCLOAK_ADMIN_PASSWORD:k_pass5q}
   mode: ${APP_MODE:DEV}
-  admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:9e3c01e8-795c-4c85-8af2-91b8b1c481ba}
+  admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:06f28b07-5d18-493a-9517-e1e7d78614a4}
   file-api:
     name: file-api
     url: ${FILE_API_URL:https://wonderfilemanagerepository-of5r5e4d7a-el.a.run.app}
