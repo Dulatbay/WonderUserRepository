@@ -57,7 +57,7 @@ public class KaspiApi {
 
     public Mono<PointOfServiceResponse> getStoreById(String orderEntryId, String token) {
         return webClient.get()
-                .uri(String.format("orderentries/%s/deliveryPointOfService", orderEntryId))
+                .uri(String.format("/orderentries/%s/deliveryPointOfService", orderEntryId))
                 .headers(httpHeaders(token))
                 .retrieve()
                 .bodyToMono(PointOfServiceResponse.class)
