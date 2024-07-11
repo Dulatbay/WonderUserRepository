@@ -78,6 +78,8 @@ public class ProductServiceImpl implements ProductService {
                 throw new IllegalArgumentException(messageSource.getMessage("services-impl.product-service-impl.file-must-have-at-least-one-page", null, LocaleContextHolder.getLocale()));
             }
 
+
+
             // get products page
             Sheet sheet = workbook.getSheetAt(workbook.getNumberOfSheets() - 1);
             Iterator<Row> rowIterator = sheet.iterator();
@@ -95,12 +97,14 @@ public class ProductServiceImpl implements ProductService {
                     Spliterators.spliteratorUnknownSize(rowIterator, Spliterator.ORDERED), false
             ).toList();
 
+
             var productResponses = customThreadPool.submit(() ->
                     rows.parallelStream()
                             .map(row -> processRow(row, keycloakUserId, cityCache))
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList())
             ).get();
+
 
             int batchSize = 500;
             for (int i = 0; i < productResponses.size(); i += batchSize) {
@@ -136,11 +140,11 @@ public class ProductServiceImpl implements ProductService {
         double priceAlmaty = row.getCell(5).getNumericCellValue();
         double priceAstana = row.getCell(6).getNumericCellValue();
         double priceShymkent = row.getCell(7).getNumericCellValue();
-
         Product product = processProduct(vendorCode, name, link, isPublic, tradePrice, keycloakUserId);
-        processProductPrices(product, priceAlmaty, priceAstana, priceShymkent, cityCache);
 
-//        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
+        processProductPrices(product, priceAlmaty, priceAstana, priceShymkent, cityCache);
+        log.info("#{}, Processed product code: {}, user's keycloak id: {}, prices size: {}", row.getRowNum() - 2, vendorCode, keycloakUserId, product.getPrices().size());
+
 
 
         return product;
@@ -173,13 +177,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void processProductPrices(Product product, double priceAlmaty, double priceAstana, double priceShymkent, Map<String, KaspiCity> cityCache) {
-        final String CITY_ALMATY = messageSource.getMessage("services-impl.product-service-impl.almaty", null, LocaleContextHolder.getLocale());
-        final String CITY_ASTANA = messageSource.getMessage("services-impl.product-service-impl.astana", null, LocaleContextHolder.getLocale());
-        final String CITY_SHYMKENT = messageSource.getMessage("services-impl.product-service-impl.shymkent", null, LocaleContextHolder.getLocale());
 
-        var cityAlmaty = getCachedCity(CITY_ALMATY, cityCache);
-        var cityAstana = getCachedCity(CITY_ASTANA, cityCache);
-        var cityShymkent = getCachedCity(CITY_SHYMKENT, cityCache);
+        var cityAlmaty = getCachedCity("Алматы", cityCache);
+        var cityAstana = getCachedCity("Астана", cityCache);
+        var cityShymkent = getCachedCity("Шымкент", cityCache);
 
         var priceAtAlmaty = processProductPrice(product, cityAlmaty, priceAlmaty);
         var priceAtAstana = processProductPrice(product, cityAstana, priceAstana);
