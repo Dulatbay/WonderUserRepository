@@ -43,5 +43,46 @@ public class ValueConstants {
     public static final String FILE_MANAGER_PRODUCT_BARCODE_DIR = "product-barcode";
     public static final String FILE_MANAGER_BOX_BARCODE_DIR = "box-barcode";
 
+    public static final String UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY = "supply-authority-documents";
+
+    public static final double BUBBLE_WRAP_SMALL_WIDTH = 0.31;  // meters
+    public static final double BUBBLE_WRAP_SMALL_LENGTH = 50;  // meters
+    public static final double BUBBLE_WRAP_SMALL_COST = 2000;  // тенге
+
+    public static final double BUBBLE_WRAP_LARGE_WIDTH = 0.61;  // meters
+    public static final double BUBBLE_WRAP_LARGE_LENGTH = 100;  // meters
+    double BUBBLE_WRAP_LARGE_COST = 4000;  // тенге
+
+    public static final double TAPE_WIDTH = 0.048;  // meters (48mm)
+    public static final double TAPE_LENGTH = 132;  // meters
+    public static final double TAPE_COST = 660;  // тенге
+
+    public static final double TAPE_FRAGILE_WIDTH = 0.048;  // meters (48mm)
+    public static final double TAPE_FRAGILE_LENGTH = 50;  // meters
+    public static final double TAPE_FRAGILE_COST = 315;  // тенге
+
+    public static final int MANIPULATIVE_SIGN_COUNT = 100;
+    public static final double MANIPULATIVE_SIGN_COST = 1389;
+
+    public static final double MONTHLY_SALARY = 250000;  // тенге
+    public static final double WORK_HOURS_PER_WEEK = 40;  // hours
+    public static final double WEEKS_PER_MONTH = 4.33;
+
+    public static final double MAX_LENGTH = 30;  // cm
+
+    public static final double LABEL_WIDTH = 0.075;  // meters
+    public static final double LABEL_LENGTH = 0.12;  // meters
+    public static final int LABELS_PER_ROLL = 300;  // labels
+    public static final double LABEL_COST = 1750;  // тенге
+
+    public static final double COURIER_PACKAGE_SIZE_CM_LENGTH = 11;  // cm
+    public static final double COURIER_PACKAGE_SIZE_CM_WIDTH = 21;  // cm
+    public static final int COURIER_PACKAGE_COUNT = 100;  // units per pack
+    public static final double COURIER_PACKAGE_COST = 1300;  // тенге per pack
+
+    public static final double STRETCH_FILM_WIDTH = 0.50;  // meters
+    public static final double STRETCH_FILM_THICKNESS = 20;  // micrometers
+    public static final double STRETCH_FILM_LENGTH = 220;  // meters
+    public static final double STRETCH_FILM_COST = 4000;  // тенге per roll
     public static final String FILE_MANAGER_SUPPLY_AUTHORITY_DOCUMENTS_DIR = "supply-authority-documents";
 }
