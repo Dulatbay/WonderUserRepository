@@ -10,7 +10,7 @@ application:
   admin-keycloak-id: ${ADMIN_KEYCLOAK_ID:06f28b07-5d18-493a-9517-e1e7d78614a4}
   file-api:
     name: file-api
-    url: ${FILE_API_URL:https://wonderfilemanagerepository-of5r5e4d7a-el.a.run.app}
+    url: ${FILE_API_URL:https://wonderfilemanagerepository-3gn7q5gs6q-lm.a.run.app}
   kaspi-api:
     url: ${KASPI_API_URL:https://kaspi.kz/shop/api/v2}
 spring:
