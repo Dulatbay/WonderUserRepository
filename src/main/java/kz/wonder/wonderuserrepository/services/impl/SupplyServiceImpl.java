@@ -9,6 +9,7 @@ import kz.wonder.wonderuserrepository.entities.*;
 import kz.wonder.wonderuserrepository.entities.enums.ProductStateInStore;
 import kz.wonder.wonderuserrepository.entities.enums.SupplyState;
 import kz.wonder.wonderuserrepository.exceptions.DbObjectNotFoundException;
+import kz.wonder.wonderuserrepository.mappers.BarcodeMapper;
 import kz.wonder.wonderuserrepository.mappers.SupplyMapper;
 import kz.wonder.wonderuserrepository.repositories.*;
 import kz.wonder.wonderuserrepository.services.BarcodeService;
@@ -54,6 +55,7 @@ public class SupplyServiceImpl implements SupplyService {
     private final BarcodeService barcodeService;
     private final FileManagerApi fileManagerApi;
     private final MessageSource messageSource;
+    private final BarcodeMapper barcodeMapper;
 
     @Override
     public List<SupplyProcessFileResponse> processFile(MultipartFile file, String userId) {
@@ -472,12 +474,12 @@ public class SupplyServiceImpl implements SupplyService {
         var supply = supplyRepository.findByIdAndAuthorKeycloakId(supplyId, keycloakId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.supply-not-exist", null, LocaleContextHolder.getLocale())));
 
-        var pathToAuthorityDocument = fileManagerApi
-                .uploadFiles(UPLOAD_AUTHORITY_DOCUMENT_OF_SUPPLY, List.of(file), true).getBody().getFirst();
+        var authorityDocumentName = fileManagerApi
+                .uploadFiles(FILE_MANAGER_SUPPLY_AUTHORITY_DOCUMENTS_DIR, List.of(file), true).getBody().getFirst();
 
         log.info("uploaded authority document: {}", file.getName());
 
-        supply.setPathToAuthorityDocument(pathToAuthorityDocument);
+        supply.setPathToAuthorityDocument(authorityDocumentName);
 
         supplyRepository.save(supply);
 
@@ -493,6 +495,7 @@ public class SupplyServiceImpl implements SupplyService {
         sellerSupplyReport.setSupplyDeliveredDate(sellerSupplyReport.getSupplyDeliveredDate());
         sellerSupplyReport.setSupplyAcceptanceDate(supply.getAcceptedTime());
         sellerSupplyReport.setFormattedAddress(store.getFormattedAddress());
+        sellerSupplyReport.setPathToAuthorityDocument(barcodeMapper.getPathToAuthorityDocument(supply));
 
         var supplyBoxes = supply.getSupplyBoxes();
 
