@@ -33,7 +33,7 @@ public class ProductXmlMapper {
     public KaspiCatalog buildKaspiCatalog(List<Product> listOfProducts, KaspiToken kaspiToken) {
         KaspiCatalog kaspiCatalog = new KaspiCatalog();
         kaspiCatalog.setCompany(kaspiToken.getSellerName());
-        kaspiCatalog.setMerchantid(kaspiToken.getSellerId());
+        kaspiCatalog.setMerchantId(kaspiToken.getSellerId());
         kaspiCatalog.setOffers(getOffers(listOfProducts));
         return kaspiCatalog;
     }
@@ -41,7 +41,7 @@ public class ProductXmlMapper {
     public KaspiCatalog buildKaspiCatalogInChunks(String keycloakUserId, KaspiToken kaspiToken) {
         KaspiCatalog kaspiCatalog = new KaspiCatalog();
         kaspiCatalog.setCompany(kaspiToken.getSellerName());
-        kaspiCatalog.setMerchantid(kaspiToken.getSellerId());
+        kaspiCatalog.setMerchantId(kaspiToken.getSellerId());
         kaspiCatalog.setOffers(new ArrayList<>());
 
 
