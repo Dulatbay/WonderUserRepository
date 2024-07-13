@@ -123,7 +123,6 @@ public class SupplyServiceImpl implements SupplyService {
         if (!store.isEnabled())
             throw new IllegalArgumentException(messageSource.getMessage("services-impl.supply-service-impl.store-not-enabled", null, LocaleContextHolder.getLocale()));
 
-
         final var user = userRepository.findByKeycloakId(userId)
                 .orElseThrow(() -> new DbObjectNotFoundException(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), messageSource.getMessage("services-impl.supply-service-impl.user-not-found", null, LocaleContextHolder.getLocale())));
 

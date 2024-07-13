@@ -104,19 +104,13 @@ public class KaspiOrder extends AbstractEntity<Long> {
     @Column(name = "first_mile_courier")
     private String firstMileCourier;
 
-    // todo: divide some fields of this table into another tables with relationships 1v1
-
-    @Column(name = "customer_name")
-    private String customerName;
-
-    @Column(name = "customer_cell_phone")
-    private String customerCellPhone;
-
-    @Column(name = "customer_first_name")
-    private String customerFirstName;
-
-    @Column(name = "customer_last_name")
-    private String customerLastName;
+    @OneToOne(fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    @JoinColumn(name = "customer_id",
+            columnDefinition = "string",
+            unique = true)
+    private Customer customer;
 
     @Column(name = "delivery_cost")
     private Double deliveryCost;

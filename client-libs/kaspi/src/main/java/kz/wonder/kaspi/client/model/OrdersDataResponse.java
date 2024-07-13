@@ -76,11 +76,11 @@ public class OrdersDataResponse {
     @Data
     public static class Customer {
         private String id;
+        private String kaspiId;
         private String name;
         private String cellPhone;
         private String firstName;
         private String lastName;
-
     }
 
 

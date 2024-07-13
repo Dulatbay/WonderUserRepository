@@ -58,10 +58,19 @@ public class KaspiOrderMapper {
         kaspiOrder.setAssembled(orderAttributes.getAssembled());
         kaspiOrder.setApprovedByBankDate(orderAttributes.getApprovedByBankDate());
         kaspiOrder.setStatus(orderAttributes.getStatus());
-        kaspiOrder.setCustomerName(orderAttributes.getCustomer().getName());
-        kaspiOrder.setCustomerCellPhone(orderAttributes.getCustomer().getCellPhone());
-        kaspiOrder.setCustomerFirstName(orderAttributes.getCustomer().getFirstName());
-        kaspiOrder.setCustomerLastName(orderAttributes.getCustomer().getLastName());
+
+        Customer customerEntity = new Customer();
+
+        OrdersDataResponse.Customer customerData = orderAttributes.getCustomer();
+
+        customerEntity.setKaspiId(customerData.getKaspiId());
+        customerEntity.setName(customerData.getName());
+        customerEntity.setCellPhone(customerData.getCellPhone());
+        customerEntity.setFirstName(customerData.getFirstName());
+        customerEntity.setLastName(customerData.getLastName());
+
+        kaspiOrder.setCustomer(customerEntity);
+
         kaspiOrder.setDeliveryCost(orderAttributes.getDeliveryCost());
         kaspiOrder.setDeliveryCostForSeller(orderAttributes.getDeliveryCostForSeller());
         kaspiOrder.setWonderUser(token.getWonderUser());
