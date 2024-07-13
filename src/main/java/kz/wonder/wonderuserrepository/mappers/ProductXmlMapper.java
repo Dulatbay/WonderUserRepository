@@ -17,6 +17,9 @@ import org.springframework.stereotype.Component;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,6 +103,69 @@ public class ProductXmlMapper {
         StringWriter writer = new StringWriter();
         marshaller.marshal(kaspiCatalog, writer);
         return writer.toString();
+    }
+
+
+    public String convertKaspiCatalogToXML(KaspiCatalog kaspiCatalog) throws XMLStreamException {
+
+        StringWriter stringWriter = new StringWriter();
+
+        XMLStreamWriter xmlStreamWriter = XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(stringWriter);
+
+        xmlStreamWriter.writeProcessingInstruction("xml", "version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
+
+        xmlStreamWriter.writeStartElement("kaspi_catalog");
+        xmlStreamWriter.writeAttribute("date", kaspiCatalog.getDate().toString());
+
+        xmlStreamWriter.writeStartElement("company");
+        xmlStreamWriter.writeCharacters(kaspiCatalog.getCompany());
+        xmlStreamWriter.writeEndElement();
+
+        xmlStreamWriter.writeStartElement("merchant_id");
+        xmlStreamWriter.writeCharacters(kaspiCatalog.getMerchantId());
+        xmlStreamWriter.writeEndElement();
+
+        xmlStreamWriter.writeStartElement("offers");
+
+        for (KaspiCatalog.Offer offer : kaspiCatalog.getOffers()) {
+
+            xmlStreamWriter.writeStartElement("offer");
+            xmlStreamWriter.writeAttribute("sku", offer.getSku());
+
+            xmlStreamWriter.writeStartElement("model");
+            xmlStreamWriter.writeCharacters(offer.getModel());
+            xmlStreamWriter.writeEndElement();
+
+            xmlStreamWriter.writeStartElement("availabilities");
+
+            for (KaspiCatalog.Offer.Availability availability : offer.getAvailabilities()) {
+                xmlStreamWriter.writeEmptyElement("availability");
+                xmlStreamWriter.writeAttribute("available", availability.getAvailable());
+                xmlStreamWriter.writeAttribute("storeid", availability.getStoreId());
+
+            }
+
+            xmlStreamWriter.writeEndElement();
+
+            xmlStreamWriter.writeStartElement("cityprices");
+
+            for (KaspiCatalog.Offer.CityPrice cityPrice : offer.getCityprices()) {
+                xmlStreamWriter.writeEmptyElement("cityprice");
+                xmlStreamWriter.writeAttribute("cityid", cityPrice.getCityId());
+                xmlStreamWriter.writeAttribute("price", cityPrice.getPrice());
+            }
+            xmlStreamWriter.writeEndElement();
+
+            xmlStreamWriter.writeEndElement();
+        }
+        xmlStreamWriter.writeEndElement();
+
+        xmlStreamWriter.writeEndElement();
+        xmlStreamWriter.writeEndDocument();
+
+        xmlStreamWriter.close();
+
+        return stringWriter.toString();
     }
 
     private KaspiCatalog.Offer mapToOffer(Product product) {

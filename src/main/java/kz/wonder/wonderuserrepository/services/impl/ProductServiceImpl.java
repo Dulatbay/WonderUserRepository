@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.ws.rs.ForbiddenException;
 import javax.xml.bind.Marshaller;
+import javax.xml.stream.XMLStreamException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -227,9 +228,10 @@ public class ProductServiceImpl implements ProductService {
             return kaspiToken.getPathToXml();
 
 
-        return generateAndUpload(kaspiToken);
+        return generateAndUploadXML(kaspiToken);
     }
 
+    @Deprecated
     private String generateAndUpload(KaspiToken kaspiToken) {
         try {
             final var wonderUser = kaspiToken.getWonderUser();
@@ -249,6 +251,31 @@ public class ProductServiceImpl implements ProductService {
 
             return resultOfUploading.get(0);
         } catch (Exception e) {
+            log.error("Exception: ", e);
+            throw new IllegalStateException(messageSource.getMessage("services-impl.product-service-impl.error-generating-xml", null, LocaleContextHolder.getLocale()));
+        }
+    }
+
+    private String generateAndUploadXML(KaspiToken kaspiToken) {
+        try {
+            final var wonderUser = kaspiToken.getWonderUser();
+            KaspiCatalog kaspiCatalog = productXmlMapper.buildKaspiCatalogInChunks(wonderUser.getKeycloakId(), kaspiToken);
+
+            String xmlContent = productXmlMapper.convertKaspiCatalogToXML(kaspiCatalog);
+
+            String fileName = wonderUser.getKeycloakId() + ".xml";
+            MultipartFile multipartFile = new MockMultipartFile(fileName, fileName, "text/xml", xmlContent.getBytes());
+
+            List<String> resultOfUploading = fileManagerApi.uploadFiles(FILE_MANAGER_XML_DIR, List.of(multipartFile), false).getBody();
+
+            kaspiToken.setPathToXml(fileName);
+            kaspiToken.setXmlUpdated(true);
+            kaspiToken.setXmlUpdatedAt(LocalDateTime.now(ZONE_ID));
+            kaspiTokenRepository.save(kaspiToken);
+
+            return resultOfUploading.getFirst();
+
+        } catch (XMLStreamException e) {
             log.error("Exception: ", e);
             throw new IllegalStateException(messageSource.getMessage("services-impl.product-service-impl.error-generating-xml", null, LocaleContextHolder.getLocale()));
         }
@@ -487,7 +514,8 @@ public class ProductServiceImpl implements ProductService {
         log.info("Found tokens to generating: {}", tokens.size());
 
         tokens
-                .forEach(this::generateAndUpload);
+                .parallelStream()
+                .forEach(this::generateAndUploadXML);
         log.info("Generated xmls: {}", tokens.size());
     }
 
